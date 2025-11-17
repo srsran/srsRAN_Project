@@ -50,11 +50,9 @@ public:
 
 /// \brief Creates a software based PUxCH processor factory.
 ///
-/// \param request_queue_size Number of PUxCH processing requests that can be enqueued.
 /// \param ofdm_demod_factory OFDM demodulator factory.
 /// \return A PUxCH processor factory.
 std::shared_ptr<puxch_processor_factory>
-create_puxch_processor_factory_sw(unsigned                                  request_queue_size,
-                                  std::shared_ptr<ofdm_demodulator_factory> ofdm_demod_factory);
+create_puxch_processor_factory_sw(std::shared_ptr<ofdm_demodulator_factory> ofdm_demod_factory);
 
 } // namespace srsran

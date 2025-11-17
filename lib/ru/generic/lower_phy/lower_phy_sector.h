@@ -26,10 +26,10 @@ public:
   explicit lower_phy_sector(lower_phy_timing_notifier* timing_notifier) : timing_handler(timing_notifier) {}
 
   // See interface for documentation.
-  lower_phy_request_handler& get_request_handler() override;
+  lower_phy_uplink_request_handler& get_uplink_request_handler() override;
 
   // See interface for documentation.
-  lower_phy_rg_handler& get_rg_handler() override;
+  lower_phy_downlink_handler& get_downlink_handler() override;
 
   // See interface for documentation.
   lower_phy_controller& get_controller() override;

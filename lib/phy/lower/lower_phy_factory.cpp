@@ -66,7 +66,8 @@ public:
     srsran_assert(uplink_proc_factory, "Invalid uplink processor factory.");
   }
 
-  std::unique_ptr<srsran::lower_phy> create(lower_phy_configuration& config) override
+  std::unique_ptr<srsran::lower_phy> create(const lower_phy_configuration& config,
+                                            const lower_phy_dependencies&  dependencies) override
   {
     srsran_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F),
                   "DFT window offset if out-of-range");
@@ -81,7 +82,7 @@ public:
                   to_string(subcarrier_spacing::kHz120));
     unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
-    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size();
+    unsigned rx_buffer_size = dependencies.bb_gateway.get_receiver_optimal_buffer_size();
     switch (config.baseband_rx_buffer_size_policy) {
       case lower_phy_baseband_buffer_size_policy::slot:
         rx_buffer_size = nof_samples_per_slot;
@@ -112,63 +113,65 @@ public:
                                                        .bandwidth_prb           = config.bandwidth_rb,
                                                        .center_frequency_Hz     = config.dl_freq_hz,
                                                        .nof_tx_ports            = config.nof_tx_ports,
-                                                       .nof_slot_tti_in_advance = config.max_processing_delay_slots,
-                                                       .modulation_executor     = *config.dl_task_executor};
+                                                       .nof_slot_tti_in_advance = config.max_processing_delay_slots};
 
     // Create downlink processor.
-    std::unique_ptr<lower_phy_downlink_processor> dl_proc = downlink_proc_factory->create(dl_proc_config);
+    std::unique_ptr<lower_phy_downlink_processor> dl_proc =
+        downlink_proc_factory->create(dl_proc_config, dependencies.dl_task_executor);
     srsran_assert(dl_proc, "Failed to create DL processor.");
 
     // Prepare uplink processor configuration.
-    uplink_processor_configuration ul_proc_config;
-    ul_proc_config.sector_id           = config.sector_id;
-    ul_proc_config.scs                 = config.scs;
-    ul_proc_config.cp                  = config.cp;
-    ul_proc_config.rate                = config.srate;
-    ul_proc_config.bandwidth_prb       = config.bandwidth_rb;
-    ul_proc_config.center_frequency_Hz = config.ul_freq_hz;
-    ul_proc_config.nof_rx_ports        = config.nof_rx_ports;
+    uplink_processor_configuration ul_proc_config = {.sector_id           = config.sector_id,
+                                                     .scs                 = config.scs,
+                                                     .cp                  = config.cp,
+                                                     .rate                = config.srate,
+                                                     .bandwidth_prb       = config.bandwidth_rb,
+                                                     .center_frequency_Hz = config.ul_freq_hz,
+                                                     .nof_rx_ports        = config.nof_rx_ports};
 
     // Create uplink processor.
     std::unique_ptr<lower_phy_uplink_processor> ul_proc = uplink_proc_factory->create(ul_proc_config);
     srsran_assert(dl_proc, "Failed to create the UL processor.");
 
     // Prepare processor baseband adaptor configuration.
-    lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
-    proc_bb_adaptor_config.srate                  = config.srate;
-    proc_bb_adaptor_config.scs                    = config.scs;
-    proc_bb_adaptor_config.rx_task_executor       = config.rx_task_executor;
-    proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
-    proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
-    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver();
-    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter();
-    proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
-    proc_bb_adaptor_config.dl_bb_proc             = &dl_proc->get_baseband();
-    proc_bb_adaptor_config.nof_tx_ports           = config.nof_tx_ports;
-    proc_bb_adaptor_config.nof_rx_ports           = config.nof_rx_ports;
-    proc_bb_adaptor_config.tx_time_offset         = tx_time_offset;
-    proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
-    proc_bb_adaptor_config.rx_buffer_size         = rx_buffer_size;
-    proc_bb_adaptor_config.nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
-    proc_bb_adaptor_config.system_time_throttling = config.system_time_throttling;
-    proc_bb_adaptor_config.stop_nof_slots         = 2 * config.max_processing_delay_slots;
+    lower_phy_baseband_processor_configuration proc_bb_adaptor_config = {
+        .srate                  = config.srate,
+        .scs                    = config.scs,
+        .nof_tx_ports           = config.nof_tx_ports,
+        .nof_rx_ports           = config.nof_rx_ports,
+        .tx_time_offset         = static_cast<baseband_gateway_timestamp>(tx_time_offset),
+        .rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset,
+        .rx_buffer_size         = rx_buffer_size,
+        .nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size),
+        .system_time_throttling = config.system_time_throttling,
+        .stop_nof_slots         = 2 * config.max_processing_delay_slots};
+
+    // Prepare processor baseband adaptor dependencies.
+    lower_phy_baseband_processor_dependencies proc_bb_adaptor_deps = {
+        .rx_task_executor = dependencies.rx_task_executor,
+        .tx_task_executor = dependencies.tx_task_executor,
+        .ul_task_executor = dependencies.ul_task_executor,
+        .receiver         = dependencies.bb_gateway.get_receiver(),
+        .transmitter      = dependencies.bb_gateway.get_transmitter(),
+        .ul_bb_proc       = ul_proc->get_baseband(),
+        .dl_bb_proc       = dl_proc->get_baseband(),
+    };
 
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =
-        std::make_unique<lower_phy_baseband_processor>(proc_bb_adaptor_config);
+        std::make_unique<lower_phy_baseband_processor>(proc_bb_adaptor_config, proc_bb_adaptor_deps);
     srsran_assert(controller, "Failed to create the lower PHY controller.");
 
-    // Prepare lower PHY configuration.
-    lower_phy_impl::configuration lower_phy_config;
-    lower_phy_config.downlink_proc      = std::move(dl_proc);
-    lower_phy_config.uplink_proc        = std::move(ul_proc);
-    lower_phy_config.controller         = std::move(controller);
-    lower_phy_config.rx_symbol_notifier = config.rx_symbol_notifier;
-    lower_phy_config.timing_notifier    = config.timing_notifier;
-    lower_phy_config.error_notifier     = config.error_notifier;
-    lower_phy_config.metrics_notifier   = config.metric_notifier;
+    // Prepare lower PHY dependencies.
+    lower_phy_impl::dependencies lower_phy_deps = {.downlink_proc      = std::move(dl_proc),
+                                                   .uplink_proc        = std::move(ul_proc),
+                                                   .controller         = std::move(controller),
+                                                   .rx_symbol_notifier = dependencies.rx_symbol_notifier,
+                                                   .timing_notifier    = dependencies.timing_notifier,
+                                                   .error_notifier     = dependencies.error_notifier,
+                                                   .metrics_notifier   = dependencies.metric_notifier};
 
-    return std::make_unique<lower_phy_impl>(lower_phy_config);
+    return std::make_unique<lower_phy_impl>(std::move(lower_phy_deps));
   }
 
 private:

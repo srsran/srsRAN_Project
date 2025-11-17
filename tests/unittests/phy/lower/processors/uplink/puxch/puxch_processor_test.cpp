@@ -122,7 +122,7 @@ protected:
       ofdm_demod_factory_spy = std::make_shared<ofdm_demodulator_factory_spy>();
       ASSERT_NE(ofdm_demod_factory_spy, nullptr);
 
-      puxch_proc_factory = create_puxch_processor_factory_sw(request_queue_size, ofdm_demod_factory_spy);
+      puxch_proc_factory = create_puxch_processor_factory_sw(ofdm_demod_factory_spy);
       ASSERT_NE(puxch_proc_factory, nullptr);
     }
   }
@@ -192,15 +192,6 @@ TEST_P(LowerPhyUplinkProcessorFixture, DemodulatorConfiguration)
   subcarrier_spacing scs   = std::get<2>(GetParam());
   cyclic_prefix      cp    = std::get<3>(GetParam());
 
-  puxch_processor_configuration expected_config;
-  expected_config.cp                = cp;
-  expected_config.scs               = scs;
-  expected_config.srate             = srate;
-  expected_config.bandwidth_rb      = config.bandwidth_rb;
-  expected_config.dft_window_offset = config.dft_window_offset;
-  expected_config.center_freq_Hz    = config.center_freq_Hz;
-  expected_config.nof_rx_ports      = config.nof_rx_ports;
-
   ofdm_demodulator_configuration expected_demod_config;
   expected_demod_config.numerology                = to_numerology_value(scs);
   expected_demod_config.bw_rb                     = config.bandwidth_rb;
@@ -208,7 +199,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, DemodulatorConfiguration)
   expected_demod_config.cp                        = cp;
   expected_demod_config.nof_samples_window_offset = static_cast<unsigned>(
       static_cast<float>(cp.get_length(1, scs).to_samples(srate.to_Hz())) * config.dft_window_offset);
-  expected_demod_config.scale          = 1.0F / std::sqrt(config.bandwidth_rb * NRE);
+  expected_demod_config.scale          = 1.0F / static_cast<float>(std::sqrt(config.bandwidth_rb * NRE));
   expected_demod_config.center_freq_Hz = config.center_freq_Hz;
 
   ASSERT_EQ(ofdm_demod_spy->get_configuration(), expected_demod_config);

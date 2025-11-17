@@ -33,7 +33,7 @@ std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_config
 
 radio_config_zmq_config_validator srsran::radio_factory_zmq_impl::config_validator;
 
-const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator()
+const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator() const
 {
   return config_validator;
 }

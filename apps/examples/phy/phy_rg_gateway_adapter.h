@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/lower/lower_phy_rg_handler.h"
+#include "srsran/phy/lower/lower_phy_downlink_handler.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 
@@ -20,11 +20,11 @@ namespace srsran {
 class phy_rg_gateway_adapter : public upper_phy_rg_gateway
 {
 private:
-  lower_phy_rg_handler* rg_handler = nullptr;
+  lower_phy_downlink_handler* rg_handler = nullptr;
 
 public:
   /// Connects the adaptor to the lower physical layer gateway.
-  void connect(lower_phy_rg_handler* handler) { rg_handler = handler; }
+  void connect(lower_phy_downlink_handler* handler) { rg_handler = handler; }
 
   // See interface for documentation.
   void send(const resource_grid_context& context, shared_resource_grid grid) override

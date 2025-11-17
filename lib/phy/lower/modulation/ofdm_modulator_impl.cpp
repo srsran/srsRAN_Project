@@ -18,15 +18,15 @@
 
 using namespace srsran;
 
-ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_configuration& common_config,
-                                                       const ofdm_modulator_configuration&  ofdm_config) :
+ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_configuration& ofdm_config,
+                                                       ofdm_modulator_dependencies         dependencies) :
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
   scs(to_subcarrier_spacing(ofdm_config.numerology)),
   sampling_rate_Hz(to_sampling_rate_Hz(scs, dft_size)),
   scale(ofdm_config.scale),
-  dft(std::move(common_config.dft)),
+  dft(std::move(dependencies.dft)),
   phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
                            ofdm_config.cp,
                            ofdm_config.dft_size,

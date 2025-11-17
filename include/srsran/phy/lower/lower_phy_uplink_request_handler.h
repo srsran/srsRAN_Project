@@ -12,20 +12,20 @@
 
 namespace srsran {
 
-class resource_grid;
 class prach_buffer;
 struct prach_buffer_context;
+class resource_grid;
 struct resource_grid_context;
 class shared_resource_grid;
 
-/// \brief Describes the lower physical layer request handler.
+/// \brief Describes the lower physical layer uplink request handler.
 ///
-/// Handles incoming requests and notifies their completion through the \c phy_rx_symbol_notifier interface.
-class lower_phy_request_handler
+/// Handles incoming uplink requests and notifies their completion through the \c phy_rx_symbol_notifier interface.
+class lower_phy_uplink_request_handler
 {
 public:
   /// Default destructor.
-  virtual ~lower_phy_request_handler() = default;
+  virtual ~lower_phy_uplink_request_handler() = default;
 
   /// \brief Requests the lower PHY to capture a PRACH window.
   ///

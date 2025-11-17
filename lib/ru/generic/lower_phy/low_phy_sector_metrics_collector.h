@@ -32,9 +32,6 @@ public:
   /// Collects the metrics of the low PHY sector and fills the given structure.
   void collect_metrics(ru_generic_sector_metrics& metrics);
 
-  /// Returns the lower PHY metrics notifier of this sector metricd collector.
-  lower_phy_metrics_notifier& get_lower_phy_metrics_notifier() { return *this; }
-
 private:
   std::mutex                                   tx_mutex;
   sample_statistics<float>                     tx_avg_power;

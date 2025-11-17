@@ -15,11 +15,11 @@
 
 namespace srsran {
 
-/// Radio Unit radio notification logger.
-class ru_radio_notification_handler_logger : public radio_notification_handler
+/// Radio Unit radio event logger.
+class ru_radio_logger_event_handler : public radio_notification_handler
 {
 public:
-  explicit ru_radio_notification_handler_logger(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit ru_radio_logger_event_handler(srslog::basic_logger& logger_) : logger(logger_) {}
 
   // See interface for documentation.
   void on_radio_rt_event(const event_description& description) override
@@ -32,10 +32,8 @@ public:
     static const auto& log_format_debug = "Real-time failure in RF: Type={} Source={} Timestamp={}";
 
     if (description.timestamp.has_value()) {
-      logger.debug(log_format_debug,
-                   description.type.to_string(),
-                   description.source.to_string(),
-                   description.timestamp.value());
+      logger.debug(
+          log_format_debug, description.type.to_string(), description.source.to_string(), *description.timestamp);
     } else {
       logger.debug(log_format_debug, description.type.to_string(), description.source.to_string(), "na");
     }
@@ -45,25 +43,24 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Radio notification event dispatcher.
-class ru_radio_notification_dispatcher : public radio_notification_handler
+/// Radio event dispatcher.
+class ru_radio_event_dispatcher : public radio_notification_handler
 {
   std::vector<radio_notification_handler*> handlers;
 
 public:
-  explicit ru_radio_notification_dispatcher(std::vector<radio_notification_handler*> handlers_) :
+  explicit ru_radio_event_dispatcher(std::vector<radio_notification_handler*> handlers_) :
     handlers(std::move(handlers_))
   {
-    srsran_assert(!handlers.empty(), "Invalid list of radio notification handlers");
-    for (const auto& handler : handlers) {
-      srsran_assert(handler, "Invalid radio notification handler");
-    }
+    srsran_assert(!handlers.empty(), "Empty list of radio event notifiers");
+    srsran_assert(std::all_of(handlers.begin(), handlers.end(), [](auto* handler) { return handler != nullptr; }),
+                  "Invalid radio event notifier");
   }
 
   // See interface for documentation.
   void on_radio_rt_event(const event_description& description) override
   {
-    for (auto handler : handlers) {
+    for (auto* handler : handlers) {
       handler->on_radio_rt_event(description);
     }
   }

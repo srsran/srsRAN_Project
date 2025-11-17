@@ -106,8 +106,8 @@ private:
                                                 const fapi::fapi_cell_config&     config);
 
   /// Creates O-DU low.
-  o_du_low_unit create_o_du_low(const fapi::fapi_cell_config& config,
-                                o_du_low_unit_dependencies&&  odu_low_dependencies);
+  o_du_low_unit create_o_du_low(const fapi::fapi_cell_config&     config,
+                                const o_du_low_unit_dependencies& odu_low_dependencies);
 };
 
 } // namespace srsran

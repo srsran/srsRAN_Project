@@ -35,9 +35,7 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
       current_grid.release();
     } else if (current_slot != request.slot) {
       // If the slot of the request does not match the current slot, then notify a late event.
-      resource_grid_context late_context;
-      late_context.slot   = request.slot;
-      late_context.sector = context.sector;
+      resource_grid_context late_context = {.slot = request.slot, .sector = context.sector};
       notifier->on_puxch_request_late(late_context);
       current_grid.release();
     } else {
@@ -70,9 +68,6 @@ bool puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
   }
 
   // Notify.
-  lower_phy_rx_symbol_context rx_symbol_context;
-  rx_symbol_context.slot        = current_slot;
-  rx_symbol_context.nof_symbols = context.nof_symbols;
   notifier->on_rx_symbol(current_grid, context, true);
 
   // Release current grid if the slot is completed.
@@ -97,9 +92,7 @@ void puxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
 
   // If there was a request at the same request index, notify a late event with the context of the discarded request.
   if (request.resource) {
-    resource_grid_context late_context;
-    late_context.slot   = request.slot;
-    late_context.sector = context.sector;
+    resource_grid_context late_context = {.slot = request.slot, .sector = context.sector};
     notifier->on_puxch_request_late(late_context);
   }
 }

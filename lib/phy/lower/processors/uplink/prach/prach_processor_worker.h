@@ -35,7 +35,6 @@ namespace srsran {
 /// - process_symbol() is called from a second, different thread.
 class prach_processor_worker
 {
-private:
   /// Worker internal states.
   enum class states {
     /// The worker has not been configured yet with any request or the previously configured request has already been

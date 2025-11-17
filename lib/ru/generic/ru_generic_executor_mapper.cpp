@@ -70,7 +70,7 @@ public:
 
     async_exec = config.radio_exec;
 
-    for (auto& baseband_exec : config.baseband_exec) {
+    for (const auto& baseband_exec : config.baseband_exec) {
       srsran_assert(baseband_exec != nullptr, "Invalid baseband cell executor.");
 
       task_executor& dl_exec    = *config.high_prio_executor;
@@ -90,7 +90,7 @@ public:
 
     async_exec = config.radio_exec;
 
-    for (auto& baseband_exec : config.baseband_exec) {
+    for (const auto& baseband_exec : config.baseband_exec) {
       srsran_assert(baseband_exec.rx_exec != nullptr, "Invalid receive baseband cell executor.");
       srsran_assert(baseband_exec.tx_exec != nullptr, "Invalid transmit baseband cell executor.");
 
@@ -111,7 +111,7 @@ public:
 
     async_exec = config.radio_exec;
 
-    for (auto& baseband_exec : config.baseband_exec) {
+    for (const auto& baseband_exec : config.baseband_exec) {
       srsran_assert(baseband_exec.rx_exec != nullptr, "Invalid receive baseband cell executor.");
       srsran_assert(baseband_exec.tx_exec != nullptr, "Invalid transmit baseband cell executor.");
       srsran_assert(baseband_exec.ul_exec != nullptr, "Invalid baseband demodulator cell executor.");

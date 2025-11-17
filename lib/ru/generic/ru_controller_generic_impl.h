@@ -25,10 +25,12 @@ class radio_session;
 /// Radio Unit gain controller generic implementation.
 class ru_gain_controller_generic_impl : public ru_gain_controller
 {
-  radio_session* radio;
+  radio_session** radio = nullptr;
 
 public:
-  explicit ru_gain_controller_generic_impl(radio_session* radio_) : radio(radio_) {}
+  ru_gain_controller_generic_impl() = default;
+
+  explicit ru_gain_controller_generic_impl(radio_session** radio_) : radio(radio_) {}
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
@@ -45,7 +47,10 @@ class ru_cfo_controller_generic_impl : public ru_cfo_controller
 public:
   ru_cfo_controller_generic_impl() = default;
 
-  ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) : phy_sectors(std::move(phy_sectors_)) {}
+  explicit ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
+    phy_sectors(std::move(phy_sectors_))
+  {
+  }
 
   // See interface for documentation.
   bool set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
@@ -54,16 +59,16 @@ public:
   bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
 };
 
-/// Radio Unit carrier frequency offset controller generic implementation.
+/// Radio Unit center frequency controller generic implementation.
 class ru_center_frequency_controller_generic_impl : public ru_center_frequency_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
-  radio_session*                 radio;
+  radio_session**                radio = nullptr;
 
 public:
   ru_center_frequency_controller_generic_impl() = default;
 
-  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session* radio_) :
+  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session** radio_) :
     phy_sectors(std::move(phy_sectors_)), radio(radio_)
   {
   }
@@ -75,7 +80,7 @@ public:
   bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
 };
 
-/// Radio Unit carrier frequency offset controller generic implementation.
+/// Radio Unit transmit time offset controller generic implementation.
 class ru_tx_time_offset_controller_generic_impl : public ru_tx_time_offset_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
@@ -96,8 +101,7 @@ public:
 class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  explicit ru_controller_generic_impl(double                                               srate_MHz_,
-                                      std::optional<std::chrono::system_clock::time_point> start_time);
+  ru_controller_generic_impl(double srate_MHz_, std::optional<std::chrono::system_clock::time_point> start_time);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -108,6 +112,7 @@ public:
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return &cfo_controller; }
 
+  // See interface for documentation.
   ru_center_frequency_controller* get_center_frequency_controller() override { return &center_freq_controller; }
 
   // See interface for documentation.
@@ -120,21 +125,17 @@ public:
   void stop() override;
 
   /// Sets the radio session of this controller.
-  void set_radio(radio_session& session)
-  {
-    radio           = &session;
-    gain_controller = ru_gain_controller_generic_impl(radio);
-  }
+  void set_radio(radio_session& session) { radio = &session; }
 
-  /// Set low phy sectors.
+  /// Set lower phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
   double                                               srate_MHz;
   std::optional<std::chrono::system_clock::time_point> start_time;
-  radio_session*                                       radio;
+  radio_session*                                       radio = nullptr;
+  std::vector<lower_phy_sector*>                       low_phy_sectors;
   ru_gain_controller_generic_impl                      gain_controller;
-  std::vector<lower_phy_sector*>                       low_phy_crtl;
   ru_cfo_controller_generic_impl                       cfo_controller;
   ru_center_frequency_controller_generic_impl          center_freq_controller;
   ru_tx_time_offset_controller_generic_impl            tx_time_offset_controller;

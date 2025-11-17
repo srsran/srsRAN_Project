@@ -33,16 +33,38 @@ struct ru_generic_configuration {
   /// Starts radio operation at the given time. The use of this parameter is for starting radio operation of several
   /// instances at same time.
   std::optional<std::chrono::system_clock::time_point> start_time;
+};
+
+/// RU generic sector dependencies.
+struct ru_generic_sector_dependencies {
+  /// Logger.
+  srslog::basic_logger& logger;
+  /// Receive task executor.
+  task_executor& rx_task_executor;
+  /// Transmit task executor.
+  task_executor& tx_task_executor;
+  /// Downlink task executor.
+  task_executor& dl_task_executor;
+  /// Uplink task executor.
+  task_executor& ul_task_executor;
+  /// PRACH asynchronous task executor.
+  task_executor& prach_async_executor;
+};
+
+/// Radio Unit generic dependencies.
+struct ru_generic_dependencies {
   /// Radio executor.
-  task_executor* radio_exec = nullptr;
+  task_executor& radio_exec;
   /// Radio logger.
-  srslog::basic_logger* rf_logger = nullptr;
+  srslog::basic_logger& rf_logger;
   /// Radio Unit uplink plane received symbol notifier.
-  ru_uplink_plane_rx_symbol_notifier* symbol_notifier = nullptr;
+  ru_uplink_plane_rx_symbol_notifier& symbol_notifier;
   /// Radio Unit timing notifier.
-  ru_timing_notifier* timing_notifier = nullptr;
+  ru_timing_notifier& timing_notifier;
   /// Radio Unit error notifier.
-  ru_error_notifier* error_notifier = nullptr;
+  ru_error_notifier& error_notifier;
+  /// RU generic sector dependencies.
+  std::vector<ru_generic_sector_dependencies> ru_generic_sector_deps;
 };
 
 } // namespace srsran

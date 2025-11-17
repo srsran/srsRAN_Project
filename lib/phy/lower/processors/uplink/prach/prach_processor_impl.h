@@ -26,7 +26,6 @@ class prach_processor_impl : public prach_processor,
                              private prach_processor_baseband,
                              private prach_processor_request_handler
 {
-private:
   std::atomic<bool>                                    stopped = false;
   std::vector<std::unique_ptr<prach_processor_worker>> workers;
   prach_processor_notifier*                            notifier = nullptr;
@@ -69,7 +68,7 @@ private:
 
 public:
   /// Creates a PRACH processor containing workers.
-  explicit prach_processor_impl(std::vector<std::unique_ptr<prach_processor_worker>>&& workers_) :
+  explicit prach_processor_impl(std::vector<std::unique_ptr<prach_processor_worker>> workers_) :
     workers(std::move(workers_))
   {
     srsran_assert(!workers.empty(), "No workers are available.");

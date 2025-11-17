@@ -23,7 +23,7 @@ public:
   radio_factory_zmq_impl() = default;
 
   // See interface for documentation.
-  const radio_configuration::validator& get_configuration_validator() override;
+  const radio_configuration::validator& get_configuration_validator() const override;
 
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,

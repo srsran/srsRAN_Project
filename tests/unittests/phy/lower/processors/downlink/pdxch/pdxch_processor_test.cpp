@@ -168,16 +168,15 @@ protected:
     center_freq_Hz = dist_center_freq_Hz(rgen);
 
     // Prepare configurations.
-    pdxch_processor_configuration config = {.cp                  = cp,
-                                            .scs                 = scs,
-                                            .srate               = srate,
-                                            .bandwidth_rb        = bandwidth_rb,
-                                            .center_freq_Hz      = center_freq_Hz,
-                                            .nof_tx_ports        = nof_tx_ports,
-                                            .modulation_executor = modulation_executor};
+    pdxch_processor_configuration config = {.cp             = cp,
+                                            .scs            = scs,
+                                            .srate          = srate,
+                                            .bandwidth_rb   = bandwidth_rb,
+                                            .center_freq_Hz = center_freq_Hz,
+                                            .nof_tx_ports   = nof_tx_ports};
 
     // Create processor.
-    pdxch_proc = pdxch_proc_factory->create(config);
+    pdxch_proc = pdxch_proc_factory->create(config, modulation_executor);
     ASSERT_NE(pdxch_proc, nullptr);
 
     // Select OFDM modulator processor spy.

@@ -16,15 +16,14 @@ namespace srsran {
 
 class shared_resource_grid;
 
-/// \brief Lower physical layer resource grid handler interface.
+/// \brief Lower physical layer downlink handler interface.
 ///
-/// The resource grid handler modulates and transmits the given downlink resource grid through the underlying radio
-/// device.
-class lower_phy_rg_handler
+/// The downlink handler modulates and transmits the given downlink resource grid through the underlying radio device.
+class lower_phy_downlink_handler
 {
 public:
   /// Default destructor.
-  virtual ~lower_phy_rg_handler() = default;
+  virtual ~lower_phy_downlink_handler() = default;
 
   /// \brief Handles the given resource grid to be transmitted.
   ///

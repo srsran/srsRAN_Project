@@ -22,7 +22,7 @@ class radio_factory : public radio_base
 {
 public:
   /// Returns the reference to the radio configuration validator for the given factory.
-  virtual const radio_configuration::validator& get_configuration_validator() = 0;
+  virtual const radio_configuration::validator& get_configuration_validator() const = 0;
 
   /// \brief Creates a new radio session with the given configuration parameters.
   /// \param[in] config                Provides the configuration parameters.

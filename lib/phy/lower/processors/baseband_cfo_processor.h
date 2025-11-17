@@ -28,7 +28,7 @@ namespace srsran {
 class baseband_cfo_processor : public lower_phy_cfo_controller
 {
 public:
-  baseband_cfo_processor(sampling_rate srate_) : srate(srate_) {}
+  explicit baseband_cfo_processor(sampling_rate srate_) : srate(srate_) {}
 
   /// \brief Notifies a new CFO command.
   /// \param time Time at which the new CFO value is used.
@@ -37,10 +37,7 @@ public:
   bool schedule_cfo_command(time_point time_, float cfo_Hz_, float cfo_drift_Hz_s_ = 0) override
   {
     cfo_command command{time_, cfo_Hz_, cfo_drift_Hz_s_};
-    if (!cfo_command_queue.try_push(command)) {
-      return false;
-    }
-    return true;
+    return cfo_command_queue.try_push(command);
   }
 
   /// Reset sample offset and update the CFO if any command is queued.

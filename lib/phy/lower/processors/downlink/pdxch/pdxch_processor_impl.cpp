@@ -56,7 +56,7 @@ void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
   }
 
   // Try modulating the request. It can be the modulator is busy with a previous transmission.
-  bool success = get_modulator(context.slot).handle_request(std::move(buffer), grid.copy(), context);
+  bool success = get_modulator(context.slot).handle_request(std::move(buffer), grid, context);
 
   // If there was a request with a resource grid, then notify a late event with the context of the discarded request.
   if (!success) {
@@ -74,10 +74,7 @@ void pdxch_processor_impl::on_modulation_completion(pdxch_processor_baseband::sl
 
   // Check if the previous entry in the request buffer is not empty.
   if (request.resource.buffer) {
-    resource_grid_context late_context;
-    late_context.slot   = request.slot;
-    late_context.sector = context.sector;
-    notifier->on_pdxch_request_late(late_context);
+    notifier->on_pdxch_request_late(resource_grid_context{.slot = request.slot, .sector = context.sector});
     general_critical_tracer << instant_trace_event{"on_pdxch_request_late",
                                                    instant_trace_event::cpu_scope::thread,
                                                    instant_trace_event::event_criticality::severe};
@@ -102,10 +99,7 @@ pdxch_processor_baseband::slot_result pdxch_processor_impl::process_slot(slot_co
 
   // If the slot of the request does not match the current slot, then notify a late event.
   if (context.slot != request.slot) {
-    resource_grid_context late_context;
-    late_context.slot   = request.slot;
-    late_context.sector = context.sector;
-    notifier->on_pdxch_request_late(late_context);
+    notifier->on_pdxch_request_late(resource_grid_context{.slot = request.slot, .sector = context.sector});
     return {};
   }
 

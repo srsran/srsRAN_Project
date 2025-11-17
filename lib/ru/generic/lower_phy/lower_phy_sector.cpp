@@ -12,14 +12,14 @@
 
 using namespace srsran;
 
-lower_phy_request_handler& lower_phy_sector::get_request_handler()
+lower_phy_uplink_request_handler& lower_phy_sector::get_uplink_request_handler()
 {
-  return low_phy->get_request_handler();
+  return low_phy->get_uplink_request_handler();
 }
 
-lower_phy_rg_handler& lower_phy_sector::get_rg_handler()
+lower_phy_downlink_handler& lower_phy_sector::get_downlink_handler()
 {
-  return low_phy->get_rg_handler();
+  return low_phy->get_downlink_handler();
 }
 
 lower_phy_controller& lower_phy_sector::get_controller()

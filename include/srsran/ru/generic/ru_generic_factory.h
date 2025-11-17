@@ -16,8 +16,10 @@
 namespace srsran {
 
 struct ru_generic_configuration;
+struct ru_generic_dependencies;
 
 /// Returns a generic Radio Unit using the given configuration.
-std::unique_ptr<radio_unit> create_generic_ru(ru_generic_configuration& config);
+std::unique_ptr<radio_unit> create_generic_ru(const ru_generic_configuration& config,
+                                              const ru_generic_dependencies&  dependencies);
 
 } // namespace srsran

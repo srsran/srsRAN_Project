@@ -25,68 +25,18 @@
 
 using namespace srsran;
 
-namespace {
-
-class radio_management_plane_dummy : public radio_management_plane
-{
-public:
-  bool set_tx_gain(unsigned port_id, double gain_dB) override { return false; }
-  bool set_rx_gain(unsigned port_id, double gain_dB) override { return false; }
-  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override { return false; }
-  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override { return false; }
-};
-
-class baseband_gateway_transmitter_dummy : public baseband_gateway_transmitter
-{
-public:
-  void transmit(const baseband_gateway_buffer_reader&        data,
-                const baseband_gateway_transmitter_metadata& metadata) override
-  {
-  }
-};
-
-class baseband_gateway_receiver_dummy : public baseband_gateway_receiver
-{
-public:
-  metadata receive(baseband_gateway_buffer_writer& data) override { return {}; }
-};
-
-class baseband_gateway_dummy : public baseband_gateway
-{
-  baseband_gateway_transmitter_dummy tx;
-  baseband_gateway_receiver_dummy    rx;
-
-public:
-  baseband_gateway_transmitter& get_transmitter() override { return tx; }
-  baseband_gateway_receiver&    get_receiver() override { return rx; }
-};
-
-class radio_session_dummy : public radio_session
-{
-  radio_management_plane_dummy management;
-  baseband_gateway_dummy       gateway;
-
-public:
-  radio_management_plane&    get_management_plane() override { return management; }
-  baseband_gateway&          get_baseband_gateway(unsigned stream_id) override { return gateway; }
-  baseband_gateway_timestamp read_current_time() override { return 0; }
-  void                       start(baseband_gateway_timestamp init_time) override {}
-  void                       stop() override {}
-};
-
-} // namespace
-
-static radio_session_dummy dummy_radio;
-
 ru_controller_generic_impl::ru_controller_generic_impl(
     double                                               srate_MHz_,
     std::optional<std::chrono::system_clock::time_point> start_time_) :
-  srate_MHz(srate_MHz_), start_time(start_time_), radio(&dummy_radio), gain_controller(radio)
+  srate_MHz(srate_MHz_), start_time(start_time_)
 {
 }
 
 void ru_controller_generic_impl::start()
 {
+  srsran_assert(radio, "Null radio");
+  srsran_assert(!low_phy_sectors.empty(), "Empty list of lower phy sectors");
+
   // Start streaming at the given time.
   if (start_time.has_value()) {
     // Sleep until the start time.
@@ -113,7 +63,7 @@ void ru_controller_generic_impl::start()
 
     // Start radio and lower physical layer at the given timestamp.
     radio->start(time_start);
-    for (auto& low_phy : low_phy_crtl) {
+    for (auto& low_phy : low_phy_sectors) {
       low_phy->get_controller().start(time_start, sfn0_ref_time);
     }
 
@@ -131,7 +81,7 @@ void ru_controller_generic_impl::start()
 
   // Start radio and lower physical layer at the given timestamp.
   radio->start(start_ts);
-  for (auto& low_phy : low_phy_crtl) {
+  for (auto& low_phy : low_phy_sectors) {
     low_phy->get_controller().start(start_ts);
   }
 }
@@ -140,7 +90,7 @@ void ru_controller_generic_impl::stop()
 {
   radio->stop();
 
-  for (auto& low_phy : low_phy_crtl) {
+  for (auto& low_phy : low_phy_sectors) {
     low_phy->get_controller().stop();
   }
 }
@@ -149,20 +99,22 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
 {
   srsran_assert(!sectors.empty(), "Could not set empty sectors");
 
-  low_phy_crtl              = std::move(sectors);
-  cfo_controller            = ru_cfo_controller_generic_impl(low_phy_crtl);
-  center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_crtl, radio);
-  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_crtl);
+  low_phy_sectors = std::move(sectors);
+
+  gain_controller           = ru_gain_controller_generic_impl(&radio);
+  cfo_controller            = ru_cfo_controller_generic_impl(low_phy_sectors);
+  center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_sectors, &radio);
+  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_sectors);
 }
 
 bool ru_gain_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
-  return radio->get_management_plane().set_tx_gain(port_id, gain_dB);
+  return (*radio)->get_management_plane().set_tx_gain(port_id, gain_dB);
 }
 
 bool ru_gain_controller_generic_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
-  return radio->get_management_plane().set_rx_gain(port_id, gain_dB);
+  return (*radio)->get_management_plane().set_rx_gain(port_id, gain_dB);
 }
 
 bool ru_cfo_controller_generic_impl::set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request)
@@ -189,7 +141,7 @@ bool ru_cfo_controller_generic_impl::set_rx_cfo(unsigned sector_id, const cfo_co
 
 bool ru_center_frequency_controller_generic_impl::set_tx_center_frequency(unsigned sector_id, double center_freq_Hz)
 {
-  radio->get_management_plane().set_tx_freq(sector_id, center_freq_Hz);
+  (*radio)->get_management_plane().set_tx_freq(sector_id, center_freq_Hz);
   if (sector_id < phy_sectors.size()) {
     return phy_sectors[sector_id]->get_tx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
   }
@@ -198,7 +150,7 @@ bool ru_center_frequency_controller_generic_impl::set_tx_center_frequency(unsign
 
 bool ru_center_frequency_controller_generic_impl::set_rx_center_frequency(unsigned sector_id, double center_freq_Hz)
 {
-  radio->get_management_plane().set_rx_freq(sector_id, center_freq_Hz);
+  (*radio)->get_management_plane().set_rx_freq(sector_id, center_freq_Hz);
   if (sector_id < phy_sectors.size()) {
     return phy_sectors[sector_id]->get_rx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
   }

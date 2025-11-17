@@ -21,7 +21,6 @@ namespace srsran {
 /// Clipping amplitude controller implementation.
 class amplitude_controller_clipping_impl : public amplitude_controller
 {
-private:
   /// Enables or disables the clipping process.
   bool clipping_enabled;
   /// Gain factor applied to the input signal, before the clipping process.

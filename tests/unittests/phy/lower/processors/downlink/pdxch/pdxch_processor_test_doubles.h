@@ -171,7 +171,8 @@ class pdxch_processor_factory_spy : public pdxch_processor_factory
 public:
   pdxch_processor_factory_spy() = default;
 
-  std::unique_ptr<pdxch_processor> create(const pdxch_processor_configuration& config) override
+  std::unique_ptr<pdxch_processor> create(const pdxch_processor_configuration& config,
+                                          task_executor&                       modulation_executor) override
   {
     std::unique_ptr<pdxch_processor_spy> ptr;
 

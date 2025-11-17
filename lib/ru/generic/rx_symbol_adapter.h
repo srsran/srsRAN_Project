@@ -16,11 +16,11 @@
 
 namespace srsran {
 
-/// Implements a generic lower physical layer to Radio Unit receive symbol adapter.
-class ru_rx_symbol_adapter : public lower_phy_rx_symbol_notifier
+/// Implements a lower physical layer to Radio Unit receive symbol adapter.
+class ru_lower_phy_rx_symbol_adapter : public lower_phy_rx_symbol_notifier
 {
 public:
-  explicit ru_rx_symbol_adapter(ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler_) :
+  explicit ru_lower_phy_rx_symbol_adapter(ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler_) :
     rx_symbol_handler(rx_symbol_handler_)
   {
   }
@@ -29,11 +29,10 @@ public:
   void
   on_rx_symbol(const lower_phy_rx_symbol_context& context, const shared_resource_grid& grid, bool is_valid) override
   {
-    ru_uplink_rx_symbol_context upper_context;
-    upper_context.slot      = context.slot;
-    upper_context.sector    = context.sector;
-    upper_context.symbol_id = context.nof_symbols;
-    rx_symbol_handler.on_new_uplink_symbol(upper_context, grid, is_valid);
+    rx_symbol_handler.on_new_uplink_symbol(
+        ru_uplink_rx_symbol_context{.slot = context.slot, .sector = context.sector, .symbol_id = context.nof_symbols},
+        grid,
+        is_valid);
   }
 
   // See interface for documentation.

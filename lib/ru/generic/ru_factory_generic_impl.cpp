@@ -9,20 +9,20 @@
  */
 
 #include "lower_phy/lower_phy_factory.h"
-#include "ru_config_validator.h"
-#include "ru_generic_error_adapter.h"
 #include "ru_generic_impl.h"
-#include "ru_radio_notifier_handler.h"
+#include "ru_lower_phy_error_adapter.h"
+#include "ru_radio_event_handler.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/ru/generic/ru_generic_configuration.h"
 #include "srsran/ru/generic/ru_generic_factory.h"
 
 using namespace srsran;
 
 /// Creates a radio session with the given parameters.
-static std::unique_ptr<radio_session> create_radio_session(task_executor&              executor,
-                                                           radio_notification_handler& radio_handler,
-                                                           radio_configuration::radio& config,
-                                                           const std::string&          device_driver)
+static std::unique_ptr<radio_session> create_radio_session(task_executor&                    executor,
+                                                           radio_notification_handler&       radio_handler,
+                                                           const radio_configuration::radio& config,
+                                                           const std::string&                device_driver)
 {
   print_available_radio_factories();
 
@@ -38,39 +38,46 @@ static std::unique_ptr<radio_session> create_radio_session(task_executor&       
   return factory->create(config, executor, radio_handler);
 }
 
-std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& config)
+std::unique_ptr<radio_unit> srsran::create_generic_ru(const ru_generic_configuration& config,
+                                                      const ru_generic_dependencies&  dependencies)
 {
-  // Check the pointers inside the config.
-  if (!is_valid(config)) {
-    return nullptr;
-  }
+  ru_generic_impl_config ru_config = {.srate_MHz           = config.radio_cfg.sampling_rate_Hz * 1e-6,
+                                      .start_time          = config.start_time,
+                                      .are_metrics_enabled = config.are_metrics_enabled};
 
-  ru_generic_impl_config ru_config = {
-      config.lower_phy_config.front().srate.to_MHz(), config.start_time, config.are_metrics_enabled};
-  ru_generic_impl_dependencies ru_dependencies = {*config.symbol_notifier,
-                                                  *config.timing_notifier,
-                                                  *config.lower_phy_config.front().logger,
-                                                  *config.rf_logger,
-                                                  *config.error_notifier};
+  ru_generic_impl_dependencies ru_dependencies = {.rx_symbol_handler = dependencies.symbol_notifier,
+                                                  .timing_handler    = dependencies.timing_notifier,
+                                                  .logger         = dependencies.ru_generic_sector_deps.front().logger,
+                                                  .radio_logger   = dependencies.rf_logger,
+                                                  .error_notifier = dependencies.error_notifier};
 
-  auto ru = std::make_unique<ru_generic_impl>(ru_config, std::move(ru_dependencies));
+  auto ru = std::make_unique<ru_generic_impl>(ru_config, ru_dependencies);
 
   auto radio = create_radio_session(
-      *config.radio_exec, ru->get_radio_notification_handler(), config.radio_cfg, config.device_driver);
+      dependencies.radio_exec, ru->get_radio_event_notifier(), config.radio_cfg, config.device_driver);
   report_error_if_not(radio, "Unable to create radio session.");
 
   ru->set_radio(std::move(radio));
 
   std::vector<std::unique_ptr<lower_phy_sector>> phy_sectors;
   for (unsigned sector_id = 0, sector_end = config.lower_phy_config.size(); sector_id != sector_end; ++sector_id) {
-    lower_phy_configuration& low_cfg = config.lower_phy_config[sector_id];
+    const lower_phy_configuration&        low_phy_cfg    = config.lower_phy_config[sector_id];
+    const ru_generic_sector_dependencies& ru_sector_deps = dependencies.ru_generic_sector_deps[sector_id];
 
-    // Update the config with the adapters.
-    low_cfg.bb_gateway         = &ru->get_baseband_gateway(sector_id);
-    low_cfg.rx_symbol_notifier = &ru->get_rx_symbol_notifier();
+    lower_phy_sector_dependencies lophy_sector_deps = {
+        .logger               = ru_sector_deps.logger,
+        .rx_task_executor     = ru_sector_deps.rx_task_executor,
+        .tx_task_executor     = ru_sector_deps.tx_task_executor,
+        .dl_task_executor     = ru_sector_deps.dl_task_executor,
+        .ul_task_executor     = ru_sector_deps.ul_task_executor,
+        .prach_async_executor = ru_sector_deps.prach_async_executor,
+        .error_notifier       = ru->get_error_notifier(),
+        // Only the first sector is used to report timing events using the RU notifier.
+        .timing_notifier    = sector_id ? nullptr : &ru->get_timing_notifier(),
+        .bb_gateway         = ru->get_baseband_gateway(sector_id),
+        .rx_symbol_notifier = ru->get_rx_symbol_notifier()};
 
-    phy_sectors.push_back(
-        create_low_phy_sector(low_cfg, ru->get_error_notifier(), sector_id ? nullptr : &ru->get_timing_notifier()));
+    phy_sectors.push_back(create_low_phy_sector(low_phy_cfg, lophy_sector_deps));
   }
 
   // Add lower PHY sector dependencies.

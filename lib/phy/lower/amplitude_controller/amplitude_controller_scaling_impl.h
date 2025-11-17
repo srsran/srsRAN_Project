@@ -21,7 +21,6 @@ namespace srsran {
 /// Scaling amplitude controller implementation.
 class amplitude_controller_scaling_impl : public amplitude_controller
 {
-private:
   /// Gain factor applied to the input signal.
   float amplitude_gain;
 

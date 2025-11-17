@@ -17,8 +17,8 @@
 
 namespace srsran {
 
-/// OFDM demodulator factory configuration. Provides the necessary dependency instances.
-struct ofdm_demodulator_common_configuration {
+/// OFDM demodulator dependencies. Provides the necessary dependency instances.
+struct ofdm_demodulator_dependencies {
   /// DFT instance. The ownership is transferred to the demodulator.
   std::unique_ptr<dft_processor> dft;
 };
@@ -26,7 +26,6 @@ struct ofdm_demodulator_common_configuration {
 /// Describes a generic OFDM symbol demodulator.
 class ofdm_symbol_demodulator_impl : public ofdm_symbol_demodulator
 {
-private:
   /// Indicates the DFT size.
   unsigned dft_size;
   /// Indicates the resource grid bandwidth in resource elements.
@@ -56,10 +55,10 @@ private:
 
 public:
   /// \brief Constructs an OFDM symbol demodulator.
-  /// \param[in] common_config Provides specific configuration parameters from the factory.
-  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_symbol_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
-                               const ofdm_demodulator_configuration&  ofdm_config);
+  /// \param[in] ofdm_config  Provides generic OFDM configuration parameters.
+  /// \param[in] dependencies Provides specific dependencies.
+  ofdm_symbol_demodulator_impl(const ofdm_demodulator_configuration& ofdm_config,
+                               ofdm_demodulator_dependencies         dependencies);
 
   /// \brief Gets the resource grid bandwidth in resource elements.
   /// \return The number of resource elements in the grid.
@@ -91,7 +90,6 @@ public:
 /// Describes a generic OFDM slot demodulator.
 class ofdm_slot_demodulator_impl : public ofdm_slot_demodulator
 {
-private:
   /// Cyclic prefix type.
   cyclic_prefix cp;
   /// Instance of symbol demodulator.

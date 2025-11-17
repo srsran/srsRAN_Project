@@ -16,9 +16,9 @@
 #include "processors/downlink/downlink_processor_test_doubles.h"
 #include "processors/uplink/uplink_processor_notifier_test_doubles.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
+#include "srsran/phy/lower/lower_phy_downlink_handler.h"
 #include "srsran/phy/lower/lower_phy_factory.h"
-#include "srsran/phy/lower/lower_phy_request_handler.h"
-#include "srsran/phy/lower/lower_phy_rg_handler.h"
+#include "srsran/phy/lower/lower_phy_uplink_request_handler.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_notifier.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
 #include "srsran/srsvec/compare.h"
@@ -285,18 +285,20 @@ protected:
     config.time_alignment_calibration        = time_alignment_calibration;
     config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::slot;
     config.amplitude_config                  = {};
-    config.bb_gateway                        = &bb_gateway_spy;
-    config.rx_symbol_notifier                = &rx_symbol_notifier_spy;
-    config.timing_notifier                   = &timing_notifier_spy;
-    config.error_notifier                    = &error_notifier_spy;
-    config.metric_notifier                   = &metrics_notifier_spy;
-    config.tx_task_executor                  = &tx_task_executor;
-    config.rx_task_executor                  = &rx_task_executor;
-    config.dl_task_executor                  = &dl_task_executor;
-    config.ul_task_executor                  = &ul_task_executor;
-    config.prach_async_executor              = &prach_task_executor;
     config.system_time_throttling            = 0.1;
     config.max_nof_prach_concurrent_requests = 1;
+
+    lower_phy_dependencies deps = {.logger               = srslog::fetch_basic_logger("PHY"),
+                                   .bb_gateway           = bb_gateway_spy,
+                                   .rx_symbol_notifier   = rx_symbol_notifier_spy,
+                                   .timing_notifier      = timing_notifier_spy,
+                                   .error_notifier       = error_notifier_spy,
+                                   .metric_notifier      = metrics_notifier_spy,
+                                   .rx_task_executor     = rx_task_executor,
+                                   .tx_task_executor     = tx_task_executor,
+                                   .dl_task_executor     = dl_task_executor,
+                                   .ul_task_executor     = ul_task_executor,
+                                   .prach_async_executor = prach_task_executor};
 
     // Prepare downlink processor factory.
     std::shared_ptr<lower_phy_downlink_processor_factory_spy> lphy_dl_proc_factory =
@@ -314,7 +316,7 @@ protected:
     ASSERT_NE(lphy_factory, nullptr);
 
     // Create lower PHY.
-    lphy = lphy_factory->create(config);
+    lphy = lphy_factory->create(config, deps);
     ASSERT_NE(lphy, nullptr);
 
     // Select spies.
@@ -433,8 +435,7 @@ TEST_P(LowerPhyFixture, Factory)
                                                      .bandwidth_prb           = bandwidth_rb,
                                                      .center_frequency_Hz     = dl_freq_hz,
                                                      .nof_tx_ports            = nof_tx_ports,
-                                                     .nof_slot_tti_in_advance = max_processing_delay_slots,
-                                                     .modulation_executor     = dl_task_executor};
+                                                     .nof_slot_tti_in_advance = max_processing_delay_slots};
   ASSERT_EQ(dl_proc_config, downlink_proc_spy->get_config());
 
   // Check that the uplink processor configuration is correct.
@@ -673,7 +674,7 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
 
 TEST_P(LowerPhyFixture, RgHandler)
 {
-  lower_phy_rg_handler&                      rg_handler     = lphy->get_rg_handler();
+  lower_phy_downlink_handler&                rg_handler     = lphy->get_downlink_handler();
   const pdxch_processor_request_handler_spy& pdxch_proc_spy = downlink_proc_spy->get_pdxch_proc_request_handler_spy();
 
   // Prepare context.
@@ -703,7 +704,7 @@ TEST_P(LowerPhyFixture, RgHandler)
 
 TEST_P(LowerPhyFixture, PrachRequestHandler)
 {
-  lower_phy_request_handler&                 request_handler = lphy->get_request_handler();
+  lower_phy_uplink_request_handler&          request_handler = lphy->get_uplink_request_handler();
   const prach_processor_request_handler_spy& prach_proc_spy  = uplink_proc_spy->get_prach_req_handler_spy();
 
   // Prepare context.
@@ -743,7 +744,7 @@ TEST_P(LowerPhyFixture, PrachRequestHandler)
 
 TEST_P(LowerPhyFixture, PuxchRequestHandler)
 {
-  lower_phy_request_handler&                 request_handler = lphy->get_request_handler();
+  lower_phy_uplink_request_handler&          request_handler = lphy->get_uplink_request_handler();
   const puxch_processor_request_handler_spy& puxch_proc_spy  = uplink_proc_spy->get_puxch_req_handler_spy();
 
   // Prepare context.

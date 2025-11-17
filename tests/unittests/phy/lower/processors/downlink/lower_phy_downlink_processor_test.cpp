@@ -178,11 +178,10 @@ protected:
                                                .rate                = srate,
                                                .bandwidth_prb       = bandwidth_rb,
                                                .center_frequency_Hz = center_freq_Hz,
-                                               .nof_tx_ports        = nof_tx_ports,
-                                               .modulation_executor = modulation_executor};
+                                               .nof_tx_ports        = nof_tx_ports};
 
     // Create processor.
-    dl_processor = dl_proc_factory->create(config);
+    dl_processor = dl_proc_factory->create(config, modulation_executor);
     ASSERT_NE(dl_processor, nullptr);
 
     // Select PDxCH processor spy.
@@ -247,11 +246,10 @@ protected:
                                                .rate                = srate,
                                                .bandwidth_prb       = MAX_RB,
                                                .center_frequency_Hz = 3.5e6,
-                                               .nof_tx_ports        = nof_tx_ports,
-                                               .modulation_executor = modulation_executor};
+                                               .nof_tx_ports        = nof_tx_ports};
 
     // Create processor.
-    dl_processor = dl_proc_factory->create(config);
+    dl_processor = dl_proc_factory->create(config, modulation_executor);
     ASSERT_NE(dl_processor, nullptr);
   }
 
@@ -272,13 +270,12 @@ private:
 TEST_P(LowerPhyDownlinkProcessorFixture, PdxchConfiguration)
 {
   // Assert PDxCH factory configuration.
-  pdxch_processor_configuration expected_pdxch_config = {.cp                  = cp,
-                                                         .scs                 = scs,
-                                                         .srate               = srate,
-                                                         .bandwidth_rb        = bandwidth_rb,
-                                                         .center_freq_Hz      = center_freq_Hz,
-                                                         .nof_tx_ports        = nof_tx_ports,
-                                                         .modulation_executor = modulation_executor};
+  pdxch_processor_configuration expected_pdxch_config = {.cp             = cp,
+                                                         .scs            = scs,
+                                                         .srate          = srate,
+                                                         .bandwidth_rb   = bandwidth_rb,
+                                                         .center_freq_Hz = center_freq_Hz,
+                                                         .nof_tx_ports   = nof_tx_ports};
   ASSERT_EQ(expected_pdxch_config, pdxch_proc_spy->get_configuration());
 }
 

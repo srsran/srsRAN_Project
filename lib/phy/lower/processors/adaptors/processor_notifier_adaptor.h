@@ -28,33 +28,16 @@ namespace srsran {
 class processor_notifier_adaptor
 {
 public:
-  /// Connects the adaptor to a lower physical layer error notifier.
-  void connect_error_notifier(lower_phy_error_notifier& notifier)
+  processor_notifier_adaptor(lower_phy_error_notifier&     err_notifier,
+                             lower_phy_metrics_notifier&   metrics_notifier,
+                             lower_phy_rx_symbol_notifier& rx_symbol_notifier,
+                             lower_phy_timing_notifier&    timing_notifier) :
+    downlink(metrics_notifier, timing_notifier),
+    pdxch(err_notifier),
+    uplink(metrics_notifier, timing_notifier),
+    prach(rx_symbol_notifier, err_notifier),
+    puxch(rx_symbol_notifier, err_notifier)
   {
-    pdxch.connect_error_notifier(notifier);
-    prach.connect_error_notifier(notifier);
-    puxch.connect_error_notifier(notifier);
-  }
-
-  /// Connects the adaptor with a lower physical layer metrics notifier.
-  void connect_metrics_notifier(lower_phy_metrics_notifier& notifier)
-  {
-    downlink.connect_metrics_notifier(notifier);
-    uplink.connect_metrics_notifier(notifier);
-  }
-
-  /// Connects the adaptor with a lower physical layer reception notifier.
-  void connect_rx_symbol_notifier(lower_phy_rx_symbol_notifier& notifier)
-  {
-    prach.connect_rx_symbol_notifier(notifier);
-    puxch.connect_rx_symbol_notifier(notifier);
-  }
-
-  /// Connects the adaptor with a lower physical layer timing notifier.
-  void connect_timing_notifier(lower_phy_timing_notifier& notifier)
-  {
-    downlink.connect_timing_notifier(notifier);
-    uplink.connect_timing_notifier(notifier);
   }
 
   /// Gets the downlink processor notifier adaptor.
@@ -77,11 +60,10 @@ private:
   class downlink_adaptor : public downlink_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer metrics notifier.
-    void connect_metrics_notifier(lower_phy_metrics_notifier& notifier) { metric_notifier = &notifier; }
-
-    /// Connects the adaptor with a lower physical layer timing notifier.
-    void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
+    downlink_adaptor(lower_phy_metrics_notifier& metric_notifier_, lower_phy_timing_notifier& timing_notifier_) :
+      metric_notifier(metric_notifier_), timing_notifier(timing_notifier_)
+    {
+    }
 
     // See interface for documentation.
     void on_tti_boundary(const lower_phy_timing_context& context) override;
@@ -91,20 +73,19 @@ private:
 
   private:
     /// Metrics notifier.
-    lower_phy_metrics_notifier* metric_notifier = nullptr;
+    lower_phy_metrics_notifier& metric_notifier;
     /// Timing notifier.
-    lower_phy_timing_notifier* timing_notifier = nullptr;
+    lower_phy_timing_notifier& timing_notifier;
   };
 
   /// Internal PRACH processor adaptor.
   class uplink_adaptor : public uplink_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer metrics notifier.
-    void connect_metrics_notifier(lower_phy_metrics_notifier& notifier) { metric_notifier = &notifier; }
-
-    /// Connects the adaptor with a lower physical layer timing notifier.
-    void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
+    uplink_adaptor(lower_phy_metrics_notifier& metric_notifier_, lower_phy_timing_notifier& timing_notifier_) :
+      metric_notifier(metric_notifier_), timing_notifier(timing_notifier_)
+    {
+    }
 
     // See interface for documentation.
     void on_half_slot(const lower_phy_timing_context& context) override;
@@ -117,35 +98,33 @@ private:
 
   private:
     /// Metrics notifier.
-    lower_phy_metrics_notifier* metric_notifier = nullptr;
+    lower_phy_metrics_notifier& metric_notifier;
     /// Timing notifier.
-    lower_phy_timing_notifier* timing_notifier = nullptr;
+    lower_phy_timing_notifier& timing_notifier;
   };
 
   /// Internal PRACH processor adaptor.
   class pdxch_adaptor : public pdxch_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer error notifier.
-    void connect_error_notifier(lower_phy_error_notifier& notifier) { error_notifier = &notifier; }
+    explicit pdxch_adaptor(lower_phy_error_notifier& error_notifier_) : error_notifier(error_notifier_) {}
 
     // See interface for documentation.
     void on_pdxch_request_late(const resource_grid_context& context) override;
 
   private:
     /// Error notifier.
-    lower_phy_error_notifier* error_notifier = nullptr;
+    lower_phy_error_notifier& error_notifier;
   };
 
   /// Internal PRACH processor adaptor.
   class prach_adaptor : public prach_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer reception notifier.
-    void connect_rx_symbol_notifier(lower_phy_rx_symbol_notifier& notifier) { rx_notifier = &notifier; }
-
-    /// Connects the adaptor with a lower physical layer error notifier.
-    void connect_error_notifier(lower_phy_error_notifier& notifier) { error_notifier = &notifier; }
+    prach_adaptor(lower_phy_rx_symbol_notifier& rx_notifier_, lower_phy_error_notifier& error_notifier_) :
+      rx_notifier(rx_notifier_), error_notifier(error_notifier_)
+    {
+    }
 
     // See interface for documentation.
     void on_prach_request_late(const prach_buffer_context& context) override;
@@ -158,20 +137,19 @@ private:
 
   private:
     /// Receive notifier.
-    lower_phy_rx_symbol_notifier* rx_notifier = nullptr;
+    lower_phy_rx_symbol_notifier& rx_notifier;
     /// Error notifier.
-    lower_phy_error_notifier* error_notifier = nullptr;
+    lower_phy_error_notifier& error_notifier;
   };
 
   /// Internal PUxCH processor adaptor.
   class puxch_adaptor : public puxch_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer reception notifier.
-    void connect_rx_symbol_notifier(lower_phy_rx_symbol_notifier& notifier) { rx_notifier = &notifier; }
-
-    /// Connects the adaptor with a lower physical layer error notifier.
-    void connect_error_notifier(lower_phy_error_notifier& notifier) { error_notifier = &notifier; }
+    puxch_adaptor(lower_phy_rx_symbol_notifier& rx_notifier_, lower_phy_error_notifier& error_notifier_) :
+      rx_notifier(rx_notifier_), error_notifier(error_notifier_)
+    {
+    }
 
     // See interface for documentation.
     void on_puxch_request_late(const resource_grid_context& context) override;
@@ -182,9 +160,9 @@ private:
 
   private:
     /// Receive notifier.
-    lower_phy_rx_symbol_notifier* rx_notifier = nullptr;
+    lower_phy_rx_symbol_notifier& rx_notifier;
     /// Error notifier.
-    lower_phy_error_notifier* error_notifier = nullptr;
+    lower_phy_error_notifier& error_notifier;
   };
 
   /// Downlink processor adaptor.

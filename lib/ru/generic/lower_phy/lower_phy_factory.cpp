@@ -12,7 +12,8 @@
 
 using namespace srsran;
 
-static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config)
+static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(const lower_phy_configuration& config,
+                                                                   task_executor&                 prach_async_executor)
 {
   // Deduce frequency range from the subcarrier spacing.
   frequency_range fr = frequency_range::FR1;
@@ -29,8 +30,7 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   report_fatal_error_if_not(dft_factory, "Failed to create DFT factory.");
 
   // Create OFDM modulator factory.
-  ofdm_factory_generic_configuration ofdm_common_config;
-  ofdm_common_config.dft_factory                            = dft_factory;
+  ofdm_factory_generic_configuration      ofdm_common_config = {.dft_factory = dft_factory};
   std::shared_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory_generic(ofdm_common_config);
   report_fatal_error_if_not(modulator_factory, "Failed to create OFDM modulator factory.");
 
@@ -66,15 +66,14 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   // Create PRACH processor factory.
   std::shared_ptr<prach_processor_factory> prach_proc_factory =
       create_prach_processor_factory_sw(prach_demodulator_factory,
-                                        *config.prach_async_executor,
+                                        prach_async_executor,
                                         config.srate,
                                         config.nof_rx_ports,
                                         config.max_nof_prach_concurrent_requests);
   report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
 
   // Create PUxCH processor factory.
-  std::shared_ptr<puxch_processor_factory> puxch_proc_factory =
-      create_puxch_processor_factory_sw(10, demodulator_factory);
+  std::shared_ptr<puxch_processor_factory> puxch_proc_factory = create_puxch_processor_factory_sw(demodulator_factory);
   report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
 
   // Create Downlink processor factory.
@@ -90,23 +89,29 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
-std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(lower_phy_configuration&   low_cfg,
-                                                                lower_phy_error_notifier&  error_notifier,
-                                                                lower_phy_timing_notifier* timing_notifier)
+std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(const lower_phy_configuration&       low_phy_config,
+                                                                const lower_phy_sector_dependencies& sector_deps)
 {
-  auto sector = std::make_unique<lower_phy_sector>(timing_notifier);
+  auto sector = std::make_unique<lower_phy_sector>(sector_deps.timing_notifier);
 
-  // Fill the sector notifiers.
-  low_cfg.timing_notifier = &sector->get_timing_notifier();
-  low_cfg.error_notifier  = &error_notifier;
-  low_cfg.metric_notifier = &sector->get_metrics_collector();
+  lower_phy_dependencies dependencies = {.logger               = sector_deps.logger,
+                                         .bb_gateway           = sector_deps.bb_gateway,
+                                         .rx_symbol_notifier   = sector_deps.rx_symbol_notifier,
+                                         .timing_notifier      = sector->get_timing_notifier(),
+                                         .error_notifier       = sector_deps.error_notifier,
+                                         .metric_notifier      = sector->get_metrics_collector(),
+                                         .rx_task_executor     = sector_deps.rx_task_executor,
+                                         .tx_task_executor     = sector_deps.tx_task_executor,
+                                         .dl_task_executor     = sector_deps.dl_task_executor,
+                                         .ul_task_executor     = sector_deps.ul_task_executor,
+                                         .prach_async_executor = sector_deps.prach_async_executor};
 
   // Create lower PHY factory.
-  auto lphy_factory = create_lower_phy_factory(low_cfg);
+  auto lphy_factory = create_lower_phy_factory(low_phy_config, dependencies.prach_async_executor);
   report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   // Create lower PHY.
-  auto phy = lphy_factory->create(low_cfg);
+  auto phy = lphy_factory->create(low_phy_config, dependencies);
   report_error_if_not(phy, "Unable to create lower PHY.");
 
   // Move PHY to the sector.

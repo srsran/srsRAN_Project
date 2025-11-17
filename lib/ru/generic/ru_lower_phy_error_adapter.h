@@ -19,10 +19,11 @@
 
 namespace srsran {
 
-class ru_generic_error_adapter : public lower_phy_error_notifier
+/// Lower phy to RU error adapter class.
+class ru_lower_phy_error_adapter : public lower_phy_error_notifier
 {
 public:
-  ru_generic_error_adapter(srslog::basic_logger& logger_, ru_error_notifier& notifier_) :
+  ru_lower_phy_error_adapter(srslog::basic_logger& logger_, ru_error_notifier& notifier_) :
     logger(logger_), notifier(notifier_)
   {
   }
@@ -30,7 +31,7 @@ public:
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override
   {
-    notifier.on_late_downlink_message({.slot = context.slot, .sector = context.sector});
+    notifier.on_late_downlink_message(ru_error_context{.slot = context.slot, .sector = context.sector});
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
                    "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.",
@@ -72,7 +73,7 @@ public:
   // See interface for documentation.
   void on_puxch_request_late(const resource_grid_context& context) override
   {
-    notifier.on_late_uplink_message({.slot = context.slot, .sector = context.sector});
+    notifier.on_late_uplink_message(ru_error_context{.slot = context.slot, .sector = context.sector});
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
                    "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.",

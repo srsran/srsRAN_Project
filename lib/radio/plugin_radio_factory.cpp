@@ -41,7 +41,7 @@ public:
   }
 
   /// Default destructor - deletes the session first then the dynamic library handler.
-  ~radio_dynamic_wrapper()
+  ~radio_dynamic_wrapper() override
   {
     session.reset();
     handler.reset();
@@ -72,14 +72,14 @@ public:
   }
 
   /// Default destructor - deletes the factory first then the dynamic library handler.
-  ~radio_factory_dynamic_wrapper()
+  ~radio_factory_dynamic_wrapper() override
   {
     factory.reset();
     handle.reset();
   }
 
   // See interface for documentation.
-  const radio_configuration::validator& get_configuration_validator() override
+  const radio_configuration::validator& get_configuration_validator() const override
   {
     return factory->get_configuration_validator();
   }

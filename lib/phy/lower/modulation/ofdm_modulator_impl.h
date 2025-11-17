@@ -17,8 +17,8 @@
 
 namespace srsran {
 
-/// OFDM modulator factory configuration. Provides the necessary dependency instances.
-struct ofdm_modulator_common_configuration {
+/// OFDM modulator dependencies. Provides the necessary dependency instances.
+struct ofdm_modulator_dependencies {
   /// DFT instance. The ownership is transferred to the modulator.
   std::unique_ptr<dft_processor> dft;
 };
@@ -26,7 +26,6 @@ struct ofdm_modulator_common_configuration {
 /// Describes a generic OFDM symbol modulator.
 class ofdm_symbol_modulator_impl : public ofdm_symbol_modulator
 {
-private:
   /// Indicates the DFT size.
   unsigned dft_size;
   /// Indicates the resource grid bandwidth in resource elements.
@@ -50,10 +49,9 @@ private:
 
 public:
   /// \brief Constructs an OFDM symbol modulator.
-  /// \param[in] common_config Provides specific configuration parameters from the factory.
-  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_symbol_modulator_impl(ofdm_modulator_common_configuration& common_config,
-                             const ofdm_modulator_configuration&  ofdm_config);
+  /// \param[in] ofdm_config  Provides generic OFDM configuration parameters.
+  /// \param[in] dependencies Provides specific dependencies.
+  ofdm_symbol_modulator_impl(const ofdm_modulator_configuration& ofdm_config, ofdm_modulator_dependencies dependencies);
 
   // See the interface for documentation.
   unsigned get_symbol_size(unsigned symbol_index) const override
@@ -75,7 +73,6 @@ public:
 /// Describes a generic OFDM slot modulator.
 class ofdm_slot_modulator_impl : public ofdm_slot_modulator
 {
-private:
   /// Cyclic prefix type.
   cyclic_prefix cp;
   /// Resource grid numerology.

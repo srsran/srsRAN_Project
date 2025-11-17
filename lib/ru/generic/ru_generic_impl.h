@@ -12,12 +12,12 @@
 
 #include "lower_phy/lower_phy_sector.h"
 #include "ru_controller_generic_impl.h"
-#include "ru_downlink_handler_generic_impl.h"
-#include "ru_generic_error_adapter.h"
+#include "ru_lower_phy_downlink_handler_impl.h"
+#include "ru_lower_phy_error_adapter.h"
+#include "ru_lower_phy_timing_adapter.h"
+#include "ru_lower_phy_uplink_request_handler_impl.h"
 #include "ru_metrics_collector_generic_impl.h"
 #include "ru_radio_metrics_collector.h"
-#include "ru_timing_adapter.h"
-#include "ru_uplink_request_handler_generic_impl.h"
 #include "rx_symbol_adapter.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/ru/ru.h"
@@ -45,16 +45,16 @@ struct ru_generic_impl_dependencies {
 class ru_generic_impl : public radio_unit
 {
 public:
-  ru_generic_impl(const ru_generic_impl_config& config, ru_generic_impl_dependencies&& dependencies);
+  ru_generic_impl(const ru_generic_impl_config& config, const ru_generic_impl_dependencies& dependencies);
 
   // See interface for documentation.
-  ru_controller& get_controller() override;
+  ru_controller& get_controller() override { return radio_unit_controller; }
 
   // See interface for documentation
-  ru_downlink_plane_handler& get_downlink_plane_handler() override;
+  ru_downlink_plane_handler& get_downlink_plane_handler() override { return ru_downlink_hdlr; }
 
   // See interface for documentation.
-  ru_uplink_plane_handler& get_uplink_plane_handler() override;
+  ru_uplink_plane_handler& get_uplink_plane_handler() override { return ru_uplink_request_hdlr; }
 
   // See interface for documentation.
   ru_metrics_collector* get_metrics_collector() override { return are_metrics_enabled ? &metrics_collector : nullptr; }
@@ -68,37 +68,41 @@ public:
   /// Returns the lower PHY error notifier of this RU.
   lower_phy_error_notifier& get_error_notifier() { return error_adapter; }
 
-  /// Returns the radio notification handler of this RU.
-  radio_notification_handler& get_radio_notification_handler() { return radio_event_dispatcher; }
+  /// Returns the radio event notifier of this RU.
+  radio_notification_handler& get_radio_event_notifier() { return radio_event_dispatcher; }
 
   /// Sets the radio to the given one for this RU.
-  void set_radio(std::unique_ptr<radio_session>&& radio_ptr)
+  void set_radio(std::unique_ptr<radio_session> radio_ptr)
   {
     radio = std::move(radio_ptr);
     srsran_assert(radio, "Invalid radio");
-    ru_ctrl.set_radio(*radio);
+    radio_unit_controller.set_radio(*radio);
   }
 
   /// Sets the RU lower PHY sectors.
-  void set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> sectors);
+  void set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> sectors_);
 
   /// Returns the baseband gateway for the given sector.
-  baseband_gateway& get_baseband_gateway(unsigned sector_id) { return radio->get_baseband_gateway(sector_id); }
+  baseband_gateway& get_baseband_gateway(unsigned sector_id)
+  {
+    srsran_assert(radio, "Invalid radio");
+    return radio->get_baseband_gateway(sector_id);
+  }
 
 private:
   const bool                                     are_metrics_enabled;
   ru_radio_metrics_collector                     radio_metrics_collector;
-  ru_radio_notification_handler_logger           radio_event_logger;
-  ru_radio_notification_dispatcher               radio_event_dispatcher;
-  ru_generic_error_adapter                       error_adapter;
-  ru_rx_symbol_adapter                           rx_adapter;
-  ru_timing_adapter                              timing_adapter;
+  ru_radio_logger_event_handler                  radio_event_logger;
+  ru_radio_event_dispatcher                      radio_event_dispatcher;
+  ru_lower_phy_error_adapter                     error_adapter;
+  ru_lower_phy_rx_symbol_adapter                 rx_adapter;
+  ru_lower_phy_timing_adapter                    timing_adapter;
   std::unique_ptr<radio_session>                 radio;
   std::vector<std::unique_ptr<lower_phy_sector>> phy_sectors;
   ru_metrics_collector_generic_impl              metrics_collector;
-  ru_controller_generic_impl                     ru_ctrl;
-  ru_downlink_handler_generic_impl               ru_downlink_hdlr;
-  ru_uplink_request_handler_generic_impl         ru_uplink_request_hdlr;
+  ru_controller_generic_impl                     radio_unit_controller;
+  ru_lower_phy_downlink_handler_impl             ru_downlink_hdlr;
+  ru_lower_phy_uplink_request_handler_impl       ru_uplink_request_hdlr;
 };
 
 } // namespace srsran

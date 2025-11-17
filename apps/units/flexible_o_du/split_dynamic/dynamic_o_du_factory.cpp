@@ -18,8 +18,7 @@
 using namespace srsran;
 
 static flexible_o_du_unit_config::ru_config
-generate_ru_config(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg,
-                   subcarrier_spacing                                                                       scs)
+generate_ru_config(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_config, ru_dummy_unit_config>& ru_cfg)
 {
   if (const auto* ru = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
     return {ru->metrics_cfg.metrics_cfg, ru->metrics_cfg.enable_ru_metrics};
@@ -37,10 +36,9 @@ generate_ru_config(const std::variant<ru_sdr_unit_config, ru_ofh_unit_parsed_con
 }
 
 dynamic_o_du_factory::dynamic_o_du_factory(const dynamic_o_du_unit_config& config_) :
-  flexible_o_du_factory(
-      {config_.odu_high_cfg,
-       config_.du_low_cfg,
-       generate_ru_config(config_.ru_cfg, config_.odu_high_cfg.du_high_cfg.config.cells_cfg.front().cell.common_scs)}),
+  flexible_o_du_factory(flexible_o_du_unit_config{.odu_high_cfg = config_.odu_high_cfg,
+                                                  .du_low_cfg   = config_.du_low_cfg,
+                                                  .ru_cfg       = generate_ru_config(config_.ru_cfg)}),
   unit_config(config_)
 {
 }

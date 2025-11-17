@@ -48,29 +48,31 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   }
 }
 
-// Fills the unprocessed regions of a baseband buffer with zeros, according to the downlink processor baseband metadata.
+/// Fills the unprocessed regions of a baseband buffer with zeros, according to the downlink processor baseband
+/// metadata.
 static void fill_zeros(baseband_gateway_buffer_writer& buffer, const baseband_gateway_transmitter_metadata& md)
 {
-  // If discontinous mode is disabled, fill the non-processed regions with zeros and report full buffer metadata.
+  // If discontinuous mode is disabled, fill the non-processed regions with zeros and report full buffer metadata.
   if (md.is_empty) {
     for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
       srsvec::zero(buffer.get_channel_buffer(i_channel));
     }
-  } else {
-    if (md.tx_start.has_value()) {
-      for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-        srsvec::zero(buffer.get_channel_buffer(i_channel).first(*md.tx_start));
-      }
+    return;
+  }
+
+  if (md.tx_start.has_value()) {
+    for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
+      srsvec::zero(buffer.get_channel_buffer(i_channel).first(*md.tx_start));
     }
-    if (md.tx_end.has_value()) {
-      for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-        srsvec::zero(buffer.get_channel_buffer(i_channel).last(buffer.get_nof_samples() - *md.tx_end));
-      }
+  }
+  if (md.tx_end.has_value()) {
+    for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
+      srsvec::zero(buffer.get_channel_buffer(i_channel).last(buffer.get_nof_samples() - *md.tx_end));
     }
   }
 }
 
-// Fills the unprocessed destination buffer with the last samples in the source.
+/// Fills the unprocessed destination buffer with the last samples in the source.
 static void fill_buffer_from_tail(baseband_gateway_buffer_writer&       destination,
                                   const baseband_gateway_buffer_reader& source)
 {
@@ -136,11 +138,10 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   pdxch_processor_baseband::slot_result pdxch_baseband_result;
   if (!previous_slot.has_value() || (*previous_slot != slot)) {
     srsran_assert(notifier != nullptr, "Timing notifier is not connected.");
-    trace_point              tp = ru_tracer.now();
-    lower_phy_timing_context context;
-    context.slot       = slot + nof_slot_tti_in_advance;
-    context.time_point = std::chrono::system_clock::now() + nof_slot_tti_in_advance_ns;
-    notifier->on_tti_boundary(context);
+    trace_point tp = ru_tracer.now();
+    notifier->on_tti_boundary(
+        lower_phy_timing_context{.slot       = slot + nof_slot_tti_in_advance,
+                                 .time_point = std::chrono::system_clock::now() + nof_slot_tti_in_advance_ns});
     previous_slot = slot;
     ru_tracer << trace_event("on_tti_boundary", tp);
 
@@ -174,10 +175,7 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   // a slot or no PDxCH baseband is available to transmit.
   if ((i_sample_slot != 0) || !pdxch_baseband_result.buffer) {
     // Prepare result metadata and obtain baseband buffer from the pool.
-    processing_result result = {};
-    result.metadata.ts       = timestamp;
-    result.metadata.is_empty = true;
-    result.buffer            = buffer_pool.get();
+    processing_result result = {.metadata = {.ts = timestamp, .is_empty = true}, .buffer = buffer_pool.get()};
     report_fatal_error_if_not(result.buffer, "Failed to retrieve a baseband buffer.");
 
     // Calculate the number of samples to the next slot.
@@ -199,11 +197,8 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   }
 
   // Prepare result metadata.
-  processing_result result = {};
-  result.metadata.ts       = timestamp;
-  result.metadata.is_empty = false;
-  result.buffer            = std::move(pdxch_baseband_result.buffer);
-  return result;
+  return processing_result{.metadata = {.ts = timestamp, .is_empty = false},
+                           .buffer   = std::move(pdxch_baseband_result.buffer)};
 }
 
 void downlink_processor_baseband_impl::set_tx_time_offset(phy_time_unit tx_time_offset_)

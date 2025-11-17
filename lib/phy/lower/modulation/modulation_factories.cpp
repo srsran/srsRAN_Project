@@ -21,7 +21,6 @@ namespace {
 
 class ofdm_modulator_factory_generic : public ofdm_modulator_factory
 {
-private:
   std::shared_ptr<dft_processor_factory> dft_factory;
 
 public:
@@ -34,9 +33,9 @@ public:
   std::unique_ptr<ofdm_symbol_modulator>
   create_ofdm_symbol_modulator(const ofdm_modulator_configuration& config) override
   {
-    ofdm_modulator_common_configuration common_config;
-    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::INVERSE});
-    return std::make_unique<ofdm_symbol_modulator_impl>(common_config, config);
+    ofdm_modulator_dependencies deps = {
+        .dft = dft_factory->create({.size = config.dft_size, .dir = dft_processor::direction::INVERSE})};
+    return std::make_unique<ofdm_symbol_modulator_impl>(config, std::move(deps));
   }
 
   std::unique_ptr<ofdm_slot_modulator> create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) override
@@ -118,7 +117,6 @@ private:
 
 class ofdm_demodulator_factory_generic : public ofdm_demodulator_factory
 {
-private:
   std::shared_ptr<dft_processor_factory> dft_factory;
 
 public:
@@ -131,9 +129,9 @@ public:
   std::unique_ptr<ofdm_symbol_demodulator>
   create_ofdm_symbol_demodulator(const ofdm_demodulator_configuration& config) override
   {
-    ofdm_demodulator_common_configuration common_config;
-    common_config.dft = dft_factory->create({config.dft_size, dft_processor::direction::DIRECT});
-    return std::make_unique<ofdm_symbol_demodulator_impl>(common_config, config);
+    ofdm_demodulator_dependencies deps = {.dft =
+                                              dft_factory->create({config.dft_size, dft_processor::direction::DIRECT})};
+    return std::make_unique<ofdm_symbol_demodulator_impl>(config, std::move(deps));
   }
 
   std::unique_ptr<ofdm_slot_demodulator>
@@ -145,7 +143,6 @@ public:
 
 class ofdm_prach_demodulator_factory_sw : public ofdm_prach_demodulator_factory
 {
-private:
   std::shared_ptr<dft_processor_factory> dft_factory;
   sampling_rate                          srate;
   frequency_range                        fr;
@@ -207,7 +204,7 @@ srsran::create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration
 std::shared_ptr<ofdm_modulator_factory>
 srsran::create_ofdm_modulator_pool_factory(std::shared_ptr<ofdm_modulator_factory> base, unsigned max_nof_threads)
 {
-  return std::make_shared<ofdm_modulator_pool_factory>(base, max_nof_threads);
+  return std::make_shared<ofdm_modulator_pool_factory>(std::move(base), max_nof_threads);
 }
 
 std::shared_ptr<ofdm_demodulator_factory>
@@ -219,7 +216,7 @@ srsran::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configurati
 std::shared_ptr<ofdm_demodulator_factory>
 srsran::create_ofdm_demodulator_pool_factory(std::shared_ptr<ofdm_demodulator_factory> base, unsigned max_nof_threads)
 {
-  return std::make_shared<ofdm_demodulator_pool_factory>(base, max_nof_threads);
+  return std::make_shared<ofdm_demodulator_pool_factory>(std::move(base), max_nof_threads);
 }
 
 std::shared_ptr<ofdm_prach_demodulator_factory>
