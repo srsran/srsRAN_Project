@@ -14,6 +14,7 @@
 #include "../srs/srs_scheduler.h"
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
+#include "../ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 

@@ -54,6 +54,7 @@ public:
 
 private:
   friend class ue_dl_logical_channel_repository;
+  static constexpr size_t MAX_RAN_SLICES_PER_UE = 4;
 
   /// Context of a single pending CE.
   struct mac_ce_context {
@@ -79,6 +80,9 @@ private:
     std::optional<soa::row_id> stats_row;
     /// Slice associated with this channel.
     std::optional<ran_slice_id_t> slice_id;
+
+    // Note: clang 18.1.3 std::is_constructible_v<channel_context> return false without this.
+    channel_context() noexcept = default;
   };
   /// UE context relative to its configuration.
   struct ue_config_context {
@@ -93,7 +97,7 @@ private:
     slotted_id_table<lcid_t, channel_context, MAX_NOF_RB_LCIDS> channels;
     /// List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
     /// priority.
-    std::vector<lcid_t> sorted_channels;
+    static_vector<lcid_t, MAX_NOF_RB_LCIDS> sorted_channels;
     /// Currently enqueued CEs for this UE.
     std::optional<soa::row_id> pending_ces;
   };
@@ -105,7 +109,7 @@ private:
     /// Cached sum of pending CE bytes for this UE, excluding CON RES CE.
     uint32_t pending_ce_bytes{0};
     /// Mapping of RAN slice ID to the pending bytes of that slice, excluding any CE.
-    std::vector<std::pair<ran_slice_id_t, unsigned>> pending_bytes_per_slice;
+    static_vector<std::pair<ran_slice_id_t, unsigned>, MAX_RAN_SLICES_PER_UE> pending_bytes_per_slice;
 
     bool contains(ran_slice_id_t slice_id) const
     {

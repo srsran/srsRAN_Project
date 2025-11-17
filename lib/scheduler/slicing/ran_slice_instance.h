@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../cell/resource_grid.h"
 #include "../config/cell_configuration.h"
 #include "../ue_context/ue_repository.h"
 #include "ran_slice_id.h"

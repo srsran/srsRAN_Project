@@ -11,6 +11,7 @@
 #include "inter_slice_scheduler.h"
 #include "../policy/scheduler_policy_factory.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
+#include "../ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;

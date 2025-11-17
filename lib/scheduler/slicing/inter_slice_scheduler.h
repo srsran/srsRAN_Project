@@ -16,6 +16,8 @@
 
 namespace srsran {
 
+struct cell_resource_allocator;
+
 /// Inter-slice Scheduler.
 class inter_slice_scheduler
 {
