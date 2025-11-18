@@ -35,7 +35,7 @@ ru_controller_generic_impl::ru_controller_generic_impl(
 void ru_controller_generic_impl::start()
 {
   srsran_assert(radio, "Null radio");
-  srsran_assert(!low_phy_sectors.empty(), "Empty list of lower phy sectors");
+  srsran_assert(!lower_phy_sectors.empty(), "Empty list of lower phy sectors");
 
   // Start streaming at the given time.
   if (start_time.has_value()) {
@@ -63,8 +63,8 @@ void ru_controller_generic_impl::start()
 
     // Start radio and lower physical layer at the given timestamp.
     radio->start(time_start);
-    for (auto& low_phy : low_phy_sectors) {
-      low_phy->get_controller().start(time_start, sfn0_ref_time);
+    for (auto& sector : lower_phy_sectors) {
+      sector->get_controller().start(time_start, sfn0_ref_time);
     }
 
     return;
@@ -81,8 +81,8 @@ void ru_controller_generic_impl::start()
 
   // Start radio and lower physical layer at the given timestamp.
   radio->start(start_ts);
-  for (auto& low_phy : low_phy_sectors) {
-    low_phy->get_controller().start(start_ts);
+  for (auto& sector : lower_phy_sectors) {
+    sector->get_controller().start(start_ts);
   }
 }
 
@@ -90,8 +90,8 @@ void ru_controller_generic_impl::stop()
 {
   radio->stop();
 
-  for (auto& low_phy : low_phy_sectors) {
-    low_phy->get_controller().stop();
+  for (auto& sector : lower_phy_sectors) {
+    sector->get_controller().stop();
   }
 }
 
@@ -99,12 +99,12 @@ void ru_controller_generic_impl::set_lower_phy_sectors(std::vector<lower_phy_sec
 {
   srsran_assert(!sectors.empty(), "Could not set empty sectors");
 
-  low_phy_sectors = std::move(sectors);
+  lower_phy_sectors = std::move(sectors);
 
   gain_controller           = ru_gain_controller_generic_impl(&radio);
-  cfo_controller            = ru_cfo_controller_generic_impl(low_phy_sectors);
-  center_freq_controller    = ru_center_frequency_controller_generic_impl(low_phy_sectors, &radio);
-  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(low_phy_sectors);
+  cfo_controller            = ru_cfo_controller_generic_impl(lower_phy_sectors);
+  center_freq_controller    = ru_center_frequency_controller_generic_impl(lower_phy_sectors, &radio);
+  tx_time_offset_controller = ru_tx_time_offset_controller_generic_impl(lower_phy_sectors);
 }
 
 bool ru_gain_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)

@@ -8,8 +8,8 @@
 
 set(SOURCES
         lower_phy/lower_phy_sector.cpp
-        lower_phy/low_phy_sector_metrics_collector.cpp
-        lower_phy/low_phy_sector_timing_handler.cpp
+        lower_phy/lower_phy_sector_metrics_collector.cpp
+        lower_phy/lower_phy_sector_timing_handler.cpp
         lower_phy/lower_phy_factory.cpp
         ru_controller_generic_impl.cpp
         ru_lower_phy_downlink_handler_impl.cpp

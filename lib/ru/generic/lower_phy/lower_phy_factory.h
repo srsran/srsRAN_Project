@@ -33,7 +33,7 @@ struct lower_phy_sector_dependencies {
 };
 
 /// Helper class that creates the lower PHY sector using the given configuration.
-std::unique_ptr<lower_phy_sector> create_low_phy_sector(const lower_phy_configuration&       low_phy_config,
-                                                        const lower_phy_sector_dependencies& sector_deps);
+std::unique_ptr<lower_phy_sector> create_lower_phy_sector(const lower_phy_configuration&       lower_phy_config,
+                                                          const lower_phy_sector_dependencies& sector_deps);
 
 } // namespace srsran

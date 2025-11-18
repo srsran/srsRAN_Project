@@ -33,7 +33,7 @@ static std::string to_string(lower_phy_thread_profile profile)
     case lower_phy_thread_profile::triple:
       return "triple";
     default:
-      srsran_assert(0, "Invalid low PHY profile");
+      srsran_assert(0, "Invalid lower PHY profile");
       break;
   }
   return {};

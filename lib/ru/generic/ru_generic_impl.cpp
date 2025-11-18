@@ -43,8 +43,8 @@ void ru_generic_impl::set_lower_phy_sectors(std::vector<std::unique_ptr<lower_ph
     return sectors;
   }());
 
-  metrics_collector.set_lower_phy_sectors([this]() -> std::vector<low_phy_sector_metrics_collector*> {
-    std::vector<low_phy_sector_metrics_collector*> collectors;
+  metrics_collector.set_lower_phy_sectors([this]() -> std::vector<lower_phy_sector_metrics_collector*> {
+    std::vector<lower_phy_sector_metrics_collector*> collectors;
     collectors.reserve(phy_sectors.size());
     for (auto& sector : phy_sectors) {
       collectors.push_back(&sector->get_metrics_collector());

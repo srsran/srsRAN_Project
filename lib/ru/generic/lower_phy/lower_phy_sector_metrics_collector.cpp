@@ -8,14 +8,14 @@
  *
  */
 
-#include "low_phy_sector_metrics_collector.h"
+#include "lower_phy_sector_metrics_collector.h"
 #include "srsran/phy/lower/lower_phy_baseband_metrics.h"
 #include "srsran/ru/generic/ru_generic_metrics.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 
-void low_phy_sector_metrics_collector::on_new_transmit_metrics(const lower_phy_baseband_metrics& metrics)
+void lower_phy_sector_metrics_collector::on_new_transmit_metrics(const lower_phy_baseband_metrics& metrics)
 {
   std::lock_guard<std::mutex> lock(tx_mutex);
   tx_avg_power.update(metrics.avg_power);
@@ -28,7 +28,7 @@ void low_phy_sector_metrics_collector::on_new_transmit_metrics(const lower_phy_b
   }
 }
 
-void low_phy_sector_metrics_collector::on_new_receive_metrics(const lower_phy_baseband_metrics& metrics)
+void lower_phy_sector_metrics_collector::on_new_receive_metrics(const lower_phy_baseband_metrics& metrics)
 {
   std::lock_guard<std::mutex> lock(rx_mutex);
   rx_avg_power.update(metrics.avg_power);
@@ -43,7 +43,7 @@ void low_phy_sector_metrics_collector::on_new_receive_metrics(const lower_phy_ba
   }
 }
 
-void low_phy_sector_metrics_collector::collect_metrics(ru_generic_sector_metrics& metrics)
+void lower_phy_sector_metrics_collector::collect_metrics(ru_generic_sector_metrics& metrics)
 {
   {
     std::lock_guard<std::mutex> lock(tx_mutex);

@@ -89,8 +89,8 @@ static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(const lower_p
   return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
-std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(const lower_phy_configuration&       low_phy_config,
-                                                                const lower_phy_sector_dependencies& sector_deps)
+std::unique_ptr<lower_phy_sector> srsran::create_lower_phy_sector(const lower_phy_configuration&       lower_phy_config,
+                                                                  const lower_phy_sector_dependencies& sector_deps)
 {
   auto sector = std::make_unique<lower_phy_sector>(sector_deps.timing_notifier);
 
@@ -107,11 +107,11 @@ std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(const lower_phy_
                                          .prach_async_executor = sector_deps.prach_async_executor};
 
   // Create lower PHY factory.
-  auto lphy_factory = create_lower_phy_factory(low_phy_config, dependencies.prach_async_executor);
+  auto lphy_factory = create_lower_phy_factory(lower_phy_config, dependencies.prach_async_executor);
   report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   // Create lower PHY.
-  auto phy = lphy_factory->create(low_phy_config, dependencies);
+  auto phy = lphy_factory->create(lower_phy_config, dependencies);
   report_error_if_not(phy, "Unable to create lower PHY.");
 
   // Move PHY to the sector.

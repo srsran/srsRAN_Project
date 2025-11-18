@@ -134,7 +134,7 @@ private:
   double                                               srate_MHz;
   std::optional<std::chrono::system_clock::time_point> start_time;
   radio_session*                                       radio = nullptr;
-  std::vector<lower_phy_sector*>                       low_phy_sectors;
+  std::vector<lower_phy_sector*>                       lower_phy_sectors;
   ru_gain_controller_generic_impl                      gain_controller;
   ru_cfo_controller_generic_impl                       cfo_controller;
   ru_center_frequency_controller_generic_impl          center_freq_controller;

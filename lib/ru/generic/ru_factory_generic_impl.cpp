@@ -61,7 +61,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(const ru_generic_configura
 
   std::vector<std::unique_ptr<lower_phy_sector>> phy_sectors;
   for (unsigned sector_id = 0, sector_end = config.lower_phy_config.size(); sector_id != sector_end; ++sector_id) {
-    const lower_phy_configuration&        low_phy_cfg    = config.lower_phy_config[sector_id];
+    const lower_phy_configuration&        lower_phy_cfg  = config.lower_phy_config[sector_id];
     const ru_generic_sector_dependencies& ru_sector_deps = dependencies.ru_generic_sector_deps[sector_id];
 
     lower_phy_sector_dependencies lophy_sector_deps = {
@@ -77,7 +77,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(const ru_generic_configura
         .bb_gateway         = ru->get_baseband_gateway(sector_id),
         .rx_symbol_notifier = ru->get_rx_symbol_notifier()};
 
-    phy_sectors.push_back(create_low_phy_sector(low_phy_cfg, lophy_sector_deps));
+    phy_sectors.push_back(create_lower_phy_sector(lower_phy_cfg, lophy_sector_deps));
   }
 
   // Add lower PHY sector dependencies.

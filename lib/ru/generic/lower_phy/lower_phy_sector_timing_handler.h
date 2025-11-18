@@ -14,12 +14,12 @@
 
 namespace srsran {
 
-class low_phy_sector_timing_handler : public lower_phy_timing_notifier
+class lower_phy_sector_timing_handler : public lower_phy_timing_notifier
 {
   lower_phy_timing_notifier* notifier = nullptr;
 
 public:
-  explicit low_phy_sector_timing_handler(lower_phy_timing_notifier* notifier_);
+  explicit lower_phy_sector_timing_handler(lower_phy_timing_notifier* notifier_);
 
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override;

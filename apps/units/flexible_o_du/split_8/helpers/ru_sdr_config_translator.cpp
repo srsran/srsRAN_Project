@@ -16,10 +16,10 @@
 using namespace srsran;
 
 /// Generates a lower PHY configuration from the given RU and cell configurations.
-static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_config::cell_config& config,
-                                                       const ru_sdr_unit_config&                   ru_cfg,
-                                                       unsigned max_processing_delay_slot,
-                                                       unsigned sector_id)
+static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_config::cell_config& config,
+                                                         const ru_sdr_unit_config&                   ru_cfg,
+                                                         unsigned max_processing_delay_slot,
+                                                         unsigned sector_id)
 {
   // Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
@@ -236,7 +236,8 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
 
   unsigned sector_id = 0;
   for (const auto& cell : cells) {
-    out_cfg.lower_phy_config.push_back(generate_low_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
+    out_cfg.lower_phy_config.push_back(
+        generate_lower_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
   }
 
   return out_cfg;

@@ -21,14 +21,14 @@ class ru_radio_metrics_collector;
 /// Metrics collector implementation for the RU generic.
 class ru_metrics_collector_generic_impl : public ru_metrics_collector
 {
-  ru_radio_metrics_collector&                    radio;
-  std::vector<low_phy_sector_metrics_collector*> sector_metrics_collectors;
+  ru_radio_metrics_collector&                      radio;
+  std::vector<lower_phy_sector_metrics_collector*> sector_metrics_collectors;
 
 public:
   explicit ru_metrics_collector_generic_impl(ru_radio_metrics_collector& radio_) : radio(radio_) {}
 
-  /// Sets the list of lower phy sector collectors.
-  void set_lower_phy_sectors(std::vector<low_phy_sector_metrics_collector*> collectors)
+  /// Sets the list of lower PHY sector collectors.
+  void set_lower_phy_sectors(std::vector<lower_phy_sector_metrics_collector*> collectors)
   {
     sector_metrics_collectors = std::move(collectors);
   }

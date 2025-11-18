@@ -21,7 +21,7 @@ void ru_metrics_collector_generic_impl::collect_metrics(ru_metrics& metrics)
   // Radio metrics.
   radio.collect_metrics(ru_metrics.radio);
 
-  // Low phy metrics.
+  // Lower PHY metrics.
   ru_metrics.cells.resize(sector_metrics_collectors.size());
 
   unsigned sector_id = 0;

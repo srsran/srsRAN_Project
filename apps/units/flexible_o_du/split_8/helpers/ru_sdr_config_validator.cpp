@@ -92,7 +92,7 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 
   static constexpr interval<float> lphy_dl_throttling_range(0.0F, 1.0F);
   if (!lphy_dl_throttling_range.contains(config.expert_cfg.lphy_dl_throttling)) {
-    fmt::print("Low PHY throttling (i.e., {}) must be in range {}.\n",
+    fmt::print("Lower PHY throttling (i.e., {}) must be in range {}.\n",
                config.expert_cfg.lphy_dl_throttling,
                lphy_dl_throttling_range);
     return false;

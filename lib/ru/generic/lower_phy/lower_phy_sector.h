@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "low_phy_sector_metrics_collector.h"
-#include "low_phy_sector_timing_handler.h"
+#include "lower_phy_sector_metrics_collector.h"
+#include "lower_phy_sector_timing_handler.h"
 #include "srsran/phy/lower/lower_phy.h"
 
 namespace srsran {
@@ -53,19 +53,19 @@ public:
   void set_lower_phy(std::unique_ptr<lower_phy> phy)
   {
     srsran_assert(phy, "Invalid lower PHY");
-    low_phy = std::move(phy);
+    lower_phy = std::move(phy);
   }
 
-  /// Returns the metrics collector of this low PHY sector.
-  low_phy_sector_metrics_collector& get_metrics_collector() { return metric_collector; }
+  /// Returns the metrics collector of this lower PHY sector.
+  lower_phy_sector_metrics_collector& get_metrics_collector() { return metric_collector; }
 
-  /// Returns the timing notifier of this low PHY sector.
+  /// Returns the timing notifier of this lower PHY sector.
   lower_phy_timing_notifier& get_timing_notifier() { return timing_handler; }
 
 private:
-  low_phy_sector_metrics_collector metric_collector;
-  low_phy_sector_timing_handler    timing_handler;
-  std::unique_ptr<lower_phy>       low_phy;
+  lower_phy_sector_metrics_collector metric_collector;
+  lower_phy_sector_timing_handler    timing_handler;
+  std::unique_ptr<lower_phy>         lower_phy;
 };
 
 } // namespace srsran

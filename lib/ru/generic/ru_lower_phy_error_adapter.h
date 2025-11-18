@@ -34,7 +34,7 @@ public:
     notifier.on_late_downlink_message(ru_error_context{.slot = context.slot, .sector = context.sector});
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
-                   "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.",
+                   "Real-time failure in lower PHY: Downlink data late for sector {} and slot {}.",
                    context.sector,
                    context.slot);
     general_critical_tracer << instant_trace_event{"on_late_resource_grid",
@@ -47,7 +47,7 @@ public:
   {
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
-                   "Real-time failure in low-phy: PRACH request late for sector {}, slot {} and start symbol {}.",
+                   "Real-time failure in lower PHY: PRACH request late for sector {}, slot {} and start symbol {}.",
                    context.sector,
                    context.slot,
                    context.start_symbol);
@@ -61,7 +61,7 @@ public:
   {
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
-                   "Real-time failure in low-phy: PRACH request overflow for sector {}, slot {} and start symbol {}.",
+                   "Real-time failure in lower PHY: PRACH request overflow for sector {}, slot {} and start symbol {}.",
                    context.sector,
                    context.slot,
                    context.start_symbol);
@@ -76,7 +76,7 @@ public:
     notifier.on_late_uplink_message(ru_error_context{.slot = context.slot, .sector = context.sector});
     logger.warning(context.slot.sfn(),
                    context.slot.slot_index(),
-                   "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.",
+                   "Real-time failure in lower PHY: PUxCH request late for sector {}, slot {}.",
                    context.sector,
                    context.slot);
     general_critical_tracer << instant_trace_event{"on_puxch_request_late",
