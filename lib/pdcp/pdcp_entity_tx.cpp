@@ -15,6 +15,7 @@
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/srsran_assert.h"
+#include "srsran/support/tracing/tracy_profiler.h"
 #include <algorithm>
 
 using namespace srsran;
@@ -530,6 +531,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
 
 {
+  SRSRAN_ZONE_SCOPED_NC("pdcp_tx::apply_security", tracy::Color::LightSeaGreen);
   auto     pre      = std::chrono::high_resolution_clock::now();
   uint32_t tx_count = buf_info.count;
 

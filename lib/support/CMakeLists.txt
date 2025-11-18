@@ -45,9 +45,14 @@ set(SOURCES
         math_utils.cpp
 )
 
+if(ENABLE_SRSRAN_TRACY)
+	list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/external/tracy/public/TracyClient.cpp)
+        include_directories(external/tracy/public)
+endif()
+
 add_library(srsran_support STATIC ${SOURCES})
 target_link_libraries(srsran_support PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${YAML_CPP_LIBRARIES}
-        ${NUMA_LIBRARIES} srslog)
+	${NUMA_LIBRARIES} ${TRACY_LIBRARIES} srslog)
 add_backward(srsran_support)
 
 if (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)
