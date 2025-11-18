@@ -451,7 +451,7 @@ tests:
           srs_period_ms: 10
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 130.0e+6
+    expected_ul_bitrate: 200.0e+6
     expected_max_late_harqs: 4
     expected_nof_kos: 5
     warning_as_errors: true
