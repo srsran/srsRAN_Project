@@ -67,7 +67,8 @@ public:
   void add_ue(sched_ue_creation_request_message ue_req)
   {
     ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req));
-    ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}),
+               ue_ded_cfgs.back().logical_channels());
   }
 
   void slot_indication(slot_point slot_tx)

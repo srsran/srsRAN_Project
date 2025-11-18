@@ -38,17 +38,21 @@ public:
   row_id id() const { return row_id{table->index_reverse_map[offset]}; }
 
   /// Retrieves a cell from the table for column I.
-  template <std::size_t ColIndex>
+  template <auto ColId>
   auto& at()
   {
+    static_assert(std::is_enum_v<decltype(ColId)>, "ColId must be an enum value");
+    static constexpr auto ColIndex = static_cast<std::size_t>(ColId);
     static_assert(ColIndex < nof_columns(), "Column index out of range");
     auto& cols = std::get<ColIndex>(table->columns);
     srsran_sanity_check(offset < cols.size(), "Row offset out of range");
     return cols[offset];
   }
-  template <std::size_t ColIndex>
+  template <auto ColId>
   const auto& at() const
   {
+    static_assert(std::is_enum_v<decltype(ColId)>, "ColId must be an enum value");
+    static constexpr auto ColIndex = static_cast<std::size_t>(ColId);
     static_assert(ColIndex < nof_columns(), "Column index out of range");
     auto& cols = std::get<ColIndex>(table->columns);
     srsran_sanity_check(offset < cols.size(), "Row offset out of range");
@@ -74,12 +78,12 @@ public:
   template <std::size_t ColIndex>
   friend auto& get(const row_view& rv)
   {
-    return rv.at<ColIndex>();
+    return rv.at<static_cast<typename TableType::column_id>(ColIndex)>();
   }
   template <std::size_t ColIndex>
   friend auto& get(row_view&& rv)
   {
-    return rv.at<ColIndex>();
+    return rv.at<static_cast<typename TableType::column_id>(ColIndex)>();
   }
   template <typename T>
   friend auto& get(const row_view& rv)
@@ -181,9 +185,11 @@ private:
 /// Objects have a stable row ID, but their offset or address in the internal storage may change.
 /// Each column of the table is represented as a vector. All elements are stored contiguously in memory, with no
 /// holes.
-template <typename... ColumnTypes>
+template <typename ColumnIdType, typename... ColumnTypes>
 class table
 {
+  static_assert(std::is_enum_v<ColumnIdType>, "ColumnIdType must be an enum type");
+
   struct sentinel {};
 
   /// Iterator of rows in the table. The iterator is not sorted by row ID.
@@ -233,28 +239,29 @@ class table
     friend bool operator!=(sentinel /* unused */, const iter_impl& rhs) { return rhs.offset != rhs.parent->size(); }
 
   private:
-    friend class table<ColumnTypes...>;
+    friend class table<ColumnIdType, ColumnTypes...>;
 
     TableType* parent = nullptr;
     unsigned   offset = 0;
   };
 
 public:
+  using column_id = ColumnIdType;
   template <std::size_t ColIndex>
   using column_type = std::tuple_element_t<ColIndex, std::tuple<ColumnTypes...>>;
 
   using iterator       = iter_impl<table>;
   using const_iterator = iter_impl<const table>;
 
-  template <std::size_t I>
+  template <ColumnIdType ColId>
   auto column()
   {
-    return make_column_view(std::get<I>(columns));
+    return make_column_view(std::get<static_cast<std::size_t>(ColId)>(columns));
   }
-  template <std::size_t I>
+  template <ColumnIdType ColId>
   auto column() const
   {
-    return make_column_view(std::get<I>(columns));
+    return make_column_view(std::get<static_cast<std::size_t>(ColId)>(columns));
   }
 
   row_view<table> row(row_id rid)
@@ -293,19 +300,34 @@ public:
     return index_reverse_map[offset] == rid;
   }
 
-  template <std::size_t I>
+  /// Retrieves a cell from the table for column I and row with ID rid.
+  template <ColumnIdType ColId>
   auto& at(row_id rid)
   {
+    static constexpr auto I = static_cast<std::size_t>(ColId);
     static_assert(I < sizeof...(ColumnTypes), "Column index out of bounds");
     srsran_assert(has_row_id(rid), "Invalid row_id");
     return std::get<I>(columns)[index_map[rid.value()]];
   }
-  template <std::size_t I>
+  template <ColumnIdType ColId>
   const auto& at(row_id rid) const
   {
+    static constexpr auto I = static_cast<std::size_t>(ColId);
     static_assert(I < sizeof...(ColumnTypes), "Column index out of bounds");
     srsran_assert(has_row_id(rid), "Invalid row_id");
     return std::get<I>(columns)[index_map[rid.value()]];
+  }
+  template <typename ColumnType>
+  auto& at(row_id rid)
+  {
+    srsran_assert(has_row_id(rid), "Invalid row_id");
+    return std::get<std::vector<ColumnType>>(columns)[index_map[rid.value()]];
+  }
+  template <typename ColumnType>
+  const auto& at(row_id rid) const
+  {
+    srsran_assert(has_row_id(rid), "Invalid row_id");
+    return std::get<std::vector<ColumnType>>(columns)[index_map[rid.value()]];
   }
 
   template <typename... Vals>
