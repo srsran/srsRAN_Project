@@ -22,15 +22,15 @@ class lower_phy_controller;
 class lower_phy_metrics_notifier;
 class radio_session;
 
-/// Radio Unit gain controller generic implementation.
-class ru_gain_controller_generic_impl : public ru_gain_controller
+/// SDR Radio Unit gain controller implementation.
+class ru_gain_controller_sdr_impl : public ru_gain_controller
 {
   radio_session** radio = nullptr;
 
 public:
-  ru_gain_controller_generic_impl() = default;
+  ru_gain_controller_sdr_impl() = default;
 
-  explicit ru_gain_controller_generic_impl(radio_session** radio_) : radio(radio_) {}
+  explicit ru_gain_controller_sdr_impl(radio_session** radio_) : radio(radio_) {}
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
@@ -39,15 +39,15 @@ public:
   bool set_rx_gain(unsigned port_id, double gain_dB) override;
 };
 
-/// Radio Unit carrier frequency offset controller generic implementation.
-class ru_cfo_controller_generic_impl : public ru_cfo_controller
+/// SDR Radio Unit carrier frequency offset controller implementation.
+class ru_cfo_controller_sdr_impl : public ru_cfo_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
 
 public:
-  ru_cfo_controller_generic_impl() = default;
+  ru_cfo_controller_sdr_impl() = default;
 
-  explicit ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
+  explicit ru_cfo_controller_sdr_impl(std::vector<lower_phy_sector*> phy_sectors_) :
     phy_sectors(std::move(phy_sectors_))
   {
   }
@@ -59,16 +59,16 @@ public:
   bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
 };
 
-/// Radio Unit center frequency controller generic implementation.
-class ru_center_frequency_controller_generic_impl : public ru_center_frequency_controller
+/// SDR Radio Unit center frequency controller implementation.
+class ru_center_frequency_controller_sdr_impl : public ru_center_frequency_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
   radio_session**                radio = nullptr;
 
 public:
-  ru_center_frequency_controller_generic_impl() = default;
+  ru_center_frequency_controller_sdr_impl() = default;
 
-  ru_center_frequency_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session** radio_) :
+  ru_center_frequency_controller_sdr_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session** radio_) :
     phy_sectors(std::move(phy_sectors_)), radio(radio_)
   {
   }
@@ -80,15 +80,15 @@ public:
   bool set_rx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
 };
 
-/// Radio Unit transmit time offset controller generic implementation.
-class ru_tx_time_offset_controller_generic_impl : public ru_tx_time_offset_controller
+/// SDR Radio Unit transmit time offset controller implementation.
+class ru_tx_time_offset_controller_sdr_impl : public ru_tx_time_offset_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
 
 public:
-  ru_tx_time_offset_controller_generic_impl() = default;
+  ru_tx_time_offset_controller_sdr_impl() = default;
 
-  explicit ru_tx_time_offset_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) :
+  explicit ru_tx_time_offset_controller_sdr_impl(std::vector<lower_phy_sector*> phy_sectors_) :
     phy_sectors(std::move(phy_sectors_))
   {
   }
@@ -97,11 +97,11 @@ public:
   bool set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset) override;
 };
 
-/// Radio Unit controller generic implementation.
-class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
+/// SDR Radio Unit controller implementation.
+class ru_controller_sdr_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  ru_controller_generic_impl(double srate_MHz_, std::optional<std::chrono::system_clock::time_point> start_time);
+  ru_controller_sdr_impl(double srate_MHz_, std::optional<std::chrono::system_clock::time_point> start_time);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -135,10 +135,10 @@ private:
   std::optional<std::chrono::system_clock::time_point> start_time;
   radio_session*                                       radio = nullptr;
   std::vector<lower_phy_sector*>                       lower_phy_sectors;
-  ru_gain_controller_generic_impl                      gain_controller;
-  ru_cfo_controller_generic_impl                       cfo_controller;
-  ru_center_frequency_controller_generic_impl          center_freq_controller;
-  ru_tx_time_offset_controller_generic_impl            tx_time_offset_controller;
+  ru_gain_controller_sdr_impl                          gain_controller;
+  ru_cfo_controller_sdr_impl                           cfo_controller;
+  ru_center_frequency_controller_sdr_impl              center_freq_controller;
+  ru_tx_time_offset_controller_sdr_impl                tx_time_offset_controller;
 };
 
 } // namespace srsran

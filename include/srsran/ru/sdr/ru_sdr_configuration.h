@@ -18,8 +18,8 @@
 
 namespace srsran {
 
-/// Radio Unit generic configuration.
-struct ru_generic_configuration {
+/// SDR Radio Unit configuration.
+struct ru_sdr_configuration {
   /// Metrics enabled flag.
   bool are_metrics_enabled;
   /// Device driver.
@@ -35,8 +35,8 @@ struct ru_generic_configuration {
   std::optional<std::chrono::system_clock::time_point> start_time;
 };
 
-/// RU generic sector dependencies.
-struct ru_generic_sector_dependencies {
+/// SDR RU sector dependencies.
+struct ru_sdr_sector_dependencies {
   /// Logger.
   srslog::basic_logger& logger;
   /// Receive task executor.
@@ -51,8 +51,8 @@ struct ru_generic_sector_dependencies {
   task_executor& prach_async_executor;
 };
 
-/// Radio Unit generic dependencies.
-struct ru_generic_dependencies {
+/// SDR Radio Unit dependencies.
+struct ru_sdr_dependencies {
   /// Radio executor.
   task_executor& radio_exec;
   /// Radio logger.
@@ -63,8 +63,8 @@ struct ru_generic_dependencies {
   ru_timing_notifier& timing_notifier;
   /// Radio Unit error notifier.
   ru_error_notifier& error_notifier;
-  /// RU generic sector dependencies.
-  std::vector<ru_generic_sector_dependencies> ru_generic_sector_deps;
+  /// SDR RU sector dependencies.
+  std::vector<ru_sdr_sector_dependencies> sector_dependencies;
 };
 
 } // namespace srsran

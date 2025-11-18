@@ -17,7 +17,7 @@
 namespace srsran {
 
 struct ru_dummy_metrics;
-struct ru_generic_metrics;
+struct ru_sdr_metrics;
 struct ru_metrics;
 
 /// JSON handler for the O-RU metrics.
@@ -84,7 +84,7 @@ public:
 
 private:
   /// Log SDR RU metrics in STDOUT.
-  void log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics);
+  void log_ru_sdr_metrics_in_stdout(const ru_sdr_metrics& sdr_metrics);
 
   /// Log dummy RU metrics in STDOUT.
   void log_ru_dummy_metrics_in_stdout(const ru_dummy_metrics& dummy_metrics);

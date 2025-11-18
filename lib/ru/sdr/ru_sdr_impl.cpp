@@ -8,12 +8,11 @@
  *
  */
 
-#include "ru_generic_impl.h"
+#include "ru_sdr_impl.h"
 
 using namespace srsran;
 
-ru_generic_impl::ru_generic_impl(const ru_generic_impl_config&       config,
-                                 const ru_generic_impl_dependencies& dependencies) :
+ru_sdr_impl::ru_sdr_impl(const ru_sdr_impl_config& config, const ru_sdr_impl_dependencies& dependencies) :
   are_metrics_enabled(config.are_metrics_enabled),
   radio_metrics_collector(),
   radio_event_logger(dependencies.radio_logger),
@@ -28,9 +27,9 @@ ru_generic_impl::ru_generic_impl(const ru_generic_impl_config&       config,
 {
 }
 
-void ru_generic_impl::set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> sectors_)
+void ru_sdr_impl::set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> lower_phy_sectors)
 {
-  phy_sectors = std::move(sectors_);
+  phy_sectors = std::move(lower_phy_sectors);
 
   srsran_assert(!phy_sectors.empty(), "SDR Radio Unit received an empty list of sectors");
 

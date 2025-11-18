@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/radio/radio_notification_handler.h"
-#include "srsran/ru/generic/ru_generic_metrics.h"
+#include "srsran/ru/sdr/ru_sdr_metrics.h"
 #include <atomic>
 
 namespace srsran {

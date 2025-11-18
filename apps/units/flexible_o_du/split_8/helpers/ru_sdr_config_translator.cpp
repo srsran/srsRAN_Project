@@ -224,11 +224,11 @@ static void generate_radio_config(radio_configuration::radio&                   
   }
 }
 
-ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&                        ru_cfg,
-                                                        span<const flexible_o_du_ru_config::cell_config> cells,
-                                                        unsigned max_processing_delay_slots)
+ru_sdr_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&                        ru_cfg,
+                                                    span<const flexible_o_du_ru_config::cell_config> cells,
+                                                    unsigned max_processing_delay_slots)
 {
-  ru_generic_configuration out_cfg;
+  ru_sdr_configuration out_cfg;
   out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.device_driver       = ru_cfg.device_driver;
   out_cfg.start_time          = ru_cfg.start_time;

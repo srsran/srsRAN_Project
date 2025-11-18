@@ -17,7 +17,7 @@
 
 namespace srsran {
 
-struct ru_generic_sector_metrics;
+struct ru_sdr_sector_metrics;
 
 /// Lower PHY sector metrics collector.
 class lower_phy_sector_metrics_collector : public lower_phy_metrics_notifier
@@ -30,7 +30,7 @@ public:
   void on_new_receive_metrics(const lower_phy_baseband_metrics& metrics) override;
 
   /// Collects the metrics of the lower PHY sector and fills the given structure.
-  void collect_metrics(ru_generic_sector_metrics& metrics);
+  void collect_metrics(ru_sdr_sector_metrics& metrics);
 
 private:
   std::mutex                                   tx_mutex;

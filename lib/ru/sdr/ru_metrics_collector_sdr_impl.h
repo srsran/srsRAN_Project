@@ -18,14 +18,14 @@ namespace srsran {
 
 class ru_radio_metrics_collector;
 
-/// Metrics collector implementation for the RU generic.
-class ru_metrics_collector_generic_impl : public ru_metrics_collector
+/// Metrics collector implementation for the SDR RU.
+class ru_metrics_collector_sdr_impl : public ru_metrics_collector
 {
   ru_radio_metrics_collector&                      radio;
   std::vector<lower_phy_sector_metrics_collector*> sector_metrics_collectors;
 
 public:
-  explicit ru_metrics_collector_generic_impl(ru_radio_metrics_collector& radio_) : radio(radio_) {}
+  explicit ru_metrics_collector_sdr_impl(ru_radio_metrics_collector& radio_) : radio(radio_) {}
 
   /// Sets the list of lower PHY sector collectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector_metrics_collector*> collectors)

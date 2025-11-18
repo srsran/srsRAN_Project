@@ -206,7 +206,7 @@ static void print_sdr_header()
 
 void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
 {
-  if (const auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metric.metrics)) {
+  if (const auto* sdr_metrics = std::get_if<ru_sdr_metrics>(&metric.metrics)) {
     log_ru_sdr_metrics_in_stdout(*sdr_metrics);
   }
 
@@ -219,7 +219,7 @@ void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
   }
 }
 
-void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics)
+void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_sdr_metrics& sdr_metrics)
 {
   if (sdr_metrics.cells.size() > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER) {
     print_sdr_header();

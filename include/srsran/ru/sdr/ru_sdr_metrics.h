@@ -16,8 +16,8 @@
 
 namespace srsran {
 
-/// Generic Radio Unit sector metrics.
-struct ru_generic_sector_metrics {
+/// SDR Radio Unit sector metrics.
+struct ru_sdr_sector_metrics {
   unsigned sector_id;
   float    tx_avg_power_dB;
   float    tx_peak_power_dB;
@@ -36,10 +36,10 @@ struct radio_metrics {
   unsigned overflow_count  = 0;
 };
 
-/// Generic Radio Unit metrics.
-struct ru_generic_metrics {
-  static_vector<ru_generic_sector_metrics, MAX_CELLS_PER_DU> cells;
-  radio_metrics                                              radio;
+/// SDR Radio Unit metrics.
+struct ru_sdr_metrics {
+  static_vector<ru_sdr_sector_metrics, MAX_CELLS_PER_DU> cells;
+  radio_metrics                                          radio;
 };
 
 } // namespace srsran

@@ -594,16 +594,16 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
       std::string    exec_name = "phy_exec";
       task_executor* phy_exec  = exec_mng.executors().at(exec_name);
 
-      ru_generic_executor_mapper_sequential_configuration ru_sdr_exec_map_config;
+      ru_sdr_executor_mapper_sequential_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.asynchronous_exec = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.common_exec       = phy_exec;
       ru_sdr_exec_map_config.nof_sectors       = config.nof_cells;
-      sdr_exec_mapper                          = create_ru_generic_executor_mapper(ru_sdr_exec_map_config);
+      sdr_exec_mapper                          = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::single: {
       fmt::print("Lower PHY in single baseband executor mode.\n");
-      ru_generic_executor_mapper_single_configuration ru_sdr_exec_map_config;
+      ru_sdr_executor_mapper_single_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
 
@@ -620,12 +620,12 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
         task_executor* baseband_exec = exec_mng.executors().at(exec_name);
         ru_sdr_exec_map_config.baseband_exec.emplace_back(baseband_exec);
       }
-      sdr_exec_mapper = create_ru_generic_executor_mapper(ru_sdr_exec_map_config);
+      sdr_exec_mapper = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::dual: {
       fmt::print("Lower PHY in dual baseband executor mode.\n");
-      ru_generic_executor_mapper_dual_configuration ru_sdr_exec_map_config;
+      ru_sdr_executor_mapper_dual_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
 
@@ -646,15 +646,15 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::ru),
                            os_thread_realtime_priority::max() - 1);
 
-        ru_sdr_exec_map_config.baseband_exec.emplace_back(ru_generic_executor_mapper_dual_configuration::cell_executors{
+        ru_sdr_exec_map_config.baseband_exec.emplace_back(ru_sdr_executor_mapper_dual_configuration::cell_executors{
             .tx_exec = exec_mng.executors().at(exec_tx), .rx_exec = exec_mng.executors().at(exec_rx)});
       }
-      sdr_exec_mapper = create_ru_generic_executor_mapper(ru_sdr_exec_map_config);
+      sdr_exec_mapper = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
       break;
     }
     case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::triple: {
       fmt::print("Lower PHY in triple executor mode.\n");
-      ru_generic_executor_mapper_triple_configuration ru_sdr_exec_map_config;
+      ru_sdr_executor_mapper_triple_configuration ru_sdr_exec_map_config;
       ru_sdr_exec_map_config.radio_exec         = exec_mng.executors().at("radio_exec");
       ru_sdr_exec_map_config.high_prio_executor = rt_hi_prio_exec;
 
@@ -683,12 +683,11 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                            os_thread_realtime_priority::max() - 1);
 
         ru_sdr_exec_map_config.baseband_exec.emplace_back(
-            ru_generic_executor_mapper_triple_configuration::cell_executors{.tx_exec = exec_mng.executors().at(exec_tx),
-                                                                            .rx_exec = exec_mng.executors().at(exec_rx),
-                                                                            .ul_exec =
-                                                                                exec_mng.executors().at(exec_ul)});
+            ru_sdr_executor_mapper_triple_configuration::cell_executors{.tx_exec = exec_mng.executors().at(exec_tx),
+                                                                        .rx_exec = exec_mng.executors().at(exec_rx),
+                                                                        .ul_exec = exec_mng.executors().at(exec_ul)});
       }
-      sdr_exec_mapper = create_ru_generic_executor_mapper(ru_sdr_exec_map_config);
+      sdr_exec_mapper = create_ru_sdr_executor_mapper(ru_sdr_exec_map_config);
       break;
     }
   }

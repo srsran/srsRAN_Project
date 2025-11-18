@@ -10,7 +10,7 @@
 
 #include "lower_phy_sector_metrics_collector.h"
 #include "srsran/phy/lower/lower_phy_baseband_metrics.h"
-#include "srsran/ru/generic/ru_generic_metrics.h"
+#include "srsran/ru/sdr/ru_sdr_metrics.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
@@ -43,7 +43,7 @@ void lower_phy_sector_metrics_collector::on_new_receive_metrics(const lower_phy_
   }
 }
 
-void lower_phy_sector_metrics_collector::collect_metrics(ru_generic_sector_metrics& metrics)
+void lower_phy_sector_metrics_collector::collect_metrics(ru_sdr_sector_metrics& metrics)
 {
   {
     std::lock_guard<std::mutex> lock(tx_mutex);

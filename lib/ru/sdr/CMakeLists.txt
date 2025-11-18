@@ -11,14 +11,15 @@ set(SOURCES
         lower_phy/lower_phy_sector_metrics_collector.cpp
         lower_phy/lower_phy_sector_timing_handler.cpp
         lower_phy/lower_phy_factory.cpp
-        ru_controller_generic_impl.cpp
+        lower_phy/lower_phy_sector.cpp
+        ru_controller_sdr_impl.cpp
+        ru_factory_sdr_impl.cpp
         ru_lower_phy_downlink_handler_impl.cpp
-        ru_factory_generic_impl.cpp
-        ru_generic_executor_mapper.cpp
-        ru_generic_impl.cpp
-        ru_metrics_collector_generic_impl.cpp
+        ru_lower_phy_uplink_request_handler_impl.cpp
+        ru_metrics_collector_sdr_impl.cpp
         ru_radio_metrics_collector.cpp
-        ru_lower_phy_uplink_request_handler_impl.cpp)
+        ru_sdr_executor_mapper.cpp
+        ru_sdr_impl.cpp)
 
-add_library(srsran_ru_generic STATIC ${SOURCES})
-target_link_libraries(srsran_ru_generic srsran_lower_phy srsran_radio srslog)
+add_library(srsran_ru_sdr STATIC ${SOURCES})
+target_link_libraries(srsran_ru_sdr srsran_lower_phy srsran_radio srslog)
