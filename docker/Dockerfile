@@ -35,6 +35,7 @@ ADD . /src
 
 # Install srsRAN build dependencies
 RUN /src/docker/scripts/install_dependencies.sh build && \
+    /src/docker/scripts/install_rohc_dependencies.sh build && \
     /src/docker/scripts/install_uhd_dependencies.sh build && \
     /src/docker/scripts/install_dpdk_dependencies.sh build && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git clang
@@ -44,13 +45,15 @@ ARG DPDK_VERSION
 ARG MARCH
 ARG NUM_JOBS
 
-# Compile UHD/DPDK
-RUN /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${MARCH} ${NUM_JOBS} && \
+# Compile ROHC/UHD/DPDK
+RUN /src/docker/scripts/build_rohc.sh ${MARCH} ${NUM_JOBS} && \
+    /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${MARCH} ${NUM_JOBS} && \
     /src/docker/scripts/build_dpdk.sh "${DPDK_VERSION}" ${MARCH} ${NUM_JOBS}
 
 # Compile srsRAN Project and install it in the OS
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS=""
+ENV ROHC_DIR=/opt/rohc
 ENV UHD_DIR=/opt/uhd/${UHD_VERSION}
 ENV DPDK_DIR=/opt/dpdk/${DPDK_VERSION}
 RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
@@ -85,20 +88,24 @@ ARG UHD_VERSION
 ARG DPDK_VERSION
 
 # Copy srsRAN binaries and libraries installed in previous stage
+COPY --from=builder /opt/rohc                 /opt/rohc
 COPY --from=builder /opt/uhd/${UHD_VERSION}   /opt/uhd/${UHD_VERSION}
 COPY --from=builder /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
 COPY --from=builder /opt/srs                  /usr/local
 
 # Copy the install dependencies scripts
+ADD docker/scripts/install_rohc_dependencies.sh /usr/local/etc/install_rohc_dependencies.sh
 ADD docker/scripts/install_uhd_dependencies.sh  /usr/local/etc/install_uhd_dependencies.sh
 ADD docker/scripts/install_dpdk_dependencies.sh /usr/local/etc/install_dpdk_dependencies.sh
 ADD docker/scripts/install_dependencies.sh      /usr/local/etc/install_srsran_dependencies.sh
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rohc/lib/
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/uhd/${UHD_VERSION}/lib/:/opt/uhd/${UHD_VERSION}/lib/x86_64-linux-gnu/:/opt/uhd/${UHD_VERSION}/lib/aarch64-linux-gnu/
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/dpdk/${DPDK_VERSION}/lib/:/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/
 ENV PATH=$PATH:/opt/uhd/${UHD_VERSION}/bin/:/opt/dpdk/${DPDK_VERSION}/bin/
 
 # Install srsran and lib runtime dependencies
 RUN /usr/local/etc/install_srsran_dependencies.sh run && \
+    /usr/local/etc/install_rohc_dependencies.sh run && \
     /usr/local/etc/install_uhd_dependencies.sh run && \
     /usr/local/etc/install_dpdk_dependencies.sh run && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl ntpdate && \
