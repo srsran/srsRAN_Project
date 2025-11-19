@@ -160,7 +160,7 @@ void ue_repository::add_ue(std::unique_ptr<ue> u, logical_channel_config_list_pt
   const du_ue_index_t      ue_index = u->ue_index;
   const rnti_t             rnti     = u->crnti;
   const subcarrier_spacing scs      = u->get_pcell().active_bwp().dl_common->value().generic_params.scs;
-  u->setup(dl_lc_ch_sys.create_ue(scs, u->get_pcell().is_in_fallback_mode(), lc_cfgs));
+  u->setup(dl_lc_ch_sys.create_ue(ue_index, scs, u->get_pcell().is_in_fallback_mode(), lc_cfgs));
   bool ret = ues.insert(ue_index, std::move(u));
   srsran_assert(ret, "UE with duplicate index being added to the repository");
 

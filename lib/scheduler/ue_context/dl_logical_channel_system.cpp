@@ -53,13 +53,15 @@ void dl_logical_channel_system::slot_indication()
 }
 
 ue_dl_logical_channel_repository
-dl_logical_channel_system::create_ue(subcarrier_spacing              scs_common,
+dl_logical_channel_system::create_ue(du_ue_index_t                   ue_index,
+                                     subcarrier_spacing              scs_common,
                                      bool                            starts_in_fallback,
                                      logical_channel_config_list_ptr log_channels_configs)
 {
   soa::row_id ue_rid                         = ues.insert(ue_config_context{}, ue_context{}, ue_channel_context{});
   auto        row                            = ues.row(ue_rid);
   row.at<ue_context>().fallback_state        = starts_in_fallback;
+  row.at<ue_config_context>().ue_index       = ue_index;
   row.at<ue_config_context>().slots_per_msec = get_nof_slots_per_subframe(scs_common);
   if (log_channels_configs.has_value()) {
     configure(ue_rid, log_channels_configs);

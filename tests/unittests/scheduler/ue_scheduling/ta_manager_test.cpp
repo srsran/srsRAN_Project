@@ -23,7 +23,7 @@ class ta_manager_tester : public ::testing::TestWithParam<duplex_mode>
 protected:
   ta_manager_tester() :
     ul_scs(GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30),
-    ue_dl_lc_chs(dl_lc_ch_sys.create_ue(ul_scs, false, cfg_pool.create({}))),
+    ue_dl_lc_chs(dl_lc_ch_sys.create_ue(to_du_ue_index(0), ul_scs, false, cfg_pool.create({}))),
     ta_mgr(expert_cfg.ue.ta_control, ul_scs, time_alignment_group::id_t{0}, &ue_dl_lc_chs),
     current_sl(to_numerology_value(ul_scs), test_rgen::uniform_int<unsigned>(0, 10239))
   {

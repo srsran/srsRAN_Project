@@ -41,7 +41,8 @@ public:
   void slot_indication();
 
   /// Creates a new UE logical channel repository.
-  ue_dl_logical_channel_repository create_ue(subcarrier_spacing              scs_common,
+  ue_dl_logical_channel_repository create_ue(du_ue_index_t                   ue_index,
+                                             subcarrier_spacing              scs_common,
                                              bool                            starts_in_fallback,
                                              logical_channel_config_list_ptr log_channels_configs);
 
@@ -85,10 +86,12 @@ private:
   };
   /// UE context relative to its configuration.
   struct ue_config_context {
-    /// List of UE-dedicated logical channel configurations.
-    logical_channel_config_list_ptr channel_configs;
+    /// DU UE index of this UE.
+    du_ue_index_t ue_index{INVALID_DU_UE_INDEX};
     /// Number of slots per millisecond for this UE, based on the subcarrier spacing.
     unsigned slots_per_msec{0};
+    /// List of UE-dedicated logical channel configurations.
+    logical_channel_config_list_ptr channel_configs;
   };
   /// UE context relative to its channel management.
   struct ue_channel_context {
