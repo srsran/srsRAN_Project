@@ -118,8 +118,8 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
         channel_context& ch_ctx = ue_ch.channels[old_lc->lcid];
 
         // Detach from QoS tracking.
-        if (ch_ctx.stats_row.has_value()) {
-          qos_channels.erase(*ch_ctx.stats_row);
+        if (ch_ctx.qos_row.has_value()) {
+          qos_channels.erase(*ch_ctx.qos_row);
         }
 
         // Detach from RAN slice.
@@ -153,18 +153,18 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
         not is_srb(ch_cfg->lcid) and ch_cfg->qos.has_value() and ch_cfg->qos.value().gbr_qos_info.has_value();
     if (qos_is_tracked) {
       const unsigned win_size_msec = ch_cfg->qos.value().qos.average_window_ms.value();
-      if (not ch_ctx.stats_row.has_value()) {
+      if (not ch_ctx.qos_row.has_value()) {
         // New GBR QoS, initiate tracking.
-        auto qos_rid     = qos_channels.insert(qos_context{});
-        ch_ctx.stats_row = qos_rid;
+        auto qos_rid   = qos_channels.insert(qos_context{});
+        ch_ctx.qos_row = qos_rid;
       }
-      qos_channels.row(*ch_ctx.stats_row)
+      qos_channels.row(*ch_ctx.qos_row)
           .at<qos_context>()
           .avg_bytes_per_slot.resize(win_size_msec * ue_cfg.slots_per_msec);
-    } else if (ch_ctx.stats_row.has_value()) {
+    } else if (ch_ctx.qos_row.has_value()) {
       // Remove from QoS tracking.
-      qos_channels.erase(*ch_ctx.stats_row);
-      ch_ctx.stats_row.reset();
+      qos_channels.erase(*ch_ctx.qos_row);
+      ch_ctx.qos_row.reset();
     }
   }
 
@@ -196,9 +196,9 @@ void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
 
   // Deactivate (not erase) all bearers.
   for (channel_context& ch_ctx : ue_ch.channels) {
-    if (ch_ctx.stats_row.has_value()) {
+    if (ch_ctx.qos_row.has_value()) {
       // Eliminate associated QoS being tracked.
-      qos_channels.erase(*ch_ctx.stats_row);
+      qos_channels.erase(*ch_ctx.qos_row);
     }
 
     // Detach from RAN slice.
@@ -388,9 +388,9 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   const unsigned   last_sched_bytes = std::min(sdu_size, ch_ctx.buf_st);
   auto             prev_buf_st      = ch_ctx.buf_st;
   ch_ctx.buf_st -= last_sched_bytes;
-  if (ch_ctx.stats_row.has_value()) {
+  if (ch_ctx.qos_row.has_value()) {
     // QoS tracking.
-    qos_channels.at<qos_context>(*ch_ctx.stats_row).last_sched_bytes = last_sched_bytes;
+    qos_channels.at<qos_context>(*ch_ctx.qos_row).last_sched_bytes = last_sched_bytes;
   }
   if (ch_ctx.slice_id.has_value()) {
     auto& slice_pending_bytes = ue_ctx.find_slice(*ch_ctx.slice_id)->second;
@@ -512,7 +512,7 @@ dl_logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_
   return alloc_bytes;
 }
 
-// ** class logical_channel_system::ue_logical_channel_repository
+// class logical_channel_system::ue_logical_channel_repository
 
 void ue_dl_logical_channel_repository::configure(logical_channel_config_list_ptr log_channels_configs)
 {
@@ -561,8 +561,8 @@ double ue_dl_logical_channel_repository::average_bit_rate(lcid_t lcid) const
 {
   auto  u      = get_ue_row();
   auto* ch_ctx = dl_logical_channel_system::find_active_ch_ctx(u, lcid);
-  auto* qos_ch = (ch_ctx != nullptr and ch_ctx->stats_row.has_value())
-                     ? &parent->qos_channels.row(ch_ctx->stats_row.value()).at<dl_logical_channel_system::qos_context>()
+  auto* qos_ch = (ch_ctx != nullptr and ch_ctx->qos_row.has_value())
+                     ? &parent->qos_channels.row(ch_ctx->qos_row.value()).at<dl_logical_channel_system::qos_context>()
                      : nullptr;
   return qos_ch != nullptr ? qos_ch->avg_bytes_per_slot.average() * 8 * u.at<ue_config_context>().slots_per_msec * 1000
                            : 0.0;

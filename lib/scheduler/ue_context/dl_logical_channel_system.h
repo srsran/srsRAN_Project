@@ -75,8 +75,8 @@ private:
     unsigned buf_st = 0;
     /// Head-of-line (HOL) time-of-arrival
     slot_point hol_toa;
-    /// In case statistics are being tracked, holds the row in the channel_stats_list table.
-    std::optional<soa::row_id> stats_row;
+    /// In case QoS statistics are being tracked, holds the row in the \c qos_channels table.
+    std::optional<soa::row_id> qos_row;
     /// Slice associated with this channel.
     std::optional<ran_slice_id_t> slice_id;
 
