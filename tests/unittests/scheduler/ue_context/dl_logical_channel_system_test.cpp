@@ -379,6 +379,21 @@ TEST_F(single_ue_dl_logical_channel_system_test, assign_leftover_bytes_to_sdu_if
   ASSERT_EQ(allocated_bytes, tb_size);
 }
 
+TEST_F(single_ue_dl_logical_channel_system_test,
+       when_buffer_occupancy_is_very_low_then_enough_space_is_still_considered_to_fit_rlc_ovh)
+{
+  ue_lchs.handle_dl_buffer_status_indication(LCID_SRB1, 1);
+
+  dl_msg_lc_info subpdu;
+  assert_ue_lch_valid(ue_lchs);
+  // SRB1 SDU requires 2 bytes of subheader. However, if only 3 bytes were allocated, RLC overhead could not be fitted.
+  unsigned allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, 50, LCID_SRB1);
+  // Note: The MAC can only estimate the RLC overhead. However, it should always be equal or higher than 2 bytes, which
+  // is the RLC UM header min size.
+  const unsigned min_rlc_ovh = 2;
+  ASSERT_GE(allocated_bytes, MIN_MAC_SDU_SUBHEADER_SIZE + 1 + min_rlc_ovh);
+}
+
 TEST_F(single_ue_dl_logical_channel_system_test, ta_cmd_mac_ce_gets_updated_if_already_in_pending_ces_queue)
 {
   const auto first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 29};
