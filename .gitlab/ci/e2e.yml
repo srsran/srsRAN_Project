@@ -719,6 +719,7 @@ amari 1UE s72x iperf:
     E2E_FILE_OR_DIR: tests/iperf.py
   timeout: 4h
 
+
 .s72_fr2:
   stage: rf
   extends: .e2e-run
@@ -741,57 +742,3 @@ amari 1UE s72x FR2:
   variables:
     MARKERS: s72 and fr2
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-
-
-################################################################################
-# Garbage collector
-################################################################################
-retina setup:
-  stage: ci
-  extends:
-    - .prepare_test
-  retry: 2
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: always
-  interruptible: false
-  image:
-    name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
-    entrypoint: ["/bin/sh", "-c"]
-  tags:
-    - ${CLUSTER}
-  script:
-    - |
-      retina-garbage-collector --mode demolition
-  needs:
-    - *retina-needs
-  parallel:
-    matrix:
-      - CLUSTER: retina-e2e-amd64
-      - CLUSTER: new-retina-e2e-amd64
-
-retina runners:
-  stage: ci
-  allow_failure: true
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      variables:
-        CI_DESCRIPTION: Lab Runner Manager
-        DISABLE_MODE: nightly
-        ON_SCHEDULE: "true"
-        NOTIFY_SLACK: "false"
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      variables:
-        CI_DESCRIPTION: Lab Runner Manager
-        DISABLE_MODE: weekly
-        ON_SCHEDULE: "true"
-        NOTIFY_SLACK: "false"
-  inherit:
-    variables: false
-  trigger:
-    project: softwareradiosystems/ci/infrastructure
-    branch: main
-  needs:
-    - job: retina setup
-      optional: true
-      artifacts: false
