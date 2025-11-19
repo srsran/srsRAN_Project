@@ -719,6 +719,30 @@ amari 1UE s72x iperf:
     E2E_FILE_OR_DIR: tests/iperf.py
   timeout: 4h
 
+.s72_fr2:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    CLUSTER: new-retina-e2e-amd64
+    GROUP: rf
+    TESTBED: s72_fr2
+    E2E_LOG_LEVEL: info
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+      when: delayed
+      start_in: 8 hours # let zmq finish first so they don't fight for resources
+  needs:
+    - job: basic avx512 dpdk rtsan
+      artifacts: true
+    - *retina-needs
+
+amari 1UE s72x FR2:
+  extends: .s72_fr2
+  variables:
+    MARKERS: s72 and fr2
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
+
 ################################################################################
 # Garbage collector
 ################################################################################
