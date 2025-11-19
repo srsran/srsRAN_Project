@@ -558,6 +558,7 @@ def test_zmq_64_ues(
         nof_antennas_ul=2,
         inter_ue_start_period=1.5,  # Due to uesim
         assess_bitrate=True,
+        parallel_iperfs=64,
     )
 
 
@@ -944,6 +945,7 @@ def _iperf(
     min_dl_bitrate: float = 0,
     min_ul_bitrate: float = 0,
     pdsch_interleaving_bundle_size: int = 0,
+    parallel_iperfs: int = 8,
 ):
     wait_before_power_off = 5
 
@@ -1010,6 +1012,7 @@ def _iperf(
         bitrate=bitrate,
         packet_length=packet_length,
         bitrate_threshold_ratio=bitrate_threshold,
+        parallel_iperfs=parallel_iperfs,
     )
 
     if ric:
