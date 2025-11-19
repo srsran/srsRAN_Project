@@ -12,6 +12,15 @@
 
 using namespace srsran;
 
+/// Estimation of much space the MAC should leave for RLC segmentation header overhead.
+static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+
+static constexpr unsigned get_mac_sdu_with_subhdr_and_rlc_hdr_estim(lcid_t lcid, unsigned payload)
+{
+  const unsigned rlc_ovh = (lcid != LCID_SRB0 && payload > 0) ? RLC_SEGMENTATION_OVERHEAD : 0;
+  return get_mac_sdu_required_bytes(payload + rlc_ovh);
+}
+
 /// Determine the MAC SDU size from the total size of SDU + subheader.
 static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 {
@@ -355,7 +364,9 @@ unsigned
 dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes)
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-  if (rem_bytes <= MIN_MAC_SDU_SUBHEADER_SIZE) {
+  const unsigned min_bytes_needed = get_mac_sdu_with_subhdr_and_rlc_hdr_estim(lcid, 1);
+  if (rem_bytes <= min_bytes_needed) {
+    // There is no space even for a minimal MAC SDU.
     return 0;
   }
   auto  u         = get_ue(ue_rid);
@@ -366,22 +377,29 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   if (lch_bytes_and_subhr == 0) {
     return 0;
   }
+  // This ensures that regardless of the pending bytes, enough space is allocated for the RLC overhead.
+  lch_bytes_and_subhr = std::max(lch_bytes_and_subhr, min_bytes_needed);
 
   // Account for available space and MAC subheader to decide the number of bytes to allocate.
   unsigned alloc_bytes = std::min(rem_bytes, lch_bytes_and_subhr);
 
   // Allocate all leftover bytes in following cases:
-  //  - If it is last PDU of the TBS.
-  //  - [Implementation-defined] If \c leftover_bytes is < 5 bytes, as it results in small SDU size.
-  unsigned leftover_bytes = rem_bytes - alloc_bytes;
-  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or total_pending_bytes(u) == 0)) {
+  // - [Implementation-defined] If \c leftover_bytes is less than 5 bytes, as it is unlikely they will be used for
+  // another SDU.
+  // - If it is last PDU of the TBS.
+  unsigned                  leftover_bytes     = rem_bytes - alloc_bytes;
+  constexpr static unsigned MIN_LEFTOVER_BYTES = 5;
+  if (leftover_bytes > 0 and
+      ((leftover_bytes <= MIN_LEFTOVER_BYTES) or total_pending_bytes(u) <= lch_bytes_and_subhr)) {
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {
     // Avoid invalid combination of MAC subPDU and subheader size.
     alloc_bytes--;
   }
-  unsigned sdu_size = get_mac_sdu_size(alloc_bytes);
+
+  // Compute MAC SDU size without MAC subheader.
+  const unsigned sdu_size = get_mac_sdu_size(alloc_bytes);
 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
   channel_context& ch_ctx           = ue_ch_ctx.channels[lcid];
@@ -401,7 +419,6 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   }
 
   if (lcid != LCID_SRB0 and ch_ctx.buf_st > 0) {
-    static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
     // Allocation was not enough to empty the logical channel. In this specific case, we add some bytes to account
     // for the RLC segmentation overhead.
     // Note: This update is only relevant for PDSCH allocations for slots > slot_tx. For the case of PDSCH
@@ -414,7 +431,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
     }
   }
 
-  subpdu.lcid        = (lcid_dl_sch_t::options)lcid;
+  subpdu.lcid        = lcid;
   subpdu.sched_bytes = sdu_size;
 
   return alloc_bytes;
@@ -451,7 +468,7 @@ unsigned dl_logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_l
   if (not ue_ch_ctx.pending_ces.has_value()) {
     return 0;
   }
-  auto                ce_row_id = *ue_ch_ctx.pending_ces;
+  soa::row_id         ce_row_id = *ue_ch_ctx.pending_ces;
   const auto&         ce_node   = pending_ces.at<mac_ce_context>(ce_row_id);
   const lcid_dl_sch_t lcid      = ce_node.info.ce_lcid;
 
@@ -475,9 +492,7 @@ unsigned dl_logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_l
   // Pop MAC CE.
   ue_ch_ctx.pending_ces = ce_node.next_ue_ce;
   // Update sum of pending CE bytes.
-  u.at<ue_context>().pending_ce_bytes -= ce_node.info.ce_lcid.is_var_len_ce()
-                                             ? get_mac_sdu_required_bytes(ce_node.info.ce_lcid.sizeof_ce())
-                                             : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce_node.info.ce_lcid.sizeof_ce();
+  u.at<ue_context>().pending_ce_bytes -= alloc_bytes;
   pending_ces.erase(ce_row_id);
 
   return alloc_bytes;
