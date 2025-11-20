@@ -488,6 +488,7 @@ public:
   public:
     using value_type = T;
 
+    ptr()                                = default;
     ptr(const ptr& other)                = delete;
     ptr(ptr&& other) noexcept            = default;
     ptr& operator=(const ptr& other)     = delete;
@@ -511,6 +512,8 @@ public:
     bool operator==(std::nullptr_t) const { return rc == nullptr; }
     bool operator!=(const ptr& other) const { return rc != other.rc; }
     bool operator!=(std::nullptr_t) const { return rc != nullptr; }
+
+    operator bool() const { return rc != nullptr; }
 
   private:
     friend class bounded_rc_object_pool;

@@ -174,8 +174,11 @@ TEST(bounded_rc_object_pool_test, object_reclaimed_on_zero_rc)
 {
   bounded_rc_object_pool<int> pool{16};
 
+  bounded_rc_object_pool<int>::ptr ptr;
+  ASSERT_FALSE(ptr);
+
   ASSERT_EQ(pool.size_approx(), pool.capacity());
-  auto ptr = pool.get(); // rc == 1
+  ptr = pool.get(); // rc == 1
   ASSERT_NE(ptr, nullptr);
   ASSERT_TRUE(ptr.unique());
   ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
