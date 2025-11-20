@@ -386,11 +386,9 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   // Allocate all leftover bytes in following cases:
   // - [Implementation-defined] If \c leftover_bytes is less than 5 bytes, as it is unlikely they will be used for
   // another SDU.
-  // - If it is last PDU of the TBS.
-  unsigned                  leftover_bytes     = rem_bytes - alloc_bytes;
+  const unsigned            leftover_bytes     = rem_bytes - alloc_bytes;
   constexpr static unsigned MIN_LEFTOVER_BYTES = 5;
-  if (leftover_bytes > 0 and
-      ((leftover_bytes <= MIN_LEFTOVER_BYTES) or total_pending_bytes(u) <= lch_bytes_and_subhr)) {
+  if (leftover_bytes > 0 and (leftover_bytes <= MIN_LEFTOVER_BYTES)) {
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {
