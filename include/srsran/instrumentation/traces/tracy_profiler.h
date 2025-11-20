@@ -10,7 +10,7 @@
 
 #pragma once
 
-#ifdef SRSRAN_TRACY_ENABLE
+#ifdef TRACY_ENABLE
 #include "tracy/Tracy.hpp"
 
 #define SRSRAN_ZONE_SCOPED_NC ZoneScopedNC

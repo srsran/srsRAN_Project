@@ -11,12 +11,8 @@ add_subdirectory(uWebSockets)
 if(ENABLE_SRSRAN_TRACY)
 	# Add optional support for the tracy frame profiler. To use this profiler,
 	# you will need to clone the tracy repo to this folder and turn on the
-	# ENABLE_SRSRAN_TRACY variable. You should also define the TRACY_ENABLE define,
-	# As specified in the tracy documentation. See https://github.com/wolfpld/tracy
-	# for details.
-	#
-	# Example:
-	#	cmake -DCMAKE_CXX_FLAGS:="-DTRACY_ENABLE" -DENABLE_SRSRAN_TRACY=ON ../
+	# ENABLE_SRSRAN_TRACY CMake variable.
+	# See https://github.com/wolfpld/tracy for details.
 	if (NOT EXISTS "${CMAKE_SOURCE_DIR}/external/tracy/")
 		message(FATAL_ERROR "Tracy enabled, but not found. Make sure that the subrepo is cloned correctly.")
 	endif()

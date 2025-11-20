@@ -21,6 +21,6 @@ add_library(srsran_instrumentation ${SOURCES})
 
 target_include_directories(srsran_instrumentation PUBLIC ${CMAKE_SOURCE_DIR}/external/tracy/public/)
 
-target_link_libraries(srsran_instrumentation srsran_support)
+target_link_libraries(srsran_instrumentation srsran_support ${TRACY_LIBRARIES})
 
 add_to_exported_libs(srsran_instrumentation)
