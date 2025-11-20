@@ -259,10 +259,12 @@ void ue_repository::rem_ue(const ue& u)
                  crnti);
   }
 
-  // Take the UE from the repository and schedule its destruction outside the critical section.
+  // Take the UE from the repository and release its resources.
   auto ue_ptr = std::move(ues[ue_idx]);
   ues.erase(ue_idx);
   ue_ptr->release_resources();
+
+  // schedule UE object destruction outside the real-time thread.
   if (not ues_to_destroy.try_push(std::move(ue_ptr))) {
     logger.warning("Failed to offload UE destruction. Performance may be affected");
   }

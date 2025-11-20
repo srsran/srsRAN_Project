@@ -80,11 +80,15 @@ void ue::deactivate()
 
 void ue::release_resources()
 {
+  // Reset all HARQ processes in all UE cells.
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
       cell->harqs.reset();
     }
   }
+
+  // Destroy DL logical channel manager.
+  dl_lc_ch_mgr.reset();
 }
 
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reestablished_)
