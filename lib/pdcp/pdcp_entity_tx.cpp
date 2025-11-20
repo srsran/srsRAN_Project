@@ -10,12 +10,12 @@
 
 #include "pdcp_entity_tx.h"
 #include "../security/security_engine_impl.h"
+#include "srsran/instrumentation/traces/tracy_profiler.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/rohc/rohc_support.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/srsran_assert.h"
-#include "srsran/support/tracing/tracy_profiler.h"
 #include <algorithm>
 
 using namespace srsran;

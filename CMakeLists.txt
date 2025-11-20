@@ -248,8 +248,7 @@ if (ENABLE_GCOV)
 endif (ENABLE_GCOV)
 
 if(ENABLE_SRSRAN_TRACY)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSRSRAN_TRACY_ENABLE")
-        include_directories(external/tracy/public)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSRSRAN_TRACY_ENABLE")
 endif()
 
 if(NOT LINKER STREQUAL "default")

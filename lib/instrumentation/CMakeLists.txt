@@ -6,12 +6,21 @@
 # the distribution.
 #
 
-add_library(srsran_instrumentation
+set(SOURCES
         traces/critical_traces.cpp
         traces/du_traces.cpp
         traces/ru_traces.cpp
         traces/up_traces.cpp
         traces/ofh_traces.cpp)
+
+if(ENABLE_SRSRAN_TRACY)
+	list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/external/tracy/public/TracyClient.cpp)
+endif()
+
+add_library(srsran_instrumentation ${SOURCES})
+
+target_include_directories(srsran_instrumentation PUBLIC ${CMAKE_SOURCE_DIR}/external/tracy/public/)
+
 target_link_libraries(srsran_instrumentation srsran_support)
 
 add_to_exported_libs(srsran_instrumentation)
