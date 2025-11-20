@@ -12,6 +12,7 @@
 
 #include "../config/logical_channel_list_config.h"
 #include "../slicing/ran_slice_id.h"
+#include "srsran/adt/flat_map.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/soa_table.h"
 #include "srsran/mac/mac_pdu_format.h"
@@ -51,6 +52,12 @@ public:
 
   /// Number of logical channels managed by the system.
   size_t nof_logical_channels() const;
+
+  /// Fills list with UEs that have pending data for the given RAN slice.
+  /// \param[in/out] ues_to_fill Span where to fill the DU UE indexes of UEs with pending data.
+  /// \param[in] slice_id RAN slice identifier.
+  /// \return Number of UEs filled in the list.
+  unsigned fill_ues_with_pending_data(span<du_ue_index_t> ues_to_fill, ran_slice_id_t slice_id) const;
 
 private:
   friend class ue_dl_logical_channel_repository;
@@ -188,8 +195,21 @@ private:
     return pending_con_res_ce_bytes(ue_row) + ue_row.at<ue_context>().pending_ce_bytes;
   }
 
+  /// Helper method to update the pending bytes for a given RAN slice when a lc associated with a slice is updated.
+  void on_slice_peding_bytes_update(ue_row&                              u,
+                                    bool                                 channel_active,
+                                    const std::optional<ran_slice_id_t>& slice_id,
+                                    unsigned                             new_buf_st,
+                                    unsigned                             prev_buf_st);
+
   /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
   lcid_t get_max_prio_lcid(const const_ue_row& ue_row) const;
+
+  /// Bitset of UEs with pending CEs.
+  bounded_bitset<MAX_NOF_DU_UES> ues_with_pending_ces;
+
+  /// List of bitsets of UEs with pending data per RAN slice.
+  flat_map<ran_slice_id_t, bounded_bitset<MAX_NOF_DU_UES>> ran_slices_to_ues_with_pending_data;
 
   /// List of MAC CEs pending transmission.
   enum class ce_column_id { ce };

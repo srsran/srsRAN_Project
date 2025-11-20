@@ -35,10 +35,12 @@ dl_logical_channel_system::dl_logical_channel_system()
 {
   static constexpr unsigned PRERESERVED_NOF_DRBS_PER_UE = 2;
   static constexpr unsigned PRERESERVED_NOF_CES         = MAX_NOF_DU_UES;
+  static constexpr unsigned PRERESERVED_SLICES          = 4;
 
   // Pre-reserve space to avoid allocations in latency-critical path.
   pending_ces.reserve(PRERESERVED_NOF_CES);
   qos_channels.reserve(PRERESERVED_NOF_DRBS_PER_UE * MAX_NOF_DU_UES);
+  ran_slices_to_ues_with_pending_data.reserve(PRERESERVED_SLICES);
   ues.reserve(MAX_NOF_DU_UES);
 }
 
@@ -78,14 +80,41 @@ size_t dl_logical_channel_system::nof_logical_channels() const
   return count;
 }
 
+unsigned dl_logical_channel_system::fill_ues_with_pending_data(span<du_ue_index_t> ues_to_fill,
+                                                               ran_slice_id_t      slice_id) const
+{
+  auto slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
+  if (slice_it == ran_slices_to_ues_with_pending_data.end()) {
+    // This slice is not configured.
+    return 0;
+  }
+  const auto& ues_with_data = slice_it->second;
+
+  // Fill list of UEs with pending data.
+  unsigned cnt = 0;
+  find_first(ues_with_data, [&ues_to_fill, &cnt](size_t ueidx) {
+    ues_to_fill[cnt++] = static_cast<du_ue_index_t>(ueidx);
+    return cnt >= ues_to_fill.size();
+  });
+  return cnt;
+}
+
 void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
 {
-  ue_context& ue_ctx = get_ue_row().at<ue_context>();
+  auto        u      = get_ue_row();
+  ue_context& ue_ctx = u.at<ue_context>();
   if (ue_ctx.fallback_state == enter_fallback) {
     // no-op.
     return;
   }
   ue_ctx.fallback_state = enter_fallback;
+  auto& ue_cfg          = u.at<ue_config_context>();
+  // Clear any pending data for this UE in the slices.
+  for (const auto& [slice_id, pending_bytes] : ue_ctx.pending_bytes_per_slice) {
+    if (pending_bytes > 0) {
+      parent->ran_slices_to_ues_with_pending_data.at(slice_id).set(ue_cfg.ue_index, not ue_ctx.fallback_state);
+    }
+  }
 }
 
 static uint16_t get_lc_prio(const logical_channel_config& cfg)
@@ -114,7 +143,6 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
   auto  u      = ues.row(ue_rid);
   auto& ue_cfg = u.at<ue_config_context>();
   auto& ue_ch  = u.at<ue_channel_context>();
-  auto& ue_ctx = u.at<ue_context>();
 
   // Exchange new config.
   auto old_cfgs          = ue_cfg.channel_configs;
@@ -154,8 +182,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
     // Implicitly set channel as active when configured.
     if (not ch_ctx.active and ch_ctx.slice_id.has_value()) {
       // Update slice pending bytes, because we are activating the logical channel.
-      auto& pending_bytes = ue_ctx.find_slice(*ch_ctx.slice_id)->second;
-      pending_bytes += get_mac_sdu_required_bytes(ch_ctx.buf_st);
+      on_slice_peding_bytes_update(u, true, ch_ctx.slice_id, ch_ctx.buf_st, 0);
     }
     ch_ctx.active = true;
 
@@ -249,21 +276,17 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
 
   // Add LCID to new slice.
   ch_ctx.slice_id = slice_id;
-  ue_ctx.find_slice(slice_id)->second += get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
+  on_slice_peding_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, 0);
 }
 
 void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
 {
-  auto  u      = get_ue(ue_rid);
-  auto& ue_ctx = u.at<ue_context>();
-  auto& ue_ch  = u.at<ue_channel_context>();
+  auto  u     = get_ue(ue_rid);
+  auto& ue_ch = u.at<ue_channel_context>();
   if (ue_ch.channels.contains(lcid)) {
     channel_context& ch_ctx = ue_ch.channels[lcid];
+    on_slice_peding_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, 0, ch_ctx.buf_st);
     if (ch_ctx.slice_id.has_value()) {
-      // Erase LC from the slice lookup.
-      auto  slice_it    = ue_ctx.find_slice(*ch_ctx.slice_id);
-      auto& slice_bytes = slice_it->second;
-      slice_bytes -= get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
       // Remove slice from LC.
       auto prev_slice_id = *ch_ctx.slice_id;
       ch_ctx.slice_id.reset();
@@ -271,8 +294,10 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
       if (std::none_of(ue_ch.channels.begin(), ue_ch.channels.end(), [prev_slice_id](const channel_context& ch) {
             return ch.slice_id == prev_slice_id;
           })) {
-        // No other LC is still attached to the slice. Remove slice from UE.
-        ue_ctx.pending_bytes_per_slice.erase(slice_it);
+        // No other LC is still attached to the slice for this UE. Remove slice from UE.
+        auto& ue_ctxt  = u.at<ue_context>();
+        auto  slice_it = ue_ctxt.find_slice(prev_slice_id);
+        ue_ctxt.pending_bytes_per_slice.erase(slice_it);
       }
     }
   }
@@ -286,18 +311,41 @@ void dl_logical_channel_system::handle_dl_buffer_status_indication(soa::row_id u
   // We apply this limit to avoid potential overflows.
   static constexpr unsigned max_buffer_status = 1U << 24U;
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-  auto  u      = get_ue(ue_row_id);
-  auto& ue_ctx = u.at<ue_context>();
-  auto& ue_ch  = u.at<ue_channel_context>();
+  auto  u     = get_ue(ue_row_id);
+  auto& ue_ch = u.at<ue_channel_context>();
   if (ue_ch.channels.contains(lcid)) {
     auto& ch_ctx      = ue_ch.channels[lcid];
     auto  prev_buf_st = ch_ctx.buf_st;
     ch_ctx.buf_st     = std::min(buffer_status, max_buffer_status);
     ch_ctx.hol_toa    = hol_toa;
-    if (ch_ctx.slice_id.has_value()) {
-      ue_ctx.find_slice(*ch_ctx.slice_id)->second +=
-          ch_ctx.active ? (get_mac_sdu_required_bytes(ch_ctx.buf_st) - get_mac_sdu_required_bytes(prev_buf_st)) : 0;
-    }
+    on_slice_peding_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, prev_buf_st);
+  }
+}
+
+void dl_logical_channel_system::on_slice_peding_bytes_update(ue_row&                              u,
+                                                             bool                                 channel_active,
+                                                             const std::optional<ran_slice_id_t>& slice_id,
+                                                             unsigned                             new_buf_st,
+                                                             unsigned                             prev_buf_st)
+{
+  if (not slice_id.has_value() or not channel_active) {
+    // No slice associated with this logical channel or it is inactive.
+    return;
+  }
+
+  // In case this logical channel has a RAN slice associated, update the pending bytes for the slice.
+  auto&      ue_ctx                  = u.at<ue_context>();
+  auto&      slice_pending_bytes     = ue_ctx.find_slice(*slice_id)->second;
+  const auto prev_buf_st_incl_subhdr = get_mac_sdu_required_bytes(prev_buf_st);
+  const auto new_buf_st_incl_subhdr  = get_mac_sdu_required_bytes(new_buf_st);
+  srsran_sanity_check(slice_pending_bytes + new_buf_st_incl_subhdr >= prev_buf_st_incl_subhdr,
+                      "Invalid slice pending bytes");
+  slice_pending_bytes += new_buf_st_incl_subhdr - prev_buf_st_incl_subhdr;
+
+  if (not ue_ctx.fallback_state and (new_buf_st > 0) != (prev_buf_st > 0)) {
+    // zero crossing detection when not in fallback mode. Update the slice UE with pending data bitmap.
+    auto& ue_cfg = u.at<ue_config_context>();
+    ran_slices_to_ues_with_pending_data.at(*slice_id).set(ue_cfg.ue_index, new_buf_st > 0);
   }
 }
 
@@ -367,7 +415,6 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   }
   auto  u         = get_ue(ue_rid);
   auto& ue_ch_ctx = u.at<ue_channel_context>();
-  auto& ue_ctx    = u.at<ue_context>();
 
   unsigned lch_bytes_and_subhr = pending_bytes(u, lcid);
   if (lch_bytes_and_subhr == 0) {
@@ -398,33 +445,23 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
   channel_context& ch_ctx           = ue_ch_ctx.channels[lcid];
   const unsigned   last_sched_bytes = std::min(sdu_size, ch_ctx.buf_st);
-  auto             prev_buf_st      = ch_ctx.buf_st;
-  ch_ctx.buf_st -= last_sched_bytes;
-  if (ch_ctx.qos_row.has_value()) {
-    // QoS tracking.
-    qos_channels.at<qos_context>(*ch_ctx.qos_row).last_sched_bytes = last_sched_bytes;
-  }
-  if (ch_ctx.slice_id.has_value()) {
-    auto& slice_pending_bytes = ue_ctx.find_slice(*ch_ctx.slice_id)->second;
-    srsran_sanity_check(slice_pending_bytes + get_mac_sdu_required_bytes(ch_ctx.buf_st) >=
-                            get_mac_sdu_required_bytes(prev_buf_st),
-                        "Invalid slice pending bytes");
-    slice_pending_bytes += get_mac_sdu_required_bytes(ch_ctx.buf_st) - get_mac_sdu_required_bytes(prev_buf_st);
-  }
-
-  if (lcid != LCID_SRB0 and ch_ctx.buf_st > 0) {
+  auto             new_buf_st       = ch_ctx.buf_st - last_sched_bytes;
+  if (lcid != LCID_SRB0 and new_buf_st > 0) {
     // Allocation was not enough to empty the logical channel. In this specific case, we add some bytes to account
     // for the RLC segmentation overhead.
     // Note: This update is only relevant for PDSCH allocations for slots > slot_tx. For the case of PDSCH
     // slot==slot_tx, there will be an RLC Buffer Occupancy update right away, which will set a new buffer value.
-    prev_buf_st = ch_ctx.buf_st;
-    ch_ctx.buf_st += RLC_SEGMENTATION_OVERHEAD;
-    if (ch_ctx.slice_id.has_value()) {
-      auto& slice_pending_bytes = ue_ctx.find_slice(*ch_ctx.slice_id)->second;
-      slice_pending_bytes += get_mac_sdu_required_bytes(ch_ctx.buf_st) - get_mac_sdu_required_bytes(prev_buf_st);
-    }
+    new_buf_st += RLC_SEGMENTATION_OVERHEAD;
+  }
+  auto prev_buf_st = ch_ctx.buf_st;
+  ch_ctx.buf_st    = new_buf_st;
+  on_slice_peding_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, new_buf_st, prev_buf_st);
+  if (ch_ctx.qos_row.has_value()) {
+    // In case of QoS tracking is activated, set the last scheduled bytes.
+    qos_channels.at<qos_context>(*ch_ctx.qos_row).last_sched_bytes = last_sched_bytes;
   }
 
+  // Set subPDU info.
   subpdu.lcid        = lcid;
   subpdu.sched_bytes = sdu_size;
 
