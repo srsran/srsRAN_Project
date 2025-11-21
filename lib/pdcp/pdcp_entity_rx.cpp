@@ -65,6 +65,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
     if (cfg.header_compression.has_value()) {
       const auto& header_compression = cfg.header_compression.value();
       if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
+        // Uplink-only ROHC allows only ROHC profile 0x0006, see TS 38.331 Sec. 6.3
         for (auto profile : rohc::all_rohc_profiles) {
           if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
             logger.log_error(
