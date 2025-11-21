@@ -113,7 +113,7 @@ public:
   /// \brief Initiate removal of existing UE from the repository.
   void schedule_ue_rem(ue_config_delete_event ev);
 
-  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_data(ran_slice_id_t slice_id, bool is_dl) const;
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const;
 
   ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
   const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }

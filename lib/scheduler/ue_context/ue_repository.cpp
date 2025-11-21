@@ -219,7 +219,7 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
   }
 }
 
-bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_data(ran_slice_id_t slice_id, bool is_dl) const
+bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const
 {
   if (is_dl) {
     return dl_lc_ch_sys.get_ues_with_pending_data(slice_id);

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ue_context/ue.h"
+#include "../ue_context/ue_repository.h"
 #include "srsran/adt/slotted_array.h"
 
 namespace srsran {
@@ -112,7 +112,7 @@ private:
 class slice_ue_repository
 {
 public:
-  slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_);
+  slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_, ue_repository& ues_);
 
   /// Whether this slice has no UEs.
   bool empty() const { return ue_map.empty(); }
@@ -146,12 +146,19 @@ public:
 
   auto lower_bound(du_ue_index_t ue_index) const { return ue_map.lower_bound(ue_index); }
 
+  /// Retrieve UEs with pending data for this RAN slice.
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(bool is_dl) const
+  {
+    return ues.get_ues_with_pending_newtx_data(slice_id, is_dl);
+  }
+
 private:
   /// Add new UE to the RAN slice.
   bool add_ue(ue& u);
 
   const ran_slice_id_t  slice_id;
   const du_cell_index_t cell_index;
+  ue_repository&        ues;
 
   slotted_id_table<du_ue_index_t, slice_ue, MAX_NOF_DU_UES> ue_map;
 };

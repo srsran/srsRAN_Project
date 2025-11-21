@@ -51,19 +51,18 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_dl_candidate_group
     std::vector<ue_newtx_candidate>& candidates,
     const dl_ran_slice_candidate&    slice)
 {
-  fill_ue_candidate_group(candidates, slice.id(), true, slice.get_slice_ues());
+  fill_ue_candidate_group(candidates, true, slice.get_slice_ues());
 }
 
 void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_ul_candidate_group(
     std::vector<ue_newtx_candidate>& candidates,
     const ul_ran_slice_candidate&    slice)
 {
-  fill_ue_candidate_group(candidates, slice.id(), false, slice.get_slice_ues());
+  fill_ue_candidate_group(candidates, false, slice.get_slice_ues());
 }
 
 void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
     std::vector<ue_newtx_candidate>& candidates,
-    ran_slice_id_t                   slice_id,
     bool                             is_dl,
     const slice_ue_repository&       slice_ues)
 {
@@ -94,7 +93,7 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
   unsigned                             last_candidate_count = 0;
   const unsigned                       group_size  = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
   auto                                 start_ue_it = slice_ues.lower_bound(to_du_ue_index(group_offset));
-  const bounded_bitset<MAX_NOF_DU_UES> ues_with_data = parent->ues.get_ues_with_pending_data(slice_id, is_dl);
+  const bounded_bitset<MAX_NOF_DU_UES> ues_with_data = slice_ues.get_ues_with_pending_newtx_data(is_dl);
   for (auto ue_it = start_ue_it; count != nof_ues; ++ue_it) {
     ++count;
     if (ue_it == slice_ues.end()) {

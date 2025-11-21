@@ -49,7 +49,7 @@ protected:
       return cfg;
     }()),
     cell_ues(ues.add_cell(to_du_cell_index(0))),
-    slice_ues(ran_slice_id_t{0}, to_du_cell_index(0)),
+    slice_ues(ran_slice_id_t{0}, to_du_cell_index(0), ues),
     alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, res_grid, logger),
     current_slot(cfg_builder_params.scs_common, 0)
   {
@@ -239,7 +239,7 @@ protected:
   ue_cell_repository&     cell_ues;
   slice_ue_repository     slice_ues;
   slice_rrm_policy_config rrm_policy;
-  ran_slice_instance      slice_inst{ran_slice_id_t{0}, cell_cfg, rrm_policy};
+  ran_slice_instance      slice_inst{ran_slice_id_t{0}, cell_cfg, rrm_policy, ues};
   ue_cell_grid_allocator  alloc;
 
   slot_point current_slot;

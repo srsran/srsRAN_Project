@@ -26,7 +26,10 @@ class ran_slice_instance
   static constexpr unsigned MAX_SLOTS_SINCE_LAST_PXSCH = 256;
 
 public:
-  ran_slice_instance(ran_slice_id_t id_, const cell_configuration& cell_cfg_, const slice_rrm_policy_config& cfg_);
+  ran_slice_instance(ran_slice_id_t                 id_,
+                     const cell_configuration&      cell_cfg_,
+                     const slice_rrm_policy_config& cfg_,
+                     ue_repository&                 ues_);
 
   void slot_indication(slot_point slot_tx);
 

@@ -58,7 +58,6 @@ private:
 
   private:
     void fill_ue_candidate_group(std::vector<ue_newtx_candidate>& candidates,
-                                 ran_slice_id_t                   slice_id,
                                  bool                             is_dl,
                                  const slice_ue_repository&       slice_ues);
 

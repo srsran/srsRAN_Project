@@ -57,9 +57,9 @@ protected:
 
     ue_db.add_cell(to_du_cell_index(0));
 
-    slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0)));
-    slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0)));
-    slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0)));
+    slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0), ue_db));
+    slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0), ue_db));
+    slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0), ue_db));
   }
 
   void add_ue(du_ue_index_t ue_idx, span<const test_lc_ch_cfg> lc_chs)

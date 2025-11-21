@@ -16,8 +16,8 @@ slice_ue::slice_ue(ue& u_, ue_cell& ue_cc_, ran_slice_id_t slice_id_) : u(u_), u
 
 // class slice_ue_repository
 
-slice_ue_repository::slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_) :
-  slice_id(slice_id_), cell_index(cell_index_)
+slice_ue_repository::slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_, ue_repository& ues_) :
+  slice_id(slice_id_), cell_index(cell_index_), ues(ues_)
 {
 }
 
