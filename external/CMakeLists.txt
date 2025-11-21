@@ -17,7 +17,6 @@ if(ENABLE_SRSRAN_TRACY)
 		message(FATAL_ERROR "Tracy enabled, but not found. Make sure that the subrepo is cloned correctly.")
 	endif()
 	add_subdirectory(tracy)
-	include_directories(tracy/public)
 	set(TRACY_LIBRARIES Tracy::TracyClient)
 endif()
 
