@@ -155,6 +155,7 @@ cd "$FOLDER" || exit
 
 # Setup ROHC
 export ROHC_DIR="/opt/rohc"
+echo "ROHC_DIR set to $ROHC_DIR"
 
 # Setup UHD
 if [[ -n "$UHD_VERSION" ]]; then
