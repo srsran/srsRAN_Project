@@ -58,7 +58,7 @@ private:
 
   private:
     void fill_ue_candidate_group(std::vector<ue_newtx_candidate>& candidates,
-                                 slot_point                       sl_tx,
+                                 ran_slice_id_t                   slice_id,
                                  bool                             is_dl,
                                  const slice_ue_repository&       slice_ues);
 
@@ -114,6 +114,7 @@ private:
   cell_metrics_handler&             cell_metrics;
   cell_harq_manager&                cell_harqs;
   uci_allocator&                    uci_alloc;
+  ue_repository&                    ues;
   srslog::basic_logger&             logger;
 
   // Derived parameters.

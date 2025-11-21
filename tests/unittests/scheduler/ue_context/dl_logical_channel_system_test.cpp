@@ -455,29 +455,31 @@ TEST_F(single_ue_dl_logical_channel_system_test,
 
 TEST_F(single_ue_dl_logical_channel_system_test, all_ues_with_pending_data_provides_only_ues_with_pending_data)
 {
-  std::array<du_ue_index_t, 1> ues_with_data = {du_ue_index_t::INVALID_DU_UE_INDEX};
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 0);
+  bounded_bitset<MAX_NOF_DU_UES> ues_with_data;
+  ues_with_data = this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1});
+  ASSERT_EQ(ues_with_data.count(), 0);
 
   ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 0);
+  ASSERT_EQ(this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1}).count(), 0);
 
   ue_lchs.handle_dl_buffer_status_indication(LCID_MIN_DRB, 100);
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 1);
-  ASSERT_EQ(ues_with_data[0], to_du_ue_index(0));
+  ues_with_data = this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1});
+  ASSERT_EQ(ues_with_data.count(), 1);
+  ASSERT_TRUE(ues_with_data.test(0));
 
   // Fallback disables pending data.
   ue_lchs.set_fallback_state(true);
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 0);
+  ASSERT_EQ(this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1}).count(), 0);
 
   // Disable fallback enables pending data.
-  ues_with_data[0] = du_ue_index_t{du_ue_index_t::INVALID_DU_UE_INDEX};
   ue_lchs.set_fallback_state(false);
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 1);
-  ASSERT_EQ(ues_with_data[0], to_du_ue_index(0));
+  ues_with_data = this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1});
+  ASSERT_EQ(ues_with_data.count(), 1);
+  ASSERT_TRUE(ues_with_data.test(0));
 
   // Deregister slice removes pending data.
   ue_lchs.reset_lcid_ran_slice(LCID_MIN_DRB);
-  ASSERT_EQ(this->lch_system.fill_ues_with_pending_data(ues_with_data, ran_slice_id_t{1}), 0);
+  ASSERT_EQ(this->lch_system.get_ues_with_pending_data(ran_slice_id_t{1}).count(), 0);
 }
 
 TEST_F(single_ue_dl_logical_channel_system_test, reregistering_slice_does_not_change_pending_bytes)

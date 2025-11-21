@@ -219,6 +219,23 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
   }
 }
 
+bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_data(ran_slice_id_t slice_id, bool is_dl) const
+{
+  if (is_dl) {
+    return dl_lc_ch_sys.get_ues_with_pending_data(slice_id);
+  }
+
+  // TODO: Support for UL.
+  if (ues.empty()) {
+    return bounded_bitset<MAX_NOF_DU_UES>{};
+  }
+  auto last = ues.end();
+  --last;
+  bounded_bitset<MAX_NOF_DU_UES> ues_with_data(last->get()->ue_index + 1);
+  ues_with_data.fill(true);
+  return ues_with_data;
+}
+
 ue* ue_repository::find_by_rnti(rnti_t rnti)
 {
   auto it = rnti_to_ue_index_lookup.find(rnti);

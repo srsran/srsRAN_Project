@@ -51,19 +51,19 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_dl_candidate_group
     std::vector<ue_newtx_candidate>& candidates,
     const dl_ran_slice_candidate&    slice)
 {
-  fill_ue_candidate_group(candidates, slice.get_slot_tx(), true, slice.get_slice_ues());
+  fill_ue_candidate_group(candidates, slice.id(), true, slice.get_slice_ues());
 }
 
 void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_ul_candidate_group(
     std::vector<ue_newtx_candidate>& candidates,
     const ul_ran_slice_candidate&    slice)
 {
-  fill_ue_candidate_group(candidates, slice.get_slot_tx(), false, slice.get_slice_ues());
+  fill_ue_candidate_group(candidates, slice.id(), false, slice.get_slice_ues());
 }
 
 void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
     std::vector<ue_newtx_candidate>& candidates,
-    slot_point                       sl_tx,
+    ran_slice_id_t                   slice_id,
     bool                             is_dl,
     const slice_ue_repository&       slice_ues)
 {
@@ -90,15 +90,20 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
   last_pdcch_tx = parent->pdcch_slot;
 
   // Build list of candidates, starting from the UE group offset.
-  unsigned       count                = 0;
-  unsigned       last_candidate_count = 0;
-  const unsigned group_size           = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
-  auto           start_ue_it          = slice_ues.lower_bound(to_du_ue_index(group_offset));
+  unsigned                             count                = 0;
+  unsigned                             last_candidate_count = 0;
+  const unsigned                       group_size  = std::min(nof_ues, parent->expert_cfg.pre_policy_rr_ue_group_size);
+  auto                                 start_ue_it = slice_ues.lower_bound(to_du_ue_index(group_offset));
+  const bounded_bitset<MAX_NOF_DU_UES> ues_with_data = parent->ues.get_ues_with_pending_data(slice_id, is_dl);
   for (auto ue_it = start_ue_it; count != nof_ues; ++ue_it) {
     ++count;
     if (ue_it == slice_ues.end()) {
       // wrap-around.
       ue_it = slice_ues.begin();
+    }
+    if (not ues_with_data.test(ue_it->ue_index())) {
+      // No pending data for this UE in this slice.
+      continue;
     }
 
     std::optional<ue_newtx_candidate> ue_candidate =
@@ -120,7 +125,7 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
 // class intra_slice_scheduler
 
 intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& expert_cfg_,
-                                             ue_repository&                    ues,
+                                             ue_repository&                    ues_,
                                              pdcch_resource_allocator&         pdcch_alloc,
                                              uci_allocator&                    uci_alloc_,
                                              cell_resource_allocator&          cell_alloc_,
@@ -132,6 +137,7 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   cell_metrics(cell_metrics_),
   cell_harqs(cell_harqs_),
   uci_alloc(uci_alloc_),
+  ues(ues_),
   logger(logger_),
   expected_pdschs_per_slot(compute_expected_pdschs_per_slot(cell_alloc.cfg)),
   ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, cell_alloc_, logger_)
