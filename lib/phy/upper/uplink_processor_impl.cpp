@@ -233,28 +233,29 @@ void uplink_processor_impl::process_symbol_pdus(unsigned end_symbol_index)
   }
 }
 
-void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
+void uplink_processor_impl::process_prach(shared_prach_buffer buffer, const prach_buffer_context& context_)
 {
   // Notify the creation of the PRACH detection task.
   if (!state_machine.on_prach_detection()) {
     return;
   }
 
-  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-    trace_point tp = l1_ul_tracer.now();
+  bool success = task_executors.prach_executor.execute(
+      [this, buffer_ = std::move(buffer), context_]() noexcept SRSRAN_RTSAN_NONBLOCKING {
+        trace_point tp = l1_ul_tracer.now();
 
-    ul_prach_results ul_results;
-    ul_results.context = context_;
-    ul_results.result  = prach->detect(buffer, get_prach_dectector_config_from_prach_context(context_));
+        ul_prach_results ul_results;
+        ul_results.context = context_;
+        ul_results.result  = prach->detect(*buffer_, get_prach_dectector_config_from_prach_context(context_));
 
-    // Notify the PRACH results.
-    notifier.on_new_prach_results(ul_results);
+        // Notify the PRACH results.
+        notifier.on_new_prach_results(ul_results);
 
-    l1_ul_tracer << trace_event("process_prach", tp);
+        l1_ul_tracer << trace_event("process_prach", tp);
 
-    // Notify the end of the PRACH detection.
-    state_machine.on_end_prach_detection();
-  });
+        // Notify the end of the PRACH detection.
+        state_machine.on_end_prach_detection();
+      });
 
   if (!success) {
     logger.warning(current_slot.sfn(), current_slot.slot_index(), "Failed to execute PRACH. Ignoring detection.");

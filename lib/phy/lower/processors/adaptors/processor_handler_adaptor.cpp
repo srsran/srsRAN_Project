@@ -21,9 +21,9 @@ void processor_handler_adaptor::downlink_handler_adaptor ::handle_resource_grid(
 
 void processor_handler_adaptor::uplink_request_handler_adaptor::request_prach_window(
     const prach_buffer_context& context,
-    prach_buffer&               buffer)
+    shared_prach_buffer         buffer)
 {
-  prach_handler.handle_request(buffer, context);
+  prach_handler.handle_request(std::move(buffer), context);
 }
 
 void processor_handler_adaptor::uplink_request_handler_adaptor::request_uplink_slot(

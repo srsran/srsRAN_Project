@@ -10,9 +10,10 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
+
 namespace srsran {
 
-class prach_buffer;
 struct lower_phy_rx_symbol_context;
 struct prach_buffer_context;
 class shared_resource_grid;
@@ -43,7 +44,7 @@ public:
   ///
   /// \param[in] context PRACH context.
   /// \param[in] buffer  Read-only PRACH buffer.
-  virtual void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
+  virtual void on_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) = 0;
 };
 
 } // namespace srsran

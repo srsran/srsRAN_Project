@@ -26,10 +26,10 @@ public:
   void connect(lower_phy_uplink_request_handler* lower_handler) { rx_symbol_request_handler = lower_handler; }
 
   // See interface for documentation.
-  void on_prach_capture_request(const prach_buffer_context& context, prach_buffer& buffer) override
+  void on_prach_capture_request(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     report_fatal_error_if_not(rx_symbol_request_handler, "Adapter is not connected.");
-    rx_symbol_request_handler->request_prach_window(context, buffer);
+    rx_symbol_request_handler->request_prach_window(context, std::move(buffer));
   }
 
   // See interface for documentation.

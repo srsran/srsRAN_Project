@@ -100,14 +100,14 @@ private:
   }
 
   // See ru_uplink_plane_handler for documentation.
-  void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
+  void handle_prach_occasion(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     interval<unsigned> sector_range(0, sectors.size());
     srsran_assert(sector_range.contains(context.sector),
                   "Sector identifier (i.e., {}) is out-of-bounds {}.",
                   context.sector,
                   sector_range);
-    sectors[context.sector]->handle_prach_occasion(context, buffer);
+    sectors[context.sector]->handle_prach_occasion(context, std::move(buffer));
   }
 
   // See ru_uplink_plane_handler for documentation.

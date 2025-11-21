@@ -10,11 +10,14 @@
 
 #pragma once
 
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
+#include "srsran/srslog/logger.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
-class prach_buffer_pool;
 class upper_phy_rx_symbol_request_notifier;
 class shared_resource_grid;
 
@@ -27,8 +30,9 @@ class shared_resource_grid;
 class uplink_request_processor_impl : public uplink_request_processor
 {
 public:
-  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier_,
-                                prach_buffer_pool&                    prach_pool_);
+  uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier&       rx_symbol_request_notifier_,
+                                std::vector<std::unique_ptr<prach_buffer>>& prach_buffers,
+                                srslog::basic_logger&                       logger_);
 
   // See interface for documentation.
   void process_prach_request(const prach_buffer_context& context) override;
@@ -40,7 +44,8 @@ private:
   /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier;
   /// PRACH buffer pool.
-  prach_buffer_pool& prach_pool;
+  prach_buffer_pool     prach_pool;
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

@@ -62,7 +62,7 @@ private:
     ++on_rx_symbol_count;
   }
 
-  void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override
+  void process_prach(shared_prach_buffer buffer, const prach_buffer_context& context) override
   {
     has_process_prach_method_called = true;
   }

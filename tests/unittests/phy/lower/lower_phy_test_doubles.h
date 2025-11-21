@@ -113,7 +113,7 @@ private:
 
   struct rx_prach_event {
     prach_buffer_context context;
-    const prach_buffer*  buffer;
+    prach_buffer*        buffer;
   };
   std::vector<rx_prach_event> rx_prach_events;
 
@@ -143,13 +143,13 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void on_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     logger.debug(context.slot.sfn(), context.slot.slot_index(), "Sector {} - On Rx PRACH Window.", context.sector);
     rx_prach_events.emplace_back();
     rx_prach_event& event = rx_prach_events.back();
     event.context         = context;
-    event.buffer          = &buffer;
+    event.buffer          = buffer.get();
   }
 
   /// \brief Gets the total number of events of any kind.

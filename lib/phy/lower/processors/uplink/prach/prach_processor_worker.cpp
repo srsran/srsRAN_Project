@@ -18,7 +18,8 @@
 using namespace srsran;
 
 void prach_processor_worker::run_state_wait(const baseband_gateway_buffer_reader&           samples,
-                                            const prach_processor_baseband::symbol_context& context)
+                                            const prach_processor_baseband::symbol_context& context,
+                                            stop_event_token                                token)
 {
   // Check if the context slot is in the past even if the sector/port does not match.
   if ((context.slot > prach_context.slot) || (context.slot == prach_context.slot && context.symbol > 0)) {
@@ -49,11 +50,12 @@ void prach_processor_worker::run_state_wait(const baseband_gateway_buffer_reader
   state = states::collecting;
 
   // Accumulate the samples for the first segment.
-  accumulate_samples(samples);
+  accumulate_samples(samples, std::move(token));
 }
 
 void prach_processor_worker::run_state_collecting(const baseband_gateway_buffer_reader&           samples,
-                                                  const prach_processor_baseband::symbol_context& context)
+                                                  const prach_processor_baseband::symbol_context& context,
+                                                  stop_event_token                                token)
 {
   // Ignore symbol if the sector and port do not match with the prach_context.
   if (context.sector != prach_context.sector) {
@@ -61,10 +63,10 @@ void prach_processor_worker::run_state_collecting(const baseband_gateway_buffer_
   }
 
   // Accumulate samples of the n-th segment.
-  accumulate_samples(samples);
+  accumulate_samples(samples, std::move(token));
 }
 
-void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_reader& samples)
+void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_reader& samples, stop_event_token token)
 {
   // Select number of samples to append.
   unsigned count = std::min(window_length - nof_samples, samples.get_nof_samples());
@@ -97,7 +99,7 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
   // Otherwise, transition to processing.
   state = states::processing;
 
-  if (!async_task_executor.defer([this, nof_ports]() {
+  if (!async_task_executor.defer([this, nof_ports, moved_token = std::move(token)]() {
         trace_point tp = ru_tracer.now();
 
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
@@ -126,7 +128,7 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
         ru_tracer << trace_event("prach_demodulate", tp);
 
         // Notify PRACH window reception.
-        notifier->on_rx_prach_window(*buffer, prach_context);
+        notifier->on_rx_prach_window(std::move(buffer), prach_context);
 
         // Transition to idle.
         state = states::idle;
@@ -136,12 +138,18 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
   }
 }
 
-void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_buffer_context& context)
+void prach_processor_worker::handle_request(shared_prach_buffer request_buffer, const prach_buffer_context& context)
 {
   srsran_assert(state == states::idle, "Invalid state.");
 
+  auto token = stop_manager.get_token();
+
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
   prach_context = context;
-  buffer        = &buffer_;
+  buffer        = std::move(request_buffer);
 
   // Calculate the PRACH window size starting at the beginning of the slot.
   window_length =
@@ -158,19 +166,31 @@ void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_b
 void prach_processor_worker::process_symbol(const baseband_gateway_buffer_reader&           samples,
                                             const prach_processor_baseband::symbol_context& context)
 {
+  auto token = stop_manager.get_token();
+
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
   // Run FSM.
   switch (state) {
     case states::idle:
       // Do nothing.
       break;
     case states::wait:
-      run_state_wait(samples, context);
+      run_state_wait(samples, context, std::move(token));
       break;
     case states::collecting:
-      run_state_collecting(samples, context);
+      run_state_collecting(samples, context, std::move(token));
       break;
     case states::processing:
       // Do nothing.
       break;
   }
+}
+
+void prach_processor_worker::stop()
+{
+  stop_manager.stop();
+  buffer.reset();
 }

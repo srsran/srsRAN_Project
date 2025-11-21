@@ -39,11 +39,11 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
 }
 
 void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,
-                                                              const prach_buffer&         buffer)
+                                                              shared_prach_buffer         buffer)
 {
   // Get uplink processor.
   uplink_slot_processor& ul_proc = ul_processor_pool.get_slot_processor(context.slot);
 
   // Process PRACH.
-  ul_proc.process_prach(buffer, context);
+  ul_proc.process_prach(std::move(buffer), context);
 }

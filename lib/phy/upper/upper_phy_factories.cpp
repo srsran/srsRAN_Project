@@ -59,7 +59,7 @@ create_ul_processor_pool(uplink_processor_factory&              factory,
                          const upper_phy_factory_configuration& factory_config,
                          const upper_phy_configuration&         config);
 
-static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_configuration& config);
+static std::vector<std::unique_ptr<prach_buffer>> create_prach_buffers(const upper_phy_configuration& config);
 
 namespace {
 
@@ -465,8 +465,8 @@ public:
                                                             config);
     report_fatal_error_if_not(phy_config.ul_processor_pool, "Invalid uplink processor pool.");
 
-    phy_config.prach_pool = create_prach_pool(config);
-    report_fatal_error_if_not(phy_config.prach_pool, "Invalid PRACH buffer pool.");
+    phy_config.prach_buffers = create_prach_buffers(config);
+    report_fatal_error_if_not(!phy_config.prach_buffers.empty(), "Invalid PRACH buffers.");
 
     // Create the validators.
     phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
@@ -984,10 +984,10 @@ create_ul_processor_pool(uplink_processor_factory&              factory,
   return create_uplink_processor_pool(std::move(config_pool));
 }
 
-static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_configuration& config)
+static std::vector<std::unique_ptr<prach_buffer>> create_prach_buffers(const upper_phy_configuration& config)
 {
-  std::vector<std::unique_ptr<prach_buffer>> prach_mem;
-  prach_mem.reserve(config.nof_prach_buffer);
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  prach_buffers.reserve(config.nof_prach_buffer);
 
   for (unsigned i = 0, e = config.nof_prach_buffer; i != e; ++i) {
     std::unique_ptr<prach_buffer> buffer;
@@ -1000,10 +1000,10 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
     }
 
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");
-    prach_mem.push_back(std::move(buffer));
+    prach_buffers.push_back(std::move(buffer));
   }
 
-  return create_prach_buffer_pool(std::move(prach_mem));
+  return prach_buffers;
 }
 
 std::shared_ptr<upper_phy_rx_symbol_handler_factory> srsran::create_rx_symbol_handler_factory()

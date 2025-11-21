@@ -18,6 +18,7 @@
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -55,15 +56,17 @@ public:
     /// PRACH buffer context.
     prach_buffer_context context;
     /// PRACH buffer.
-    prach_buffer* buffer = nullptr;
+    shared_prach_buffer buffer;
   };
 
   /// Default constructor.
   prach_context() = default;
 
   /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
-  prach_context(const prach_buffer_context& context, prach_buffer& buffer, std::optional<unsigned> start_symbol_) :
-    context_info({context, &buffer})
+  prach_context(const prach_buffer_context& context,
+                shared_prach_buffer         buffer,
+                std::optional<unsigned>     start_symbol_) :
+    context_info({.context = context, .buffer = std::move(buffer)})
   {
     srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
     srsran_assert(is_short_preamble(context.format) ||
@@ -83,8 +86,32 @@ public:
 
     // Initialize statistics.
     for (unsigned i = 0; i != nof_symbols; ++i) {
-      buffer_stats.emplace_back(buffer.get_max_nof_ports(), preamble_info.sequence_length);
+      buffer_stats.emplace_back(context_info.buffer->get_max_nof_ports(), preamble_info.sequence_length);
     }
+  }
+
+  prach_context(const prach_context& other)
+  {
+    context_info.context = other.context_info.context;
+    context_info.buffer  = other.context_info.buffer.clone();
+    buffer_stats         = other.buffer_stats;
+    preamble_info        = other.preamble_info;
+    freq_mapping_info    = other.freq_mapping_info;
+    nof_symbols          = other.nof_symbols;
+    start_symbol         = other.start_symbol;
+  }
+
+  prach_context& operator=(const prach_context& other)
+  {
+    context_info.context = other.context_info.context;
+    context_info.buffer  = other.context_info.buffer.clone();
+    buffer_stats         = other.buffer_stats;
+    preamble_info        = other.preamble_info;
+    freq_mapping_info    = other.freq_mapping_info;
+    nof_symbols          = other.nof_symbols;
+    start_symbol         = other.start_symbol;
+
+    return *this;
   }
 
   /// Returns true if this context is empty, otherwise false.
@@ -145,7 +172,7 @@ public:
 
   /// Tries to get a complete PRACH buffer. A PRACH buffer is considered completed when all the PRBs for all the ports
   /// have been written.
-  expected<prach_context_information> try_getting_complete_prach_buffer() const
+  expected<prach_context_information> try_getting_complete_prach_buffer()
   {
     if (!context_info.buffer) {
       return make_unexpected(default_error_t{});
@@ -157,11 +184,11 @@ public:
       return make_unexpected(default_error_t{});
     }
 
-    return {context_info};
+    return {{context_info.context, std::move(context_info.buffer)}};
   }
 
   /// Returns the information of this PRACH context.
-  const prach_context_information& get_context_information() const { return context_info; }
+  prach_context_information pop_context_information() { return {context_info.context, std::move(context_info.buffer)}; }
 
 private:
   /// PRACH context information
@@ -208,13 +235,13 @@ public:
 
   /// Adds the given entry to the repository at slot.
   void add(const prach_buffer_context& context,
-           prach_buffer&               buffer_,
+           shared_prach_buffer         buffer_,
            srslog::basic_logger&       logger,
            std::optional<unsigned>     start_symbol)
   {
-    if (!pending_context_to_add.try_push([context, &buffer_, start_symbol, this]() {
+    if (!pending_context_to_add.try_push([context, prach_buff = std::move(buffer_), start_symbol, this]() mutable {
           std::lock_guard<std::mutex> lock(mutex);
-          entry(context.slot) = prach_context(context, buffer_, start_symbol);
+          entry(context.slot) = prach_context(context, std::move(prach_buff), start_symbol);
         })) {
       logger.warning("Failed to enqueue task to add the uplink context to the repository");
     }
@@ -247,7 +274,7 @@ public:
   ///
   /// A PRACH buffer is considered completed when all the PRBs for all the ports have been written. If the pop is
   /// successful it clears the entry of the repository for that slot.
-  expected<prach_context::prach_context_information> try_poping_complete_prach_buffer(slot_point slot)
+  expected<prach_context::prach_context_information> try_popping_complete_prach_buffer(slot_point slot)
   {
     std::lock_guard<std::mutex> lock(mutex);
     auto                        result = entry(slot).try_getting_complete_prach_buffer();
@@ -270,7 +297,7 @@ public:
       return make_unexpected(default_error_t());
     }
 
-    auto result = context.get_context_information();
+    auto result = context.pop_context_information();
     context     = {};
 
     return result;
@@ -281,6 +308,14 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     entry(slot) = {};
+  }
+
+  /// Clears the whole repository.
+  void clear()
+  {
+    for (auto& entry : buffer) {
+      entry = {};
+    }
   }
 };
 

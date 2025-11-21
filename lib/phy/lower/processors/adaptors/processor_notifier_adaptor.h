@@ -133,7 +133,7 @@ private:
     void on_prach_request_overflow(const prach_buffer_context& context) override;
 
     // See interface for documentation.
-    void on_rx_prach_window(const prach_buffer& buffer, const prach_buffer_context& context) override;
+    void on_rx_prach_window(shared_prach_buffer buffer, const prach_buffer_context& context) override;
 
   private:
     /// Receive notifier.

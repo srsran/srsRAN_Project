@@ -13,7 +13,6 @@
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/phy/support/interpolator.h"
 #include "srsran/phy/support/prach_buffer.h"
-#include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/support/executors/task_executor.h"
@@ -102,9 +101,6 @@ std::unique_ptr<prach_buffer> create_prach_buffer_long(unsigned max_nof_antennas
 /// \return A short preamble sequence buffer containing PRACH sequence buffers for the number of selected occasions.
 std::unique_ptr<prach_buffer>
 create_prach_buffer_short(unsigned max_nof_antennas, unsigned max_nof_td_occasions, unsigned max_nof_fd_occasions);
-
-/// \brief Returns a pool for the given PRACH buffers.
-std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements);
 
 /// \brief Returns an interpolator.
 std::unique_ptr<srsran::interpolator> create_interpolator();

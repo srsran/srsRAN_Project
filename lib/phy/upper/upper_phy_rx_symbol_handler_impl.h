@@ -33,7 +33,7 @@ public:
                         bool                               is_valid) override;
 
   // See interface for documentation.
-  void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
+  void handle_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override;
 
 private:
   /// Uplink processor pool.

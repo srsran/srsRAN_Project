@@ -50,9 +50,9 @@ public:
   }
 
   // See the uplink_slot_processor interface for documentation.
-  void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override
+  void process_prach(shared_prach_buffer buffer, const prach_buffer_context& context) override
   {
-    base.process_prach(buffer, context);
+    base.process_prach(std::move(buffer), context);
   }
 
   // See the uplink_slot_processor interface for documentation.

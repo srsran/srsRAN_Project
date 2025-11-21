@@ -31,7 +31,7 @@ protected:
   uplink_processor_spy*                      default_ul_proc_spy;
   std::unique_ptr<uplink_processor_pool>     ul_processor_pool;
   upper_phy_rx_symbol_handler_impl           rx_handler;
-  prach_buffer_spy                           buffer_dummy;
+  std::unique_ptr<prach_buffer_pool>         prach_pool;
   resource_grid_dummy                        rg;
   shared_resource_grid_spy                   shared_rg;
 
@@ -41,7 +41,7 @@ protected:
     prach_context.sector = 0;
     prach_context.slot   = test_slot;
 
-    rx_handler.handle_rx_prach_window(prach_context, buffer_dummy);
+    rx_handler.handle_rx_prach_window(prach_context, prach_pool->get());
   }
 
   void handle_grid_symbol()
@@ -62,6 +62,7 @@ protected:
     rm_buffer_pool(create_rx_buffer_pool(rx_buffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     rx_handler(ul_processor_pool->get_slot_processor_pool()),
+    prach_pool(create_spy_prach_buffer_pool()),
     shared_rg(rg)
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);

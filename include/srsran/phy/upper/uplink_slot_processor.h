@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor.h"
@@ -21,7 +22,6 @@
 
 namespace srsran {
 
-class prach_buffer;
 struct prach_buffer_context;
 class slot_point;
 class upper_phy_rx_results_notifier;
@@ -58,7 +58,7 @@ public:
   ///
   /// \param[in] buffer   Channel symbols the PRACH detection is performed on.
   /// \param[in] context  Context used by the underlying PRACH detector.
-  virtual void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
+  virtual void process_prach(shared_prach_buffer buffer, const prach_buffer_context& context) = 0;
 
   /// Discards the slot processing due to an error.
   virtual void discard_slot() = 0;

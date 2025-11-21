@@ -17,16 +17,17 @@ using namespace ofh;
 void uplane_prach_data_flow_notifier::notify_prach(slot_point slot)
 {
   expected<prach_context::prach_context_information> context =
-      prach_context_repo->try_poping_complete_prach_buffer(slot);
+      prach_context_repo->try_popping_complete_prach_buffer(slot);
 
   if (!context) {
     return;
   }
 
-  const auto& ctx_value = *context;
-  notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
+  const auto& ctx_value = context->context;
+
+  notifier->on_new_prach_window_data(ctx_value, std::move(context->buffer));
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
-    logger.debug("Notifying PRACH in slot '{}' for sector#{}", ctx_value.context.slot, ctx_value.context.sector);
+    logger.debug("Notifying PRACH in slot '{}' for sector#{}", ctx_value.slot, ctx_value.sector);
   }
 }

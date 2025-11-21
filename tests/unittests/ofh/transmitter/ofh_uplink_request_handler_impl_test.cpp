@@ -11,6 +11,7 @@
 #include "../../../../lib/ofh/transmitter/helpers.h"
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
+#include "../receiver/helpers.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
@@ -44,36 +45,9 @@ public:
     rg_reader = &(grid.get_reader());
   }
 
-  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
+  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override {}
 
   const resource_grid_reader* get_reasource_grid_reader() const { return rg_reader; }
-};
-
-class prach_buffer_dummy : public prach_buffer
-{
-  std::array<cbf16_t, 1> buffer;
-
-public:
-  unsigned get_max_nof_ports() const override { return 0; }
-
-  unsigned get_max_nof_td_occasions() const override { return 0; }
-
-  unsigned get_max_nof_fd_occasions() const override { return 0; }
-
-  unsigned get_max_nof_symbols() const override { return 0; }
-
-  unsigned get_sequence_length() const override { return 0; }
-
-  span<cbf16_t> get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) override
-  {
-    return buffer;
-  }
-
-  span<const cbf16_t>
-  get_symbol(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
-  {
-    return buffer;
-  }
 };
 
 /// Error notifier spy implementation.
@@ -107,6 +81,7 @@ protected:
   tx_window_timing_parameters                tx_timing_params   = {0, 0, 8, 5, 0, 0};
   std::chrono::microseconds                  ul_processing_time = std::chrono::microseconds(30);
   unsigned                                   nof_symbols        = get_nsymb_per_slot(cp);
+  std::unique_ptr<prach_buffer_pool>         prach_pool;
   error_notifier_spy                         notifier_spy;
   uplink_request_handler_impl_config         cfg;
   resource_grid_reader_spy                   reader_spy;
@@ -122,6 +97,7 @@ protected:
   uplink_request_handler_impl                             handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
+    prach_pool(create_prach_buffer_pool(1)),
     reader_spy(1, 14, 1),
     writer_spy(1, 14, 1),
     grid(reader_spy, writer_spy),
@@ -215,7 +191,6 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   context.format           = prach_format_type::B4;
   context.slot             = slot_point(1, 20, 1);
   context.pusch_scs        = subcarrier_spacing::kHz30;
-  prach_buffer_dummy buffer_dummy;
 
   // Set the OTA to the same slot as the buffer context.
   slot_symbol_point ota_time(context.slot, 0, nof_symbols);
@@ -224,7 +199,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   ota_time -= (3 * calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params));
   handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
-  handler.handle_prach_occasion(context, buffer_dummy);
+  handler.handle_prach_occasion(context, prach_pool->get());
   ul_prach_repo->process_pending_contexts();
 
   // Assert data flow.
@@ -244,7 +219,6 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   context.slot             = slot_point(1, 20, 1);
   context.pusch_scs        = subcarrier_spacing::kHz30;
   context.start_symbol     = 0;
-  prach_buffer_dummy buffer_dummy;
 
   // Set the OTA to the same slot as the buffer context.
   slot_symbol_point ota_time(context.slot, 0, nof_symbols);
@@ -253,7 +227,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   ota_time -= (calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params) + 1);
   handler_prach_cp_en.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
-  handler_prach_cp_en.handle_prach_occasion(context, buffer_dummy);
+  handler_prach_cp_en.handle_prach_occasion(context, prach_pool->get());
   ul_prach_repo->process_pending_contexts();
 
   // Assert data flow.
@@ -279,7 +253,6 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_n
   context.slot             = slot_point(1, 20, 1);
   context.pusch_scs        = subcarrier_spacing::kHz30;
   context.start_symbol     = 0;
-  prach_buffer_dummy buffer_dummy;
 
   // Set the OTA to the same slot as the buffer context.
   slot_symbol_point ota_time(context.slot, 0, nof_symbols);
@@ -288,7 +261,7 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_n
   ota_time -= calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params);
   handler_prach_cp_en.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
-  handler_prach_cp_en.handle_prach_occasion(context, buffer_dummy);
+  handler_prach_cp_en.handle_prach_occasion(context, prach_pool->get());
   ul_prach_repo->process_pending_contexts();
 
   // Assert data flow.

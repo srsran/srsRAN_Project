@@ -13,9 +13,10 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
+
 namespace srsran {
 
-class prach_buffer;
 struct prach_buffer_context;
 class resource_grid;
 class shared_resource_grid;
@@ -31,7 +32,7 @@ public:
   ///
   /// \param[in] context PRACH window context.
   /// \param[in] buffer  Buffer to be used by the request handler to write the PRACH window.
-  virtual void on_prach_capture_request(const prach_buffer_context& context, prach_buffer& buffer) = 0;
+  virtual void on_prach_capture_request(const prach_buffer_context& context, shared_prach_buffer buffer) = 0;
 
   /// \brief Notifies the event of an uplink slot request.
   ///

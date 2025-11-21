@@ -12,8 +12,11 @@
 
 #include "../../../lib/phy/support/prach_buffer_impl.h"
 #include "srsran/adt/tensor.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 
@@ -229,5 +232,25 @@ private:
   /// Data storage.
   dynamic_tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cbf16_t, dims> data;
 };
+
+inline std::unique_ptr<prach_buffer_pool> create_spy_prach_buffer_pool()
+{
+  std::unique_ptr<prach_buffer>              buffer = std::make_unique<prach_buffer_spy>();
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  prach_buffers.push_back(std::move(buffer));
+  return std::make_unique<prach_buffer_pool>(prach_buffers);
+}
+
+inline std::unique_ptr<prach_buffer_pool>
+create_spy_prach_buffer_pool(bool long_preamble, unsigned nof_fd_occasions, unsigned nof_td_occasions)
+{
+  std::unique_ptr<prach_buffer> buffer = long_preamble
+                                             ? create_prach_buffer_long(1, nof_fd_occasions)
+                                             : create_prach_buffer_short(1, nof_td_occasions, nof_fd_occasions);
+
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  prach_buffers.push_back(std::move(buffer));
+  return std::make_unique<prach_buffer_pool>(prach_buffers);
+}
 
 } // namespace srsran

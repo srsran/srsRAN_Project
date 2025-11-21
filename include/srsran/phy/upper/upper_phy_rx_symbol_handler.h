@@ -13,11 +13,11 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
 
-class prach_buffer;
 struct prach_buffer_context;
 class shared_resource_grid;
 
@@ -49,7 +49,7 @@ public:
   /// \brief Handles the arrival of PRACH sequences.
   /// \param[in] context PRACH context: specifies sector, slot and window.
   /// \param[in] buffer  Read-only buffer containing the PRACH sequence.
-  virtual void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
+  virtual void handle_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) = 0;
 };
 
 } // namespace srsran

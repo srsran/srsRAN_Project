@@ -33,29 +33,31 @@ TEST(ofh_uplane_prach_data_flow_notifier, empty_context_does_not_notify)
 
 TEST(ofh_uplane_prach_data_flow_notifier, unwritten_buffer_does_not_notify)
 {
+  auto prach_buffer_pool = create_prach_buffer_pool(1);
+
   auto                            notifier = std::make_shared<uplane_rx_symbol_notifier_spy>();
   auto                            repo     = std::make_shared<prach_context_repository>(1);
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
-  prach_buffer_dummy              buffer(1);
-  prach_buffer_context            context = {};
-  context.slot                            = slot;
-  context.format                          = prach_format_type::zero;
-  context.ports                           = {0};
-  context.nof_td_occasions                = 1;
-  context.nof_fd_occasions                = 1;
-  context.pusch_scs                       = srsran::subcarrier_spacing::kHz30;
-  context.start_symbol                    = 0;
-  context.rb_offset                       = 0;
-  context.sector                          = 0;
-  context.nof_prb_ul_grid                 = 12;
-  context.restricted_set                  = restricted_set_config::UNRESTRICTED;
-  context.root_sequence_index             = 0;
-  context.zero_correlation_zone           = 0;
-  context.start_preamble_index            = 0;
-  context.nof_preamble_indices            = 1;
 
-  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  prach_buffer_context context  = {};
+  context.slot                  = slot;
+  context.format                = prach_format_type::zero;
+  context.ports                 = {0};
+  context.nof_td_occasions      = 1;
+  context.nof_fd_occasions      = 1;
+  context.pusch_scs             = srsran::subcarrier_spacing::kHz30;
+  context.start_symbol          = 0;
+  context.rb_offset             = 0;
+  context.sector                = 0;
+  context.nof_prb_ul_grid       = 12;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.root_sequence_index   = 0;
+  context.zero_correlation_zone = 0;
+  context.start_preamble_index  = 0;
+  context.nof_preamble_indices  = 1;
+
+  repo->add(context, prach_buffer_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
   sender.notify_prach(slot);
 
@@ -72,26 +74,28 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
   slot_point                      slot(0, 0, 1);
   unsigned                        symbol = 0;
   unsigned                        port   = 0;
-  prach_buffer_dummy              buffer(1);
-  prach_buffer_context            context = {};
-  context.slot                            = slot;
-  context.format                          = prach_format_type::zero;
-  context.ports                           = {0};
-  context.nof_td_occasions                = 1;
-  context.nof_fd_occasions                = 1;
-  context.pusch_scs                       = srsran::subcarrier_spacing::kHz30;
-  context.start_symbol                    = 0;
-  context.rb_offset                       = 0;
-  context.sector                          = 0;
-  context.nof_prb_ul_grid                 = 12;
-  context.restricted_set                  = restricted_set_config::UNRESTRICTED;
-  context.root_sequence_index             = 0;
-  context.zero_correlation_zone           = 0;
-  context.start_preamble_index            = 0;
-  context.nof_preamble_indices            = 1;
+
+  auto prach_buffer_pool = create_prach_buffer_pool(1);
+
+  prach_buffer_context context  = {};
+  context.slot                  = slot;
+  context.format                = prach_format_type::zero;
+  context.ports                 = {0};
+  context.nof_td_occasions      = 1;
+  context.nof_fd_occasions      = 1;
+  context.pusch_scs             = srsran::subcarrier_spacing::kHz30;
+  context.start_symbol          = 0;
+  context.rb_offset             = 0;
+  context.sector                = 0;
+  context.nof_prb_ul_grid       = 12;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.root_sequence_index   = 0;
+  context.zero_correlation_zone = 0;
+  context.start_preamble_index  = 0;
+  context.nof_preamble_indices  = 1;
 
   static_vector<cbf16_t, 839> samples(839);
-  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->add(context, prach_buffer_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(slot).empty());
 
@@ -115,26 +119,28 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_
   uplane_prach_data_flow_notifier sender(srslog::fetch_basic_logger("TEST"), repo, notifier);
   slot_point                      slot(0, 0, 1);
   unsigned                        port = 0;
-  prach_buffer_dummy              buffer(1, false);
-  prach_buffer_context            context = {};
-  context.slot                            = slot;
-  context.format                          = prach_format_type::B4;
-  context.ports                           = {0};
-  context.nof_td_occasions                = 1;
-  context.nof_fd_occasions                = 1;
-  context.pusch_scs                       = srsran::subcarrier_spacing::kHz30;
-  context.start_symbol                    = 0;
-  context.rb_offset                       = 0;
-  context.sector                          = 0;
-  context.nof_prb_ul_grid                 = 12;
-  context.restricted_set                  = restricted_set_config::UNRESTRICTED;
-  context.root_sequence_index             = 0;
-  context.zero_correlation_zone           = 0;
-  context.start_preamble_index            = 0;
-  context.nof_preamble_indices            = 1;
+
+  auto prach_buffer_pool = create_prach_buffer_pool(1);
+
+  prach_buffer_context context  = {};
+  context.slot                  = slot;
+  context.format                = prach_format_type::B4;
+  context.ports                 = {0};
+  context.nof_td_occasions      = 1;
+  context.nof_fd_occasions      = 1;
+  context.pusch_scs             = srsran::subcarrier_spacing::kHz30;
+  context.start_symbol          = 0;
+  context.rb_offset             = 0;
+  context.sector                = 0;
+  context.nof_prb_ul_grid       = 12;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.root_sequence_index   = 0;
+  context.zero_correlation_zone = 0;
+  context.start_preamble_index  = 0;
+  context.nof_preamble_indices  = 1;
 
   static_vector<cbf16_t, 139> samples(139);
-  repo->add(context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->add(context, prach_buffer_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
   ASSERT_FALSE(repo->get(slot).empty());
 

@@ -13,6 +13,7 @@
 #include "upper_phy_rx_symbol_request_notifier_test_doubles.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/support_factories.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -24,9 +25,9 @@ TEST(UplinkRequestProcessor, process_prach_request_produces_event_that_request_c
   upper_phy_rx_symbol_request_notifier_spy   symbol_notifier;
   std::vector<std::unique_ptr<prach_buffer>> config_prach_pool;
   config_prach_pool.push_back(std::make_unique<prach_buffer_spy>());
-  std::unique_ptr<prach_buffer_pool> prach_pool = create_prach_buffer_pool(std::move(config_prach_pool));
-  uplink_request_processor_impl      ul_request_processor(symbol_notifier, *prach_pool);
-  prach_buffer_context               context;
+  uplink_request_processor_impl ul_request_processor(
+      symbol_notifier, config_prach_pool, srslog::fetch_basic_logger("PHY", false));
+  prach_buffer_context context;
   context.slot   = slot_point(0, 0, 0);
   context.sector = 0;
 

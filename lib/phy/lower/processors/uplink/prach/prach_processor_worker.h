@@ -18,10 +18,12 @@
 #include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 
 namespace srsran {
 
@@ -73,24 +75,28 @@ class prach_processor_worker
   /// Current context.
   prach_buffer_context prach_context;
   /// Current PRACH buffer.
-  prach_buffer* buffer = nullptr;
+  shared_prach_buffer buffer;
   /// Current PRACH occasion window length.
   unsigned window_length = 0;
   /// Current number of collected samples.
   unsigned nof_samples = 0;
   /// Buffer to hold complex floating-point based samples for demodulation.
   dynamic_tensor<2, cf_t> temp_cf_baseband;
+  /// Manager to handle the stop process.
+  stop_event_source stop_manager;
 
   /// Runs state \c wait.
   void run_state_wait(const baseband_gateway_buffer_reader&           samples,
-                      const prach_processor_baseband::symbol_context& context);
+                      const prach_processor_baseband::symbol_context& context,
+                      stop_event_token                                token);
 
   /// Runs state \c collecting.
   void run_state_collecting(const baseband_gateway_buffer_reader&           samples,
-                            const prach_processor_baseband::symbol_context& context);
+                            const prach_processor_baseband::symbol_context& context,
+                            stop_event_token                                token);
 
   /// Accumulates \c samples in the internal buffer.
-  void accumulate_samples(const baseband_gateway_buffer_reader& samples);
+  void accumulate_samples(const baseband_gateway_buffer_reader& samples, stop_event_token token);
 
 public:
   /// Creates a PRACH processor worker.
@@ -117,7 +123,7 @@ public:
   /// \brief Handles a PRACH occasion request.
   /// \param[in] buffer  PRACH buffer.
   /// \param[in] context PRACH occasion context.
-  void handle_request(prach_buffer& buffer, const prach_buffer_context& context);
+  void handle_request(shared_prach_buffer buffer, const prach_buffer_context& context);
 
   /// \brief Processes an OFDM symbol.
   /// \param[in] samples Baseband samples.
@@ -130,6 +136,9 @@ public:
   /// A PRACH processor is available when it is \c idle. See \ref states for more information regarding the PRACH worker
   /// internal states.
   bool is_available() const { return state == states::idle; }
+
+  /// Stops operation of the PRACH processor worker.
+  void stop();
 };
 
 } // namespace srsran

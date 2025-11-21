@@ -54,10 +54,10 @@ void processor_notifier_adaptor::prach_adaptor::on_prach_request_overflow(const 
   error_notifier.on_prach_request_overflow(context);
 }
 
-void processor_notifier_adaptor::prach_adaptor::on_rx_prach_window(const prach_buffer&         buffer,
+void processor_notifier_adaptor::prach_adaptor::on_rx_prach_window(shared_prach_buffer         buffer,
                                                                    const prach_buffer_context& context)
 {
-  rx_notifier.on_rx_prach_window(context, buffer);
+  rx_notifier.on_rx_prach_window(context, std::move(buffer));
 }
 
 void processor_notifier_adaptor::puxch_adaptor::on_puxch_request_late(const resource_grid_context& context)

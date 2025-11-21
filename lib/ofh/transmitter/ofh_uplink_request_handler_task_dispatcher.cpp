@@ -27,7 +27,7 @@ void uplink_request_handler_task_dispatcher::stop()
 }
 
 void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_buffer_context& context,
-                                                                   prach_buffer&               buffer)
+                                                                   shared_prach_buffer         buffer)
 {
   // Do not process if stop was requested.
   auto token = stop_manager.get_token();
@@ -35,8 +35,11 @@ void uplink_request_handler_task_dispatcher::handle_prach_occasion(const prach_b
     return;
   }
 
-  if (!executor.defer([context, &buffer, this, tk = std::move(token)]() noexcept SRSRAN_RTSAN_NONBLOCKING {
-        uplink_handler.handle_prach_occasion(context, buffer);
+  if (!executor.defer([context,
+                       prach_buff = std::move(buffer),
+                       this,
+                       tk = std::move(token)]() mutable noexcept SRSRAN_RTSAN_NONBLOCKING {
+        uplink_handler.handle_prach_occasion(context, std::move(prach_buff));
       })) {
     logger.warning(
         "Sector#{}: failed to handle PRACH in the uplink request handler for slot '{}'", sector_id, context.slot);

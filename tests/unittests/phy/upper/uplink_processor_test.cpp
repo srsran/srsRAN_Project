@@ -154,9 +154,10 @@ TEST_F(UplinkProcessorFixture, prach_normal_workflow)
 {
   ul_processor->get_pdu_slot_repository(slot);
 
+  auto prach_buffer_pool = create_spy_prach_buffer_pool();
+
   // Request PRACH processing.
-  prach_buffer_spy buffer;
-  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+  ul_processor->get_slot_processor(slot).process_prach(prach_buffer_pool->get(), {});
 
   // Create asynchronous task - it will block until all tasks are completed.
   std::atomic<bool> stop_thread_started = false;
@@ -192,9 +193,10 @@ TEST_F(UplinkProcessorFixture, prach_fail_defer_workflow)
   // Stop PRACH executor.
   prach_executor.stop();
 
+  auto prach_buffer_pool = create_spy_prach_buffer_pool();
+
   // Request PRACH processing.
-  prach_buffer_spy buffer;
-  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+  ul_processor->get_slot_processor(slot).process_prach(prach_buffer_pool->get(), {});
 
   // Request processor to stop. There is no pending task, so it should not block.
   ul_processor->stop();
@@ -215,9 +217,10 @@ TEST_F(UplinkProcessorFixture, prach_request_after_stop)
   // Request processor to stop. There is no pending task, so it should not block.
   ul_processor->stop();
 
+  auto prach_buffer_pool = create_spy_prach_buffer_pool();
+
   // Request PRACH processing.
-  prach_buffer_spy buffer;
-  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
+  ul_processor->get_slot_processor(slot).process_prach(prach_buffer_pool->get(), {});
 
   // The UL processor must not create an asynchronous task.
   ASSERT_FALSE(prach_executor.run_pending_tasks());

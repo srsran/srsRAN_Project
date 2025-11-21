@@ -50,10 +50,10 @@ class upper_phy_ru_ul_request_adapter : public upper_phy_rx_symbol_request_notif
 {
 public:
   // See interface for documentation.
-  void on_prach_capture_request(const prach_buffer_context& context, prach_buffer& buffer) override
+  void on_prach_capture_request(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     srsran_assert(ul_handler, "Adapter is not connected");
-    ul_handler->handle_prach_occasion(context, buffer);
+    ul_handler->handle_prach_occasion(context, std::move(buffer));
   }
 
   // See interface for documentation.
@@ -86,10 +86,10 @@ public:
   }
 
   // See interface for documentation.
-  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     srsran_assert(context.sector < handlers.size(), "Unsupported sector {}", context.sector);
-    handlers[context.sector]->handle_rx_prach_window(context, buffer);
+    handlers[context.sector]->handle_rx_prach_window(context, std::move(buffer));
   }
 
   /// Maps the given upper PHY received symbol handler and sector to this adapter.

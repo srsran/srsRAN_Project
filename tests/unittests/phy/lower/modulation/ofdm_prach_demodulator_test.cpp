@@ -96,10 +96,9 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
   const ofdm_prach_demodulator::configuration& config    = test_case.context.config;
   subcarrier_spacing pusch_scs = to_subcarrier_spacing(GetParam().context.config.slot.numerology());
 
-  bool                          long_preamble = is_long_preamble(config.format);
-  std::unique_ptr<prach_buffer> output =
-      long_preamble ? create_prach_buffer_long(1, config.nof_fd_occasions)
-                    : create_prach_buffer_short(1, config.nof_td_occasions, config.nof_fd_occasions);
+  bool long_preamble = is_long_preamble(config.format);
+  auto prach_buffer_pool =
+      create_spy_prach_buffer_pool(long_preamble, config.nof_fd_occasions, config.nof_td_occasions);
 
   // Read input waveform.
   std::vector<cf_t> input = test_case.input.read();
@@ -120,7 +119,8 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
       expected_output, config.nof_td_occasions, config.nof_fd_occasions, nof_symbols, preamble_info.sequence_length);
 
   // Run demodulator.
-  demodulator->demodulate(*output, input, GetParam().context.config);
+  auto buffer = prach_buffer_pool->get();
+  demodulator->demodulate(*buffer, input, GetParam().context.config);
 
   // For each port, time-domain occasion, frequency-domain occasion and symbol, ...
   for (unsigned i_port = 0; i_port != 1; ++i_port) {
@@ -128,7 +128,7 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
       for (unsigned i_fd_occasion = 0; i_fd_occasion != config.nof_fd_occasions; ++i_fd_occasion) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
           ASSERT_EQ(span<const cbf16_t>(expected_buffer.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)),
-                    span<const cbf16_t>(output->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)))
+                    span<const cbf16_t>(buffer->get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol)))
               << fmt::format("i_port={}; i_td_occasion={}; i_fd_occasion={}; i_symbol={};",
                              i_port,
                              i_td_occasion,
