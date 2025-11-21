@@ -12,9 +12,8 @@
 
 #include "../config/logical_channel_list_config.h"
 #include "../slicing/ran_slice_id.h"
-#include "srsran/adt/flat_map.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/adt/soa_table.h"
+#include "srsran/adt/static_flat_map.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/result/pdsch_info.h"
@@ -101,13 +100,13 @@ private:
   };
   /// UE context relative to its channel management.
   struct ue_channel_context {
-    /// Context of channels currently configured. The index of the array matches the LCID.
-    slotted_id_table<lcid_t, channel_context, MAX_NOF_RB_LCIDS> channels;
+    /// Currently enqueued CEs for this UE.
+    std::optional<soa::row_id> pending_ces;
     /// List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
     /// priority.
     static_vector<lcid_t, MAX_NOF_RB_LCIDS> sorted_channels;
-    /// Currently enqueued CEs for this UE.
-    std::optional<soa::row_id> pending_ces;
+    /// Context of channels currently configured. The index of the array matches the LCID.
+    static_flat_map<lcid_t, channel_context, MAX_NOF_RB_LCIDS> channels;
   };
   struct ue_context {
     /// Whether the UE is in fallback (no DRB tx).
@@ -117,26 +116,7 @@ private:
     /// Cached sum of pending CE bytes for this UE, excluding CON RES CE.
     uint32_t pending_ce_bytes{0};
     /// Mapping of RAN slice ID to the pending bytes of that slice, excluding any CE.
-    static_vector<std::pair<ran_slice_id_t, unsigned>, MAX_RAN_SLICES_PER_UE> pending_bytes_per_slice;
-
-    bool contains(ran_slice_id_t slice_id) const
-    {
-      return std::any_of(pending_bytes_per_slice.begin(), pending_bytes_per_slice.end(), [slice_id](const auto& item) {
-        return item.first == slice_id;
-      });
-    }
-    auto find_slice(ran_slice_id_t slice_id)
-    {
-      return std::find_if(pending_bytes_per_slice.begin(), pending_bytes_per_slice.end(), [slice_id](auto& item) {
-        return item.first == slice_id;
-      });
-    }
-    auto find_slice(ran_slice_id_t slice_id) const
-    {
-      return std::find_if(pending_bytes_per_slice.begin(), pending_bytes_per_slice.end(), [slice_id](auto& item) {
-        return item.first == slice_id;
-      });
-    }
+    static_flat_map<ran_slice_id_t, unsigned, MAX_RAN_SLICES_PER_UE> pending_bytes_per_slice;
   };
   enum class ue_column_id { config, context, channel };
   using ue_table     = soa::table<ue_column_id, ue_config_context, ue_context, ue_channel_context>;
@@ -166,7 +146,7 @@ private:
   static const channel_context* find_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
   {
     auto& ue_ch = ue_row.at<ue_channel_context>();
-    return ue_ch.channels.contains(lcid) ? &ue_ch.channels[lcid] : nullptr;
+    return ue_ch.channels.contains(lcid) ? &ue_ch.channels.at(lcid) : nullptr;
   }
   static const channel_context* find_active_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
   {
@@ -285,7 +265,7 @@ public:
   /// Determines whether a RAN slice has at least one bearer associated with it.
   [[nodiscard]] bool has_slice(ran_slice_id_t slice_id) const
   {
-    return get_ue_row().at<ue_context>().contains(slice_id);
+    return get_ue_row().at<ue_context>().pending_bytes_per_slice.contains(slice_id);
   }
 
   /// Get the RAN slice ID associated with a logical channel.
@@ -315,7 +295,7 @@ public:
     const auto& chs_ctx = u.at<ue_channel_context>();
     return has_pending_ces() or
            std::any_of(chs_ctx.sorted_channels.begin(), chs_ctx.sorted_channels.end(), [&chs_ctx](lcid_t lcid) {
-             return lcid != LCID_SRB0 and chs_ctx.channels[lcid].active and chs_ctx.channels[lcid].buf_st > 0;
+             return lcid != LCID_SRB0 and chs_ctx.channels.at(lcid).active and chs_ctx.channels.at(lcid).buf_st > 0;
            });
   }
 
@@ -327,7 +307,7 @@ public:
       // In fallback mode, slices are disabled.
       return false;
     }
-    auto slice_it = ue_ctx.find_slice(slice_id);
+    auto slice_it = ue_ctx.pending_bytes_per_slice.find(slice_id);
     if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
       return false;
     }
@@ -374,7 +354,7 @@ public:
     if (ue_ctx.fallback_state) {
       return 0;
     }
-    auto slice_it = ue_ctx.find_slice(slice_id);
+    auto slice_it = ue_ctx.pending_bytes_per_slice.find(slice_id);
     if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
       return 0;
     }

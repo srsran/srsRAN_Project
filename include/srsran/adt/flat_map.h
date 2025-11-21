@@ -350,6 +350,8 @@ public:
     return cend();
   }
 
+  [[nodiscard]] bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
+
   iterator lower_bound(const key_type& key) noexcept
   {
     auto it = std::lower_bound(conts.keys.begin(), conts.keys.end(), key, this->key_comp);

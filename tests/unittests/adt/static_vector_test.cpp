@@ -263,6 +263,20 @@ TYPED_TEST(static_vector_tester, swap_keeps_values)
   ASSERT_TRUE(std::equal(vec.begin(), vec.end(), expected2.begin(), expected2.end()));
 }
 
+TYPED_TEST(static_vector_tester, emplace_with_hint)
+{
+  using T                       = typename TestFixture::value_type;
+  size_t               first_sz = test_rgen::uniform_int<size_t>(0, 10);
+  std::vector<int>     expected = create_test_vector(first_sz);
+  static_vector<T, 11> vec(expected.begin(), expected.end());
+
+  size_t pos = test_rgen::uniform_int<size_t>(0, first_sz);
+  vec.emplace(vec.begin() + pos, 42);
+  expected.insert(expected.begin() + pos, 42);
+
+  ASSERT_TRUE(std::equal(vec.begin(), vec.end(), expected.begin(), expected.end()));
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

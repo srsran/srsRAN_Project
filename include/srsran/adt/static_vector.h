@@ -79,6 +79,8 @@ struct trivial_storage {
   constexpr iterator       end() noexcept { return begin() + sz; }
   constexpr const_iterator begin() const noexcept { return data(); }
   constexpr const_iterator end() const noexcept { return begin() + sz; }
+  constexpr const_iterator cbegin() const noexcept { return data(); }
+  constexpr const_iterator cend() const noexcept { return begin() + sz; }
 
   constexpr void construct_(size_t /**/) noexcept
   {
@@ -329,7 +331,7 @@ public:
 
   constexpr void resize(size_t new_size, const T& value) noexcept
   {
-    static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
+    static_assert(std::is_copy_constructible_v<T>, "T must be copy-constructible");
     srsran_assert(new_size <= capacity(), "out-of-bounds construction in static_vector<T,N>");
     if (new_size <= size()) {
       // vector is shrinking.
@@ -341,6 +343,32 @@ public:
       }
     }
     this->sz = new_size;
+  }
+
+  template <typename... Args>
+  constexpr iterator emplace(const_iterator pos, Args&&... args) noexcept(std::is_nothrow_move_assignable_v<T>)
+  {
+    if (pos == end()) {
+      emplace_back(std::forward<Args>(args)...);
+      return end() - 1;
+    }
+    srsran_assert(this->sz < MAX_N, "Cannot insert in full vector");
+    // Construct new last position of the vector.
+    auto it = end() - 1;
+    this->construct_(this->sz, std::move(*it));
+    // Shift elements to the right.
+    for (; it != pos; --it) {
+      *it = std::move(*(it - 1));
+    }
+    *it = T(std::forward<Args>(args)...);
+    ++this->sz;
+    return it;
+  }
+
+  template <typename U>
+  constexpr iterator insert(const_iterator pos, U&& value) noexcept(std::is_nothrow_move_assignable_v<T>)
+  {
+    return emplace(pos, std::forward<U>(value));
   }
 
   constexpr iterator erase(iterator pos) noexcept(std::is_move_assignable_v<T>)
