@@ -175,14 +175,17 @@ private:
   }
 
   /// Helper method to update the pending bytes for a given RAN slice when a lc associated with a slice is updated.
-  void on_slice_pending_bytes_update(ue_row&                              u,
-                                     bool                                 channel_active,
-                                     const std::optional<ran_slice_id_t>& slice_id,
-                                     unsigned                             new_buf_st,
-                                     unsigned                             prev_buf_st);
+  void on_single_channel_buf_st_update(ue_row&                              u,
+                                       bool                                 channel_active,
+                                       const std::optional<ran_slice_id_t>& slice_id,
+                                       unsigned                             new_buf_st,
+                                       unsigned                             prev_buf_st);
 
   /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
   lcid_t get_max_prio_lcid(const const_ue_row& ue_row) const;
+
+  /// Bitset of configured UEs.
+  bounded_bitset<MAX_NOF_DU_UES> configured_ues;
 
   /// Bitset of UEs with pending CEs.
   bounded_bitset<MAX_NOF_DU_UES> ues_with_pending_ces;
@@ -213,8 +216,8 @@ class ue_dl_logical_channel_repository
   using ue_row             = dl_logical_channel_system::ue_row;
   using const_ue_row       = dl_logical_channel_system::const_ue_row;
 
-  ue_dl_logical_channel_repository(dl_logical_channel_system& parent_, soa::row_id ue_row_) :
-    parent(&parent_), ue_row_id(ue_row_)
+  ue_dl_logical_channel_repository(dl_logical_channel_system& parent_, du_ue_index_t ue_index_, soa::row_id ue_row_) :
+    parent(&parent_), ue_index(ue_index_), ue_row_id(ue_row_)
   {
   }
 
@@ -222,13 +225,16 @@ public:
   ue_dl_logical_channel_repository()                                        = default;
   ue_dl_logical_channel_repository(const ue_dl_logical_channel_repository&) = delete;
   ue_dl_logical_channel_repository(ue_dl_logical_channel_repository&& other) noexcept :
-    parent(std::exchange(other.parent, nullptr)), ue_row_id(other.ue_row_id)
+    parent(std::exchange(other.parent, nullptr)),
+    ue_index(std::exchange(other.ue_index, INVALID_DU_UE_INDEX)),
+    ue_row_id(other.ue_row_id)
   {
   }
   ue_dl_logical_channel_repository& operator=(const ue_dl_logical_channel_repository&) = delete;
   ue_dl_logical_channel_repository& operator=(ue_dl_logical_channel_repository&& other) noexcept
   {
     parent    = std::exchange(other.parent, nullptr);
+    ue_index  = other.ue_index;
     ue_row_id = other.ue_row_id;
     return *this;
   }
@@ -300,30 +306,26 @@ public:
   }
 
   /// \brief Check whether the UE has pending data in the provided RAN slice.
-  bool has_pending_bytes(ran_slice_id_t slice_id) const
+  /// \return Returns true if the UE is active, in non-fallback mode, its has pendign bytes for the provided RAN slice
+  /// ID and the slice is configured. Returns 0, otherwise.
+  [[nodiscard]] bool has_pending_bytes(ran_slice_id_t slice_id) const
   {
-    const auto& ue_ctx = get_ue_row().at<ue_context>();
-    if (ue_ctx.fallback_state) {
-      // In fallback mode, slices are disabled.
-      return false;
-    }
-    auto slice_it = ue_ctx.pending_bytes_per_slice.find(slice_id);
-    if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
-      return false;
-    }
-    if (slice_it->second > 0) {
+    auto slice_bitset_it = parent->ran_slices_to_ues_with_pending_data.find(slice_id);
+    if (slice_bitset_it != parent->ran_slices_to_ues_with_pending_data.end() and
+        slice_bitset_it->second.test(ue_index)) {
       return true;
     }
 
-    // In case SRB slice was selected (but with no data) and there are pending CE bytes.
-    if (slice_id == SRB_RAN_SLICE_ID and has_pending_ces()) {
+    // In case SRB slice was selected (but with no data) and there are pending CE bytes (excluding ConRes, which is
+    // only scheduled in fallback mode).
+    if (slice_id == SRB_RAN_SLICE_ID and parent->ues_with_pending_ces.test(ue_index)) {
       // Check if any other slices have pending data. If they do, CE is not considered.
-      // Note: This extra check is to avoid multiple slices report pending data.
-      return std::all_of(ue_ctx.pending_bytes_per_slice.begin(),
-                         ue_ctx.pending_bytes_per_slice.end(),
-                         [](const auto& elem) { return elem.second == 0; });
+      // Note: This extra check is to avoid multiple slices report pending data when CEs are pending.
+      return std::all_of(
+          parent->ran_slices_to_ues_with_pending_data.begin(),
+          parent->ran_slices_to_ues_with_pending_data.end(),
+          [this, slice_id](const auto& p) { return p.first == slice_id or not p.second.test(ue_index); });
     }
-
     return false;
   }
 
@@ -333,11 +335,10 @@ public:
   /// \brief Checks whether a ConRes CE is pending for transmission.
   bool is_con_res_id_pending() const { return get_ue_row().at<ue_context>().pending_con_res_id; }
 
-  /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
+  /// \brief Checks whether UE has pending CEs to be scheduled (ConRes included).
   bool has_pending_ces() const
   {
-    const auto& ue_ctx = get_ue_row().at<ue_context>();
-    return ue_ctx.pending_con_res_id or ue_ctx.pending_ce_bytes > 0;
+    return parent->ues_with_pending_ces.test(ue_index) or get_ue_row().at<ue_context>().pending_con_res_id;
   }
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
@@ -439,7 +440,8 @@ private:
   const_ue_row get_ue_row() const { return parent->get_ue(ue_row_id); }
   ue_row       get_ue_row() { return parent->ues.row(ue_row_id); }
 
-  dl_logical_channel_system* parent = nullptr;
+  dl_logical_channel_system* parent   = nullptr;
+  du_ue_index_t              ue_index = INVALID_DU_UE_INDEX;
   soa::row_id                ue_row_id{std::numeric_limits<uint32_t>::max()};
 };
 

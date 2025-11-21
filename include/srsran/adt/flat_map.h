@@ -313,8 +313,10 @@ public:
   const key_container_type&    keys() const noexcept { return conts.keys; }
   const mapped_container_type& values() const noexcept { return conts.values; }
 
-  mapped_type& operator[](const key_type& key) { return emplace(key).first->second; }
-  mapped_type& operator[](key_type&& key) { return emplace(std::move(key)).first->second; }
+  mapped_type&       operator[](const key_type& key) { return emplace(key).first->second; }
+  const mapped_type& operator[](const key_type& key) const { return emplace(key).first->second; }
+  mapped_type&       operator[](key_type&& key) { return emplace(std::move(key)).first->second; }
+  const mapped_type& operator[](key_type&& key) const { return emplace(std::move(key)).first->second; }
 
   mapped_type& at(const key_type& key)
   {

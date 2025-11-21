@@ -61,19 +61,29 @@ dl_logical_channel_system::create_ue(du_ue_index_t                   ue_index,
                                      bool                            starts_in_fallback,
                                      logical_channel_config_list_ptr log_channels_configs)
 {
+  srsran_assert(configured_ues.size() <= ue_index or not configured_ues.test(ue_index), "duplicate UE index");
   // Creates a UE entry in the table.
   soa::row_id ue_rid                         = ues.insert(ue_config_context{}, ue_context{}, ue_channel_context{});
   auto        row                            = ues.row(ue_rid);
   row.at<ue_context>().fallback_state        = starts_in_fallback;
   row.at<ue_config_context>().ue_index       = ue_index;
   row.at<ue_config_context>().slots_per_msec = get_nof_slots_per_subframe(scs_common);
+  if (configured_ues.size() <= ue_index) {
+    // Need to resize UE bitsets.
+    configured_ues.resize(ue_index + 1);
+    ues_with_pending_ces.resize(ue_index + 1);
+    for (auto it = ran_slices_to_ues_with_pending_data.begin(); it != ran_slices_to_ues_with_pending_data.end(); ++it) {
+      it->second.resize(ue_index + 1);
+    }
+  }
+  configured_ues.set(ue_index);
   if (log_channels_configs.has_value()) {
     // Apply LC configuration.
     configure(ue_rid, log_channels_configs);
   }
 
   // Return handle to UE logical channel repository.
-  return ue_dl_logical_channel_repository{*this, ue_rid};
+  return ue_dl_logical_channel_repository{*this, ue_index, ue_rid};
 }
 
 size_t dl_logical_channel_system::nof_logical_channels() const
@@ -95,11 +105,7 @@ bounded_bitset<MAX_NOF_DU_UES> dl_logical_channel_system::get_ues_with_pending_d
   if (slice_id != SRB_RAN_SLICE_ID) {
     return slice_it->second;
   }
-  bounded_bitset<MAX_NOF_DU_UES> result = slice_it->second;
-  if (result.size() < ues_with_pending_ces.size()) {
-    result.resize(ues_with_pending_ces.size());
-  }
-  return result | ues_with_pending_ces;
+  return slice_it->second | ues_with_pending_ces;
 }
 
 void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
@@ -110,12 +116,28 @@ void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
     // no-op.
     return;
   }
+  // Fallback state toggled.
   ue_ctx.fallback_state = enter_fallback;
-  auto& ue_cfg          = u.at<ue_config_context>();
-  // Clear any pending data for this UE in the slices.
-  for (const auto& [slice_id, pending_bytes] : ue_ctx.pending_bytes_per_slice) {
-    if (pending_bytes > 0) {
-      parent->ran_slices_to_ues_with_pending_data.at(slice_id).set(ue_cfg.ue_index, not ue_ctx.fallback_state);
+
+  // Update pending newTx data for all UE slices.
+  auto ueidx = u.at<ue_config_context>().ue_index;
+  if (ue_ctx.fallback_state) {
+    // Entering fallback mode, clear all pending data in slices.
+    for (auto it = ue_ctx.pending_bytes_per_slice.begin(); it != ue_ctx.pending_bytes_per_slice.end(); ++it) {
+      if (it->second > 0) {
+        it->second = 0;
+        parent->ran_slices_to_ues_with_pending_data.at(it->first).reset(ueidx);
+      }
+    }
+    parent->ues_with_pending_ces.reset(ueidx);
+  } else {
+    // Exiting fallback mode, recompute pending data in slices.
+    auto ue_ch = u.at<ue_channel_context>();
+    for (const auto& [lcid, ch] : ue_ch.channels) {
+      parent->on_single_channel_buf_st_update(u, ch.active, ch.slice_id, ch.buf_st, 0);
+    }
+    if (ue_ch.pending_ces.has_value()) {
+      parent->ues_with_pending_ces.set(ueidx);
     }
   }
 }
@@ -135,11 +157,26 @@ static uint16_t get_lc_prio(const logical_channel_config& cfg)
 
 void dl_logical_channel_system::remove_ue(soa::row_id ue_rid)
 {
+  srsran_assert(ues.has_row_id(ue_rid), "trying to remove non-existing UE");
+  const auto ue_index = ues.row(ue_rid).at<ue_config_context>().ue_index;
+  srsran_assert(configured_ues.size() > ue_index and configured_ues.test(ue_index), "duplicate UE index");
   // Disable any slicing, QoS and CE tracking.
   deactivate(ue_rid);
 
   // Destroy UE context.
   ues.erase(ue_rid);
+
+  // Update UE config bitset (strip rightmost zeros).
+  // Note: if return of highest is -1 (not found), the new size will be 0.
+  configured_ues.reset(ue_index);
+  const auto new_size = static_cast<size_t>(configured_ues.find_highest(true) + 1);
+  if (configured_ues.size() != new_size) {
+    configured_ues.resize(new_size);
+    ues_with_pending_ces.resize(new_size);
+    for (auto it = ran_slices_to_ues_with_pending_data.begin(); it != ran_slices_to_ues_with_pending_data.end(); ++it) {
+      it->second.resize(new_size);
+    }
+  }
 }
 
 void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_config_list_ptr log_channels_configs)
@@ -151,10 +188,6 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
   // Exchange new config.
   auto old_cfgs          = ue_cfg.channel_configs;
   ue_cfg.channel_configs = log_channels_configs;
-
-  if (ue_cfg.ue_index >= ues_with_pending_ces.size()) {
-    ues_with_pending_ces.resize(ue_cfg.ue_index + 1);
-  }
 
   // If a previously custom configured LC is not in the list of new configs, we delete it.
   // Note: LCID will be removed from sorted_channels later.
@@ -190,7 +223,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
     // Implicitly set channel as active when configured.
     if (not ch_ctx.active and ch_ctx.slice_id.has_value()) {
       // Update slice pending bytes, because we are activating the logical channel.
-      on_slice_pending_bytes_update(u, true, ch_ctx.slice_id, ch_ctx.buf_st, 0);
+      on_single_channel_buf_st_update(u, true, ch_ctx.slice_id, ch_ctx.buf_st, 0);
     }
     ch_ctx.active = true;
 
@@ -259,6 +292,7 @@ void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
   // Clear channel lookups.
   ue_ch.sorted_channels.clear();
 
+  // Remove slices.
   for (const auto& [slice_id, bytes] : ue_ctx.pending_bytes_per_slice) {
     if (bytes > 0) {
       ran_slices_to_ues_with_pending_data.at(slice_id).reset(ue_idx);
@@ -287,23 +321,17 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   auto slice_it = ue_ctx.pending_bytes_per_slice.find(slice_id);
   if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
     // New slice, add to the list.
-    const size_t ue_idx        = static_cast<unsigned>(u.at<ue_config_context>().ue_index);
-    auto         data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
+    auto data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
     if (data_slice_it == ran_slices_to_ues_with_pending_data.end()) {
-      // Create slice tracking if not existing yet.
-      ran_slices_to_ues_with_pending_data.emplace(slice_id, bounded_bitset<MAX_NOF_DU_UES>{});
-      data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
-    }
-    if (data_slice_it->second.size() <= ue_idx) {
-      // Increase bounded bitset size if needed.
-      data_slice_it->second.resize(ue_idx + 1);
+      // Create slice if not existing yet.
+      ran_slices_to_ues_with_pending_data.emplace(slice_id, bounded_bitset<MAX_NOF_DU_UES>(configured_ues.size()));
     }
     ue_ctx.pending_bytes_per_slice.emplace(slice_id, 0);
   }
 
   // Add LCID to new slice.
   ch_ctx.slice_id = slice_id;
-  on_slice_pending_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, 0);
+  on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, 0);
 }
 
 void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
@@ -312,7 +340,7 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
   auto& ue_ch = u.at<ue_channel_context>();
   if (ue_ch.channels.contains(lcid)) {
     channel_context& ch_ctx = ue_ch.channels.at(lcid);
-    on_slice_pending_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, 0, ch_ctx.buf_st);
+    on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, 0, ch_ctx.buf_st);
     if (ch_ctx.slice_id.has_value()) {
       // Remove slice from LC.
       auto prev_slice_id = *ch_ctx.slice_id;
@@ -344,38 +372,37 @@ void dl_logical_channel_system::handle_dl_buffer_status_indication(soa::row_id u
     auto  prev_buf_st = ch_ctx.buf_st;
     ch_ctx.buf_st     = std::min(buffer_status, max_buffer_status);
     ch_ctx.hol_toa    = hol_toa;
-    on_slice_pending_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, prev_buf_st);
+    on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, prev_buf_st);
   }
 }
 
-void dl_logical_channel_system::on_slice_pending_bytes_update(ue_row&                              u,
-                                                              bool                                 channel_active,
-                                                              const std::optional<ran_slice_id_t>& slice_id,
-                                                              unsigned                             new_buf_st,
-                                                              unsigned                             prev_buf_st)
+void dl_logical_channel_system::on_single_channel_buf_st_update(ue_row&                              u,
+                                                                bool                                 channel_active,
+                                                                const std::optional<ran_slice_id_t>& slice_id,
+                                                                unsigned                             new_buf_st,
+                                                                unsigned                             prev_buf_st)
 {
   if (not slice_id.has_value() or not channel_active) {
     // No slice associated with this logical channel or it is inactive.
     return;
   }
+  auto& ue_ctx = u.at<ue_context>();
+  if (ue_ctx.fallback_state) {
+    // In fallback mode, slices are disabled.
+    return;
+  }
 
-  // In case this logical channel has a RAN slice associated, update the pending bytes for the slice.
-  auto&      ue_ctx                  = u.at<ue_context>();
+  // In case this logical channel has a RAN slice associated, (differentially) update the pending bytes for the slice.
   auto&      slice_pending_bytes     = ue_ctx.pending_bytes_per_slice.find(*slice_id)->second;
   const auto prev_buf_st_incl_subhdr = get_mac_sdu_required_bytes(prev_buf_st);
   const auto new_buf_st_incl_subhdr  = get_mac_sdu_required_bytes(new_buf_st);
   srsran_sanity_check(slice_pending_bytes + new_buf_st_incl_subhdr >= prev_buf_st_incl_subhdr,
                       "Invalid slice pending bytes");
-  auto prev_slice_pending_bytes = slice_pending_bytes;
+  const auto prev_slice_pending_bytes = slice_pending_bytes;
   slice_pending_bytes += new_buf_st_incl_subhdr - prev_buf_st_incl_subhdr;
 
-  if (ue_ctx.fallback_state) {
-    // In fallback mode, reporting of slices with pending data is disabled.
-    return;
-  }
-
   if ((prev_slice_pending_bytes > 0) != (slice_pending_bytes > 0)) {
-    // zero crossing detection when not in fallback mode. Update the slice UE with pending data bitmap.
+    // zero crossing detected. Update the slice UE with pending data bitmap.
     auto& ue_cfg = u.at<ue_config_context>();
     ran_slices_to_ues_with_pending_data.at(*slice_id).set(ue_cfg.ue_index, slice_pending_bytes > 0);
   }
@@ -489,7 +516,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   }
   auto prev_buf_st = ch_ctx.buf_st;
   ch_ctx.buf_st    = new_buf_st;
-  on_slice_pending_bytes_update(u, ch_ctx.active, ch_ctx.slice_id, new_buf_st, prev_buf_st);
+  on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, new_buf_st, prev_buf_st);
   if (ch_ctx.qos_row.has_value()) {
     // In case of QoS tracking is activated, set the last scheduled bytes.
     qos_channels.at<qos_context>(*ch_ctx.qos_row).last_sched_bytes = last_sched_bytes;

@@ -622,7 +622,7 @@ TEST_F(multi_ue_dl_logical_channel_system_test, multiple_ue_creation)
   std::vector<ue_dl_logical_channel_repository> ues;
   for (unsigned i = 0; i != nof_ues; ++i) {
     ues.push_back(lch_system.create_ue(
-        to_du_ue_index(0), subcarrier_spacing::kHz30, false, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
+        to_du_ue_index(i), subcarrier_spacing::kHz30, false, create_lcid_config({LCID_SRB0, LCID_SRB1, LCID_MIN_DRB})));
   }
   ASSERT_EQ(lch_system.nof_ues(), nof_ues);
   ASSERT_EQ(lch_system.nof_logical_channels(), nof_ues * 3);
