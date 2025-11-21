@@ -271,6 +271,17 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   auto slice_it = ue_ctx.find_slice(slice_id);
   if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
     // New slice, add to the list.
+    const size_t ue_idx        = static_cast<unsigned>(u.at<ue_config_context>().ue_index);
+    auto         data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
+    if (data_slice_it == ran_slices_to_ues_with_pending_data.end()) {
+      // Create slice tracking if not existing yet.
+      ran_slices_to_ues_with_pending_data.emplace(slice_id, bounded_bitset<MAX_NOF_DU_UES>{});
+      data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
+    }
+    if (data_slice_it->second.size() <= ue_idx) {
+      // Increase bounded bitset size if needed.
+      data_slice_it->second.resize(ue_idx + 1);
+    }
     ue_ctx.pending_bytes_per_slice.emplace_back(slice_id, 0);
   }
 
