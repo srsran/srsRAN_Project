@@ -586,6 +586,7 @@ viavi 1UE MIMO:
   extends: .viavi
   variables:
     KEYWORDS: "1UE and ideal and MIMO"
+    RETINA_PARAM_ARGS: "gnb.all.nof_antennas_ul=2"
 
 viavi 1UE birth-death:
   extends: .viavi
@@ -596,6 +597,7 @@ viavi 1UE fading:
   extends: .viavi
   variables:
     KEYWORDS: "1UE and fading and not MIMO"
+    RETINA_PARAM_ARGS: "gnb.all.nof_antennas_ul=2"
 
 viavi 1UE fading MIMO:
   extends: .viavi
