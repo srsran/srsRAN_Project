@@ -118,8 +118,8 @@ builder version increased:
       build_rohc() {
         docker/scripts/install_rohc_dependencies.sh build
         docker/scripts/build_rohc.sh ${target_arch} ${KUBERNETES_CPU_REQUEST}
-        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders/rohc
-        cp -r /opt/rohc ${CI_PROJECT_DIR}/.gitlab/ci/builders/rohc
+        mkdir -p ${CI_PROJECT_DIR}/.gitlab/ci/builders
+        cp -r /opt/rohc ${CI_PROJECT_DIR}/.gitlab/ci/builders
       }
 
     # Publish compiled version to the registry
