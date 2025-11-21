@@ -22,7 +22,7 @@ void srsran::srs_cu_cp::fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cf
 
   // ROHC
   if (cu_cp_pdcp_cfg.header_compression.has_value()) {
-    const auto&      rohc_cfg_in  = cu_cp_pdcp_cfg.header_compression.value();
+    const auto&      rohc_cfg_in  = *cu_cp_pdcp_cfg.header_compression;
     e1ap_rohc_config rohc_cfg_out = {};
     switch (rohc_cfg_in.rohc_type) {
       case rohc::rohc_type_t::rohc:

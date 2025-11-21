@@ -412,7 +412,7 @@ struct formatter<srsran::pdcp_tx_config> {
                     cfg.sn_size,
                     cfg.discard_timer);
     if (cfg.header_compression.has_value()) {
-      out = format_to(out, " {}", cfg.header_compression.value());
+      out = format_to(out, " {}", *cfg.header_compression);
     }
     out = format_to(out, " {}", cfg.custom);
     return out;
@@ -438,7 +438,7 @@ struct formatter<srsran::pdcp_rx_config> {
                     cfg.sn_size,
                     cfg.t_reordering);
     if (cfg.header_compression.has_value()) {
-      out = format_to(out, " {}", cfg.header_compression.value());
+      out = format_to(out, " {}", *cfg.header_compression);
     }
     out = format_to(out, " {}", cfg.custom);
     return out;

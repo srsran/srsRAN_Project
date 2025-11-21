@@ -31,7 +31,7 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg, const 
 
   // ROHC
   if (e1ap_cfg.rohc_config.has_value()) {
-    const auto&       rohc_cfg_in  = e1ap_cfg.rohc_config.value();
+    const auto&       rohc_cfg_in  = *e1ap_cfg.rohc_config;
     rohc::rohc_config rohc_cfg_out = {};
     switch (rohc_cfg_in.rohc_type) {
       case e1ap_rohc_type::rohc:
@@ -44,7 +44,7 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg, const 
     rohc_cfg_out.max_cid = rohc_cfg_in.rohc_params.max_cid;
     rohc_cfg_out.profiles.set_profile_bitmap(rohc_cfg_in.rohc_params.rohc_profiles);
     rohc_cfg_out.continue_rohc =
-        rohc_cfg_in.rohc_params.continue_rohc.has_value() && rohc_cfg_in.rohc_params.continue_rohc.value() == true;
+        rohc_cfg_in.rohc_params.continue_rohc.has_value() && *rohc_cfg_in.rohc_params.continue_rohc == true;
     cfg.header_compression = rohc_cfg_out;
   } else {
     cfg.header_compression = std::nullopt;

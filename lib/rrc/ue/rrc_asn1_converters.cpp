@@ -62,7 +62,7 @@ asn1::rrc_nr::pdcp_cfg_s srsran::srs_cu_cp::pdcp_config_to_rrc_nr_asn1(const pdc
 
   // Fill header compression
   if (pdcp_cfg.header_compression.has_value()) {
-    const auto& rohc_cfg_in = pdcp_cfg.header_compression.value();
+    const auto& rohc_cfg_in = *pdcp_cfg.header_compression;
     switch (rohc_cfg_in.rohc_type) {
       case rohc::rohc_type_t::rohc: {
         rrc_pdcp_cfg.drb.hdr_compress.set_rohc();

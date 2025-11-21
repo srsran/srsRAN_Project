@@ -749,7 +749,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(const e1ap_pdcp_config& p
 
   // Fill ROHC params.
   if (pdcp_cfg.rohc_config.has_value()) {
-    const auto& rohc_config           = pdcp_cfg.rohc_config.value();
+    const auto& rohc_config           = *pdcp_cfg.rohc_config;
     asn1_pdcp_cfg.rohc_params_present = true;
     switch (rohc_config.rohc_type) {
       case e1ap_rohc_type::rohc: {

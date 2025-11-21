@@ -63,7 +63,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
       logger.log_warning("t-Reordering of infinity on DRBs is not advised. It can cause data stalls.");
     }
     if (cfg.header_compression.has_value()) {
-      const auto& header_compression = cfg.header_compression.value();
+      const auto& header_compression = *cfg.header_compression;
       if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
         // Uplink-only ROHC allows only ROHC profile 0x0006, see TS 38.331 Sec. 6.3
         for (auto profile : rohc::all_rohc_profiles) {

@@ -73,7 +73,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
       logger.log_error("Invalid DRB config, discard_timer is not configured");
     }
     if (cfg.header_compression.has_value()) {
-      const auto& header_compression = cfg.header_compression.value();
+      const auto& header_compression = *cfg.header_compression;
       if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
         for (auto profile : rohc::all_rohc_profiles) {
           if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
