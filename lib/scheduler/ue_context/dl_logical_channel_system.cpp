@@ -227,7 +227,6 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   auto        u      = ues.row(ue_rid);
   auto&       ue_ch  = u.at<ue_channel_context>();
   ue_context& ue_ctx = u.at<ue_context>();
-  srsran_assert(ue_ctx.contains(slice_id), "Invalid slice ID");
   srsran_assert(ue_ch.channels.contains(lcid), "LCID not configured");
 
   channel_context& ch_ctx = ue_ch.channels[lcid];
@@ -239,14 +238,16 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   // Remove LCID from previous slice.
   deregister_lc_ran_slice(ue_rid, lcid);
 
+  // If slice does not exist yet for the UE, create it.
+  auto slice_it = ue_ctx.find_slice(slice_id);
+  if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
+    // New slice, add to the list.
+    ue_ctx.pending_bytes_per_slice.emplace_back(slice_id, 0);
+  }
+
   // Add LCID to new slice.
   ch_ctx.slice_id = slice_id;
   ue_ctx.find_slice(slice_id)->second += get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
-}
-
-void dl_logical_channel_system::register_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id)
-{
-  get_ue(ue_rid).at<ue_context>().pending_bytes_per_slice.emplace_back(slice_id, 0);
 }
 
 void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
@@ -258,27 +259,20 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
     channel_context& ch_ctx = ue_ch.channels[lcid];
     if (ch_ctx.slice_id.has_value()) {
       // Erase LC from the slice lookup.
-      auto& slice_bytes = ue_ctx.find_slice(*ch_ctx.slice_id)->second;
+      auto  slice_it    = ue_ctx.find_slice(*ch_ctx.slice_id);
+      auto& slice_bytes = slice_it->second;
       slice_bytes -= get_mac_sdu_required_bytes(ch_ctx.active ? ch_ctx.buf_st : 0);
-    }
-    ch_ctx.slice_id.reset();
-  }
-}
-
-void dl_logical_channel_system::deregister_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id)
-{
-  auto  u        = get_ue(ue_rid);
-  auto& ue_ctx   = u.at<ue_context>();
-  auto& ue_ch    = u.at<ue_channel_context>();
-  auto  slice_it = ue_ctx.find_slice(slice_id);
-  if (slice_it != ue_ctx.pending_bytes_per_slice.end()) {
-    for (auto& ch : ue_ch.channels) {
-      if (ch.slice_id == slice_id) {
-        // Detach logical channel from the slice.
-        ch.slice_id.reset();
+      // Remove slice from LC.
+      auto prev_slice_id = *ch_ctx.slice_id;
+      ch_ctx.slice_id.reset();
+      // If it is the last LC attached to the slice, remove slice.
+      if (std::none_of(ue_ch.channels.begin(), ue_ch.channels.end(), [prev_slice_id](const channel_context& ch) {
+            return ch.slice_id == prev_slice_id;
+          })) {
+        // No other LC is still attached to the slice. Remove slice from UE.
+        ue_ctx.pending_bytes_per_slice.erase(slice_it);
       }
     }
-    ue_ctx.pending_bytes_per_slice.erase(slice_it);
   }
 }
 
@@ -542,19 +536,9 @@ void ue_dl_logical_channel_repository::set_lcid_ran_slice(lcid_t lcid, ran_slice
   parent->set_lcid_ran_slice(ue_row_id, lcid, slice_id);
 }
 
-void ue_dl_logical_channel_repository::register_ran_slice(ran_slice_id_t slice_id)
-{
-  parent->register_ran_slice(ue_row_id, slice_id);
-}
-
 void ue_dl_logical_channel_repository::reset_lcid_ran_slice(lcid_t lcid)
 {
   parent->deregister_lc_ran_slice(ue_row_id, lcid);
-}
-
-void ue_dl_logical_channel_repository::deregister_ran_slice(ran_slice_id_t slice_id)
-{
-  parent->deregister_ran_slice(ue_row_id, slice_id);
 }
 
 unsigned ue_dl_logical_channel_repository::pending_bytes() const

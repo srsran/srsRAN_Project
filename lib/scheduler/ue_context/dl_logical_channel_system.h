@@ -142,9 +142,7 @@ private:
   void deactivate(soa::row_id ue_rid);
 
   void set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lcid, ran_slice_id_t slice_id);
-  void register_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id);
   void deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid);
-  void deregister_ran_slice(soa::row_id ue_rid, ran_slice_id_t slice_id);
 
   void
   handle_dl_buffer_status_indication(soa::row_id ue_row_id, lcid_t lcid, unsigned buffer_status, slot_point hol_toa);
@@ -256,17 +254,11 @@ public:
   /// Set UE fallback state.
   void set_fallback_state(bool fallback_active);
 
-  /// Setups up an observer for DL pending data for a given RAN slice.
-  void register_ran_slice(ran_slice_id_t slice_id);
-
   /// Assign a RAN slice to a logical channel.
   void set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t slice_id);
 
   /// Detach logical channel from previously set RAN slice.
   void reset_lcid_ran_slice(lcid_t lcid);
-
-  /// Remove RAN slice and detach all associated logical channels.
-  void deregister_ran_slice(ran_slice_id_t slice_id);
 
   /// Determines whether a RAN slice has at least one bearer associated with it.
   [[nodiscard]] bool has_slice(ran_slice_id_t slice_id) const

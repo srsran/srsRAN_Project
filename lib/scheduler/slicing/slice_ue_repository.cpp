@@ -12,10 +12,7 @@
 
 using namespace srsran;
 
-slice_ue::slice_ue(ue& u_, ue_cell& ue_cc_, ran_slice_id_t slice_id_) : u(u_), ue_cc(ue_cc_), slice_id(slice_id_)
-{
-  u.dl_logical_channels().register_ran_slice(slice_id);
-}
+slice_ue::slice_ue(ue& u_, ue_cell& ue_cc_, ran_slice_id_t slice_id_) : u(u_), ue_cc(ue_cc_), slice_id(slice_id_) {}
 
 // class slice_ue_repository
 
@@ -27,7 +24,6 @@ slice_ue_repository::slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index
 bool slice_ue_repository::add_ue(ue& u)
 {
   if (not ue_map.contains(u.ue_index)) {
-    u.dl_logical_channels().register_ran_slice(slice_id);
     ue_cell* ue_cc = u.find_cell(cell_index);
     srsran_sanity_check(ue_cc != nullptr, "Invalid UE added to RAN slice");
     ue_map.emplace(u.ue_index, u, *ue_cc, slice_id);
@@ -96,7 +92,6 @@ void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
     return;
   }
   auto& slice_u = ue_map[ue_index];
-  slice_u.u.dl_logical_channels().deregister_ran_slice(slice_id);
   slice_u.u.ul_logical_channels().deregister_ran_slice(slice_id);
   ue_map.erase(ue_index);
 }

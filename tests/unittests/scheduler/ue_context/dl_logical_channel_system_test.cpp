@@ -404,8 +404,6 @@ TEST_F(single_ue_dl_logical_channel_system_test,
 {
   lcids = {LCID_SRB0, LCID_SRB1, LCID_MIN_DRB, uint_to_lcid(LCID_MIN_DRB + 1)};
   ue_lchs.configure(this->create_lcid_config(lcids));
-  ue_lchs.register_ran_slice(ran_slice_id_t{0});
-  ue_lchs.register_ran_slice(ran_slice_id_t{1});
   ue_lchs.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
   ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
   ue_lchs.set_lcid_ran_slice(uint_to_lcid(LCID_MIN_DRB + 1), ran_slice_id_t{1});
@@ -427,16 +425,53 @@ TEST_F(single_ue_dl_logical_channel_system_test,
   ue_lchs.reset_lcid_ran_slice(LCID_SRB1);
   ASSERT_FALSE(ue_lchs.has_pending_bytes(ran_slice_id_t{0}));
 
-  // Deactivate the whole slice.
-  ue_lchs.deregister_ran_slice(ran_slice_id_t{1});
+  // Deactivate LC slice but not the whole slice.
+  ue_lchs.reset_lcid_ran_slice(LCID_MIN_DRB);
+  ASSERT_TRUE(ue_lchs.has_pending_bytes(ran_slice_id_t{1}));
+  assert_ue_lch_valid(ue_lchs);
+
+  // Deregister slice 1 completely.
+  ue_lchs.reset_lcid_ran_slice(uint_to_lcid(LCID_MIN_DRB + 1));
   ASSERT_FALSE(ue_lchs.has_pending_bytes(ran_slice_id_t{1}));
+}
+
+TEST_F(single_ue_dl_logical_channel_system_test, reregistering_slice_does_not_change_pending_bytes)
+{
+  ue_lchs.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{0}), 0);
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{1}), 0);
+  const unsigned srb1_bytes = 10000;
+  ue_lchs.handle_dl_buffer_status_indication(LCID_SRB1, srb1_bytes);
+  ASSERT_GE(ue_lchs.pending_bytes(ran_slice_id_t{0}), srb1_bytes);
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{1}), 0);
+
+  // RAN slice 1 only has pending bytes when associated with a logical channel.
+  const unsigned drb1_bytes = 20000, subhdr_overhead = 4;
+  ue_lchs.handle_dl_buffer_status_indication(LCID_MIN_DRB, drb1_bytes);
+  ASSERT_EQ(ue_lchs.pending_bytes(ran_slice_id_t{1}), 0);
+  ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+  ASSERT_GE(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes);
+  ASSERT_LT(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes + subhdr_overhead);
+
+  // Reregistering slice 1 should not change pending bytes.
+  for (unsigned i = 0; i != 10; ++i) {
+    ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+    ASSERT_GE(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes);
+    ASSERT_LT(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes + subhdr_overhead);
+  }
+  for (unsigned i = 0; i != 10; ++i) {
+    ue_lchs.reset_lcid_ran_slice(LCID_MIN_DRB);
+    ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+    ASSERT_GE(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes);
+    ASSERT_LT(ue_lchs.pending_bytes(ran_slice_id_t{1}), drb1_bytes + subhdr_overhead);
+  }
+  assert_ue_lch_valid(ue_lchs);
 }
 
 TEST_F(single_ue_dl_logical_channel_system_test,
        when_ce_is_pending_and_non_srb_slice_has_pending_bytes_then_ce_goes_in_that_slice)
 {
-  ue_lchs.register_ran_slice(ran_slice_id_t{0});
-  ue_lchs.register_ran_slice(ran_slice_id_t{1});
   ue_lchs.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
   ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
 
@@ -460,8 +495,6 @@ TEST_F(single_ue_dl_logical_channel_system_test,
 
 TEST_F(single_ue_dl_logical_channel_system_test, when_sdu_is_scheduled_pending_slice_bytes_are_updated_accordingly)
 {
-  ue_lchs.register_ran_slice(ran_slice_id_t{0});
-  ue_lchs.register_ran_slice(ran_slice_id_t{1});
   ue_lchs.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
   ue_lchs.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
 
