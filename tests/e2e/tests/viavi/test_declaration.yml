@@ -449,6 +449,8 @@ tests:
         nof_antennas_ul: 2
         srs:
           srs_period_ms: 10
+    retina_params:
+      nof_antennas_ul: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 200.0e+6
@@ -463,6 +465,8 @@ tests:
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config: *1ue_mimo_config
+    retina_params:
+      nof_antennas_ul: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
