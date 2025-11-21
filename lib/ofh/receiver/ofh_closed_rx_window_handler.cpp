@@ -79,10 +79,10 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
       ctx_value.context.slot, symbol_point.get_symbol_index(), ctx_value.context.sector};
   notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid), false);
 
-  if (log_unreceived_messages) {
-    // Increase the metrics counter.
-    nof_missed_uplink_symbols.fetch_add(1, std::memory_order_relaxed);
+  // Increase the metrics counter.
+  nof_missed_uplink_symbols.fetch_add(1, std::memory_order_relaxed);
 
+  if (log_unreceived_messages) {
     logger.warning("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}'",
                    ctx_value.context.sector,
                    ctx_value.context.slot,
@@ -116,9 +116,10 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
 
   notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 
-  if (log_unreceived_messages) {
-    nof_missed_prach_contexts.fetch_add(1, std::memory_order_relaxed);
+  // Increase the metrics counter.
+  nof_missed_prach_contexts.fetch_add(1, std::memory_order_relaxed);
 
+  if (log_unreceived_messages) {
     logger.warning("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'",
                    ctx_value.context.sector,
                    ctx_value.context.slot);
