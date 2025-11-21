@@ -68,12 +68,10 @@ protected:
     window_size(pdcp_window_size(sn_size_)),
     sn_size(sn_size_)
   {
-    if (rb_id_.is_drb()) {
-      bearer_id = drb_id_to_uint(rb_id_.get_drb_id()) - 1;
-    } else if (rb_id.is_srb()) {
+    if (rb_id_.is_srb()) {
       bearer_id = srb_id_to_uint(rb_id_.get_srb_id()) - 1;
     } else {
-      srsran_assertion_failure("Invalid RB identity: {}", rb_id_);
+      bearer_id = drb_id_to_uint(rb_id_.get_drb_id()) - 1;
     }
   }
 
@@ -88,7 +86,6 @@ protected:
   const pdcp_rb_type  rb_type;
   const pdcp_rlc_mode rlc_mode;
   bool                is_srb() const { return rb_type == pdcp_rb_type::srb; }
-  bool                is_drb() const { return rb_type == pdcp_rb_type::drb; }
   bool                is_um() const { return rlc_mode == pdcp_rlc_mode::um; }
   bool                is_am() const { return rlc_mode == pdcp_rlc_mode::am; }
 
