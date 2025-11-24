@@ -184,7 +184,7 @@ TEST_F(single_ue_dl_logical_channel_system_test, srb0_not_reported_in_has_pendin
 TEST_F(single_ue_dl_logical_channel_system_test, deactivate_ue)
 {
   lcid_t   lcid   = uint_to_lcid(lcid_t::LCID_MIN_DRB);
-  unsigned buf_st = test_rgen::uniform_int<unsigned>(0, 10000);
+  unsigned buf_st = test_rgen::uniform_int<unsigned>(1, 10000);
   ue_lchs.handle_dl_buffer_status_indication(lcid, buf_st);
 
   ASSERT_EQ(ue_lchs.cfg().size(), 3);
