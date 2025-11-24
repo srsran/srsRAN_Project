@@ -512,8 +512,6 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   reps[0].report_cfg_type = report_cfg_type;
 
   reps[0].report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
-  reps[0].non_pmi_port_indication.push_back(csi_report_config::port_index_for_8_ranks{
-      .port_index_type = srsran::csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_1});
 
   reps[0].report_freq_cfg.emplace();
   reps[0].report_freq_cfg->cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
