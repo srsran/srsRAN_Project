@@ -466,7 +466,8 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
 
     auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
     if (ngap == nullptr) {
-      logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+      logger.warning(
+          "ue={}: Can't transfer UE context. Cause: NGAP not found for plmn={}", ue_index, ue->get_ue_context().plmn);
       return false;
     }
 
@@ -545,7 +546,8 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
 
   auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
   if (ngap == nullptr) {
-    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    logger.warning(
+        "ue={}: could not find NGAP of the target UE for plmn={}", target_ue_index, ue->get_ue_context().plmn);
     return;
   }
 
@@ -569,16 +571,9 @@ async_task<void> cu_cp_impl::handle_ue_context_release(const cu_cp_ue_context_re
   }
 
   auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
-  if (ngap == nullptr) {
-    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
-    return launch_async([](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
 
   return launch_async<ue_amf_context_release_request_routine>(
-      request, ngap->get_ngap_control_message_handler(), *this, logger);
+      request, ngap ? &ngap->get_ngap_control_message_handler() : nullptr, *this, logger);
 }
 
 bool cu_cp_impl::handle_handover_request(ue_index_t                        ue_index,
@@ -614,7 +609,9 @@ cu_cp_impl::handle_new_initial_context_setup_request(const ngap_init_context_set
 
   auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
   if (ngap == nullptr) {
-    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
+    logger.warning("ue={}: Initial context setup failed. Cause: NGAP not found for plmn={}",
+                   request.ue_index,
+                   ue->get_ue_context().plmn);
     return launch_async(
         [](coro_context<async_task<expected<ngap_init_context_setup_response, ngap_init_context_setup_failure>>>& ctx) {
           CORO_BEGIN(ctx);
@@ -922,9 +919,12 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
 
   auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
   if (ngap == nullptr) {
-    logger.warning("NGAP not found for PLMN={}", ue->get_ue_context().plmn);
-    return launch_async([](coro_context<async_task<void>>& ctx) {
+    logger.debug("ue={}: No ngap context for this ue exists, releasing it from rrc and f1ap",
+                 ue->get_ue_context().plmn);
+    return launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
+      // If NGAP was not found, release UE from DU processor, RRC and F1AP.
+      CORO_AWAIT(handle_ue_context_release_command({ue_index, ngap_cause_radio_network_t::unspecified}));
       CORO_RETURN();
     });
   }

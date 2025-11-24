@@ -46,7 +46,7 @@ void ue_transaction_info_release_routine::operator()(coro_context<async_task<voi
   for (plmn_id_it = ng_reset_per_plmn.begin(); plmn_id_it != ng_reset_per_plmn.end(); ++plmn_id_it) {
     ngap = ngap_db.find_ngap(plmn_id_it->first);
     if (ngap == nullptr) {
-      logger.debug("NGAP not found for PLMN={}. Skipping NGReset", plmn_id_it->first);
+      logger.debug("Skipping NGReset. Cause: NGAP not found for plmn={}", plmn_id_it->first);
       continue;
     }
 

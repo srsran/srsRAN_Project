@@ -25,7 +25,7 @@ class ue_amf_context_release_request_routine
 {
 public:
   ue_amf_context_release_request_routine(const cu_cp_ue_context_release_request& request_,
-                                         ngap_control_message_handler&           ng_release_handler_,
+                                         ngap_control_message_handler*           ng_release_handler_,
                                          cu_cp_ue_context_release_handler&       cu_cp_ue_ctxt_release_handler_,
                                          srslog::basic_logger&                   logger_);
 
@@ -33,7 +33,7 @@ public:
 
 private:
   const cu_cp_ue_context_release_request request;
-  ngap_control_message_handler&          ng_release_handler;
+  ngap_control_message_handler*          ng_release_handler = nullptr;
   cu_cp_ue_context_release_handler&      cu_cp_ue_ctxt_release_handler;
   srslog::basic_logger&                  logger;
 
