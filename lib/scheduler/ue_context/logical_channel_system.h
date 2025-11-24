@@ -63,6 +63,11 @@ public:
   /// \return Bitset of UEs with pending data for the provided RANslice.
   bounded_bitset<MAX_NOF_DU_UES> get_ues_with_dl_pending_data(ran_slice_id_t slice_id) const;
 
+  /// Fills list with UEs that have UL pending newTx data for the given RAN slice (SR not considered).
+  /// \param[in] slice_id RAN slice identifier.
+  /// \return Bitset of UEs with pending data for the provided RANslice.
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_ul_pending_data(ran_slice_id_t slice_id) const;
+
 private:
   friend class ue_logical_channel_repository;
   static constexpr size_t MAX_RAN_SLICES_PER_UE = 8;
@@ -369,7 +374,7 @@ public:
   void set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t slice_id);
 
   /// Assign a RAN slice to a logical channel group.
-  void set_lcg_ran_slice(soa::row_id, lcg_id_t lcgid, ran_slice_id_t slice_id);
+  void set_lcg_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id);
 
   /// Detach logical channel from previously set RAN slice.
   void reset_lcid_ran_slice(lcid_t lcid);
@@ -409,6 +414,9 @@ public:
     return logical_channel_system::find_active_lcg_ctx(get_ue_row(), lcgid) != nullptr;
   }
 
+  /// Check whether the UE is in fallback state.
+  [[nodiscard]] bool is_in_fallback_state() const { return get_ue_row().at<ue_context>().fallback_state; }
+
   /// \brief Check whether the UE has pending DL data, given its current state.
   [[nodiscard]] bool has_dl_pending_bytes() const
   {
@@ -434,12 +442,10 @@ public:
     if (ue_ctx.fallback_state) {
       return has_pending_bytes(uint_to_lcg_id(0U));
     }
-    for (const auto& [slice_id, bytes] : u.at<ue_ul_context>().pending_bytes_per_slice) {
-      if (bytes > 0) {
-        return true;
-      }
-    }
-    return false;
+    const auto& chs_ctx = u.at<ue_ul_channel_context>();
+    return std::any_of(chs_ctx.lcgs.begin(), chs_ctx.lcgs.end(), [](const auto& p) {
+      return p.second.active and p.second.buf_st > 0;
+    });
   }
 
   /// \brief Check whether the UE has pending data in the provided RAN slice.

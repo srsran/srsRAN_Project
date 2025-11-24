@@ -111,6 +111,19 @@ bounded_bitset<MAX_NOF_DU_UES> logical_channel_system::get_ues_with_dl_pending_d
   return slice_it->second.pending_dl_ues | ues_with_pending_ces;
 }
 
+bounded_bitset<MAX_NOF_DU_UES> logical_channel_system::get_ues_with_ul_pending_data(ran_slice_id_t slice_id) const
+{
+  auto slice_it = slices.find(slice_id);
+  if (slice_it == slices.end()) {
+    // This slice is not configured.
+    return bounded_bitset<MAX_NOF_DU_UES>{};
+  }
+  if (slice_id != SRB_RAN_SLICE_ID) {
+    return slice_it->second.pending_ul_ues;
+  }
+  return slice_it->second.pending_ul_ues;
+}
+
 void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
 {
   auto        u      = get_ue_row();
@@ -883,7 +896,7 @@ void ue_logical_channel_repository::set_lcid_ran_slice(lcid_t lcid, ran_slice_id
   parent->set_lcid_ran_slice(ue_row_id, lcid, slice_id);
 }
 
-void ue_logical_channel_repository::set_lcg_ran_slice(soa::row_id, lcg_id_t lcgid, ran_slice_id_t slice_id)
+void ue_logical_channel_repository::set_lcg_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id)
 {
   parent->set_lcg_ran_slice(ue_row_id, lcgid, slice_id);
 }
