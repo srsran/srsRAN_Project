@@ -1215,6 +1215,8 @@ inline bounded_bitset<N, LowestInfoBitIsMSB> fliplr(const bounded_bitset<N, Lowe
   return ret;
 }
 
+/// Iterate over bits set to 1 in the bitset, from begin() until \c predicate returns true.
+/// \return The position of the first bit for which \c predicate returns true, or -1 if no such bit exists.
 template <size_t N, bool LowestInfoBitIsMSB, typename Tag, typename FindPred>
 int find_first(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset, FindPred&& predicate)
 {

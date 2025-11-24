@@ -225,7 +225,8 @@ bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_newtx_data(ra
     return dl_lc_ch_sys.get_ues_with_pending_data(slice_id);
   }
 
-  // TODO: Support for UL.
+  // TODO: Support for UL. Right now we assume all UEs have pending UL data and let pending_bytes() to filter them out
+  // later in the chain.
   if (ues.empty()) {
     return bounded_bitset<MAX_NOF_DU_UES>{};
   }
