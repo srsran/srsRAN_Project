@@ -43,26 +43,26 @@ public:
   }
 
   /// Determines if bearer with LCID is part of this slice.
-  bool contains(lcid_t lcid) const { return u.dl_logical_channels().get_slice_id(lcid) == slice_id; }
+  bool contains(lcid_t lcid) const { return u.logical_channels().get_slice_id(lcid) == slice_id; }
 
   /// Determines if LCG-ID is part of this slice.
-  bool contains(lcg_id_t lcg_id) const { return u.ul_logical_channels().get_slice_id(lcg_id) == slice_id; }
+  bool contains(lcg_id_t lcg_id) const { return u.logical_channels().get_slice_id(lcg_id) == slice_id; }
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  bool has_pending_dl_newtx_bytes() const { return u.dl_logical_channels().has_pending_dl_bytes(slice_id); }
+  bool has_pending_dl_newtx_bytes() const { return u.logical_channels().has_pending_dl_bytes(slice_id); }
 
   /// \brief Computes the number of DL pending bytes for a given RAN slice that are not already allocated in a DL HARQ.
   /// \return Computed DL pending bytes.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  unsigned pending_dl_newtx_bytes() const { return u.dl_logical_channels().dl_pending_bytes(slice_id); }
+  unsigned pending_dl_newtx_bytes() const { return u.logical_channels().dl_pending_bytes(slice_id); }
 
   /// \brief Computes the number of DL pending bytes for a given LCID that are not already allocated in a DL HARQ.
   /// \return Computed DL pending bytes.
   unsigned pending_dl_newtx_bytes(lcid_t lcid) const
   {
-    return contains(lcid) ? u.dl_logical_channels().pending_bytes(lcid) : 0;
+    return contains(lcid) ? u.logical_channels().pending_bytes(lcid) : 0;
   }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
@@ -73,11 +73,11 @@ public:
   /// of grants not yet scheduled and the UL bytes of already scheduled grants whose CRC has not reached the scheduled.
   unsigned pending_ul_unacked_bytes(lcg_id_t lcg_id) const
   {
-    return contains(lcg_id) ? u.ul_logical_channels().pending_bytes(lcg_id) : 0;
+    return contains(lcg_id) ? u.logical_channels().pending_bytes(lcg_id) : 0;
   }
 
   /// \brief Returns whether a SR indication handling is pending.
-  bool has_pending_sr() const { return u.ul_logical_channels().has_pending_sr(); }
+  bool has_pending_sr() const { return u.logical_channels().has_pending_sr(); }
 
   /// Get QoS information of DRBs configured for the UE.
   logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); }
@@ -85,19 +85,19 @@ public:
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const
   {
-    return contains(lcid) ? u.dl_logical_channels().average_dl_bit_rate(lcid) : 0;
+    return contains(lcid) ? u.logical_channels().average_dl_bit_rate(lcid) : 0;
   }
 
   /// Average UL bit rate, in bps, for a given UE logical channel group.
   double ul_avg_bit_rate(lcg_id_t lcg_id) const
   {
-    return contains(lcg_id) ? u.ul_logical_channels().average_bit_rate(lcg_id) : 0;
+    return contains(lcg_id) ? u.logical_channels().average_ul_bit_rate(lcg_id) : 0;
   }
 
   /// Retrieve the Head-of-Line (HOL) Time-of-arrival (TOA) for a given logical channel.
   slot_point dl_hol_toa(lcid_t lcid) const
   {
-    return contains(lcid) ? u.dl_logical_channels().hol_toa(lcid) : slot_point{};
+    return contains(lcid) ? u.logical_channels().hol_toa(lcid) : slot_point{};
   }
 
 private:

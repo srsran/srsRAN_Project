@@ -58,14 +58,18 @@ public:
   /// Number of logical channels managed by the system.
   size_t nof_logical_channels() const;
 
-  /// Fills list with UEs that have DL pending newTx data for the given RAN slice.
+  /// \brief Fills list with UEs that may have DL pending newTx data for the given RAN slice.
   /// \param[in] slice_id RAN slice identifier.
-  /// \return Bitset of UEs with pending data for the provided RANslice.
+  /// \return Bitset of UEs with pending data for the provided RAN slice.
   bounded_bitset<MAX_NOF_DU_UES> get_ues_with_dl_pending_data(ran_slice_id_t slice_id) const;
 
-  /// Fills list with UEs that have UL pending newTx data for the given RAN slice (SR not considered).
+  /// \brief Fills list with UEs that have UL pending newTx data for the given RAN slice (SR not considered).
+  ///
+  /// Note: This is an estimation based solely on the logical channel buffer status reported by the UE. It may happen
+  /// that due to the number bytes stored in the allocated UL HARQs, a UE with pending data has no actual newTx pending
+  /// data to transmit.
   /// \param[in] slice_id RAN slice identifier.
-  /// \return Bitset of UEs with pending data for the provided RANslice.
+  /// \return Bitset of UEs with pending data for the provided RAN slice.
   bounded_bitset<MAX_NOF_DU_UES> get_ues_with_ul_pending_data(ran_slice_id_t slice_id) const;
 
 private:
@@ -279,6 +283,7 @@ private:
                                        unsigned                             prev_buf_st);
   void on_single_lcg_buf_st_update(ue_row&                              u,
                                    bool                                 channel_active,
+                                   lcg_id_t                             lcgid,
                                    const std::optional<ran_slice_id_t>& slice_id,
                                    unsigned                             new_buf_st,
                                    unsigned                             prev_buf_st);

@@ -136,7 +136,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
   }
 
   // Update state of existing UEs.
-  dl_lc_ch_sys.slot_indication();
+  lc_ch_sys.slot_indication();
   for (auto& u : ues) {
     u->slot_indication(sl_tx);
   }
@@ -160,7 +160,7 @@ void ue_repository::add_ue(std::unique_ptr<ue> u, logical_channel_config_list_pt
   const du_ue_index_t      ue_index = u->ue_index;
   const rnti_t             rnti     = u->crnti;
   const subcarrier_spacing scs      = u->get_pcell().active_bwp().dl_common->value().generic_params.scs;
-  u->setup(dl_lc_ch_sys.create_ue(ue_index, scs, u->get_pcell().is_in_fallback_mode(), lc_cfgs));
+  u->setup(lc_ch_sys.create_ue(ue_index, scs, u->get_pcell().is_in_fallback_mode(), lc_cfgs));
   bool ret = ues.insert(ue_index, std::move(u));
   srsran_assert(ret, "UE with duplicate index being added to the repository");
 
@@ -222,19 +222,9 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
 bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const
 {
   if (is_dl) {
-    return dl_lc_ch_sys.get_ues_with_dl_pending_data(slice_id);
+    return lc_ch_sys.get_ues_with_dl_pending_data(slice_id);
   }
-
-  // TODO: Support for UL. Right now we assume all UEs have pending UL data and let pending_bytes() to filter them out
-  // later in the chain.
-  if (ues.empty()) {
-    return bounded_bitset<MAX_NOF_DU_UES>{};
-  }
-  auto last = ues.end();
-  --last;
-  bounded_bitset<MAX_NOF_DU_UES> ues_with_data(last->get()->ue_index + 1);
-  ues_with_data.fill(true);
-  return ues_with_data;
+  return lc_ch_sys.get_ues_with_ul_pending_data(slice_id);
 }
 
 ue* ue_repository::find_by_rnti(rnti_t rnti)

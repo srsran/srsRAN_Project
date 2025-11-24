@@ -121,7 +121,7 @@ bounded_bitset<MAX_NOF_DU_UES> logical_channel_system::get_ues_with_ul_pending_d
   if (slice_id != SRB_RAN_SLICE_ID) {
     return slice_it->second.pending_ul_ues;
   }
-  return slice_it->second.pending_ul_ues;
+  return slice_it->second.pending_ul_ues | ues_with_pending_sr;
 }
 
 void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
@@ -164,7 +164,7 @@ void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
     }
     auto& ue_ul_ch = u.at<ue_ul_channel_context>();
     for (const auto& [lcgid, ch] : ue_ul_ch.lcgs) {
-      parent->on_single_lcg_buf_st_update(u, ch.active, ch.slice_id, ch.buf_st, 0);
+      parent->on_single_lcg_buf_st_update(u, ch.active, lcgid, ch.slice_id, ch.buf_st, 0);
     }
   }
 }
@@ -288,7 +288,7 @@ void logical_channel_system::configure(soa::row_id ue_rid, logical_channel_confi
     // Implicitly set LCG as active when at least one LCID is active.
     if (not ul_ch_ctx.active and ul_ch_ctx.slice_id.has_value()) {
       // Update slice pending bytes, because we are activating the logical channel.
-      on_single_lcg_buf_st_update(u, true, ul_ch_ctx.slice_id, ul_ch_ctx.buf_st, 0);
+      on_single_lcg_buf_st_update(u, true, ch_cfg->lc_group, ul_ch_ctx.slice_id, ul_ch_ctx.buf_st, 0);
     }
     ul_ch_ctx.active = true;
 
@@ -481,7 +481,7 @@ void logical_channel_system::set_lcg_ran_slice(soa::row_id ue_rid, lcg_id_t lcgi
   ch_ctx.slice_id = slice_id;
 
   // Update pending bytes for the slice.
-  on_single_lcg_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, 0);
+  on_single_lcg_buf_st_update(u, ch_ctx.active, lcgid, ch_ctx.slice_id, ch_ctx.buf_st, 0);
 }
 
 void logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
@@ -516,7 +516,7 @@ void logical_channel_system::deregister_lcg_ran_slice(soa::row_id ue_rid, lcg_id
     return;
   }
   ul_logical_channel_group_context& ch_ctx = lcgit->second;
-  on_single_lcg_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, 0, ch_ctx.buf_st);
+  on_single_lcg_buf_st_update(u, ch_ctx.active, lcgid, ch_ctx.slice_id, 0, ch_ctx.buf_st);
   if (ch_ctx.slice_id.has_value()) {
     // Remove slice from LC.
     auto prev_slice_id = *ch_ctx.slice_id;
@@ -604,6 +604,7 @@ void logical_channel_system::on_single_channel_buf_st_update(ue_row&            
 
 void logical_channel_system::on_single_lcg_buf_st_update(ue_row&                              u,
                                                          bool                                 channel_active,
+                                                         lcg_id_t                             lcgid,
                                                          const std::optional<ran_slice_id_t>& slice_id,
                                                          unsigned                             new_buf_st,
                                                          unsigned                             prev_buf_st)
@@ -616,11 +617,9 @@ void logical_channel_system::on_single_lcg_buf_st_update(ue_row&                
   auto& ue_ctx = u.at<ue_ul_context>();
 
   // In case this logical channel has a RAN slice associated, (differentially) update the pending bytes for the slice.
-  auto&                     slice_pending_bytes = ue_ctx.pending_bytes_per_slice.find(*slice_id)->second;
-  static constexpr lcg_id_t dummy_lcgid         = uint_to_lcg_id(1);
-  const auto                prev_buf_st_incl_subhdr =
-      get_mac_sdu_required_bytes(add_upper_layer_header_bytes(dummy_lcgid, prev_buf_st));
-  const auto new_buf_st_incl_subhdr = get_mac_sdu_required_bytes(add_upper_layer_header_bytes(dummy_lcgid, new_buf_st));
+  auto&      slice_pending_bytes     = ue_ctx.pending_bytes_per_slice.find(*slice_id)->second;
+  const auto prev_buf_st_incl_subhdr = get_mac_sdu_required_bytes(add_upper_layer_header_bytes(lcgid, prev_buf_st));
+  const auto new_buf_st_incl_subhdr  = get_mac_sdu_required_bytes(add_upper_layer_header_bytes(lcgid, new_buf_st));
   srsran_assert(slice_pending_bytes + new_buf_st_incl_subhdr >= prev_buf_st_incl_subhdr, "Invalid slice pending bytes");
   const auto prev_slice_pending_bytes = slice_pending_bytes;
   slice_pending_bytes += new_buf_st_incl_subhdr - prev_buf_st_incl_subhdr;
@@ -698,7 +697,7 @@ void logical_channel_system::handle_bsr_indication(soa::row_id ue_row_id, const 
       if (lcg.qos_row.has_value()) {
         qos_lcgs.at<lcg_qos_context>(*lcg.qos_row).sched_bytes_accum = 0;
       }
-      on_single_lcg_buf_st_update(u, lcg.active, lcg.slice_id, lcg.buf_st, prev_buf_st);
+      on_single_lcg_buf_st_update(u, lcg.active, it->first, lcg.slice_id, lcg.buf_st, prev_buf_st);
     }
   }
 }

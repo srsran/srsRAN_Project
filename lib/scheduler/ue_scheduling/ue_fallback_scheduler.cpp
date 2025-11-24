@@ -245,14 +245,13 @@ void ue_fallback_scheduler::schedule_ul_new_tx_and_retx(cell_resource_allocator&
 
 ue_fallback_scheduler::dl_new_tx_alloc_type ue_fallback_scheduler::get_dl_new_tx_alloc_type(const ue& u)
 {
-  if (u.dl_logical_channels().has_pending_bytes(LCID_SRB0)) {
+  if (u.logical_channels().has_pending_bytes(LCID_SRB0)) {
     return dl_new_tx_alloc_type::srb0;
   }
-  if (u.dl_logical_channels().has_pending_bytes(LCID_SRB1)) {
+  if (u.logical_channels().has_pending_bytes(LCID_SRB1)) {
     return dl_new_tx_alloc_type::srb1;
   }
-  return u.dl_logical_channels().is_con_res_id_pending() ? dl_new_tx_alloc_type::conres_only
-                                                         : dl_new_tx_alloc_type::error;
+  return u.logical_channels().is_con_res_id_pending() ? dl_new_tx_alloc_type::conres_only : dl_new_tx_alloc_type::error;
 }
 
 bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_alloc,
@@ -266,7 +265,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       // The UE is not in a state for scheduling
       logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
                    fmt::underlying(next_ue->ue_index),
-                   u.dl_logical_channels().dl_pending_bytes());
+                   u.logical_channels().dl_pending_bytes());
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
     }
@@ -277,7 +276,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     }
 
     const bool srb0_or_srb1_only =
-        alloc_type != dl_new_tx_alloc_type::conres_only and not u.dl_logical_channels().is_con_res_id_pending();
+        alloc_type != dl_new_tx_alloc_type::conres_only and not u.logical_channels().is_con_res_id_pending();
     if (srb0_or_srb1_only and not u.get_pcell().get_pcell_state().conres_complete) {
       // If the UE hasn't acked the ConRes, we cannot schedule the SRB0 or SRB1, as any MAC PDU received without ConRes
       // MAC CE would make the Contention Resolution fail, as per TS 38.331, Section 5.1.5.
@@ -302,7 +301,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     // Move to the next UE ONLY IF the UE has no more pending bytes. This is to give priority to the same UE, if
     // there are still some bytes left in the buffer. At the next iteration, the scheduler will try
     // again with the same scheduler, but starting from the next available slot.
-    if (not u.dl_logical_channels().has_dl_pending_bytes()) {
+    if (not u.logical_channels().has_dl_pending_bytes()) {
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
     }
   }
@@ -457,7 +456,7 @@ static dci_dl_rnti_config_type get_dci_type(const ue& u, const std::optional<dl_
   if (h_dl.has_value()) {
     return h_dl->get_grant_params().dci_cfg_type;
   }
-  if (u.dl_logical_channels().is_con_res_id_pending()) {
+  if (u.logical_channels().is_con_res_id_pending()) {
     return dci_dl_rnti_config_type::tc_rnti_f1_0;
   }
   return dci_dl_rnti_config_type::c_rnti_f1_0;
@@ -575,9 +574,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     }
     ue_grant_crbs = {unused_crbs.start(), unused_crbs.start() + prbs_tbs.nof_prbs};
   } else {
-    const unsigned only_conres_bytes = u.dl_logical_channels().pending_con_res_ce_bytes();
-    const unsigned only_srb0_bytes   = u.dl_logical_channels().pending_bytes(LCID_SRB0);
-    const unsigned only_srb1_bytes   = u.dl_logical_channels().pending_bytes(LCID_SRB1);
+    const unsigned only_conres_bytes = u.logical_channels().pending_con_res_ce_bytes();
+    const unsigned only_srb0_bytes   = u.logical_channels().pending_bytes(LCID_SRB0);
+    const unsigned only_srb1_bytes   = u.logical_channels().pending_bytes(LCID_SRB1);
     const unsigned pending_bytes     = only_conres_bytes + only_srb0_bytes + only_srb1_bytes;
     srsran_assert(pending_bytes > 0, "Unexpected number of pending bytes");
     // There must be space for ConRes CE, if it is pending. If only SRB0 is pending (no ConRes), there must be space
@@ -668,7 +667,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
     // Make sure the possible PDSCH grants that are scheduled after RRCSetupComplete use dedicated resources, while the
     // notification to remove the UE from the fallback scheduler hasn't arrived yet.
     use_dedicated |=
-        (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.dl_logical_channels().has_pending_bytes(LCID_SRB1));
+        (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.logical_channels().has_pending_bytes(LCID_SRB1));
   }
   std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
                                                                  res_alloc,
@@ -918,8 +917,8 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   // Set MAC logical channels to schedule in this PDU.
   if (not is_retx) {
     build_dl_fallback_transport_block_info(
-        msg.tb_list.emplace_back(), u.dl_logical_channels(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-    msg.context.buffer_occupancy = u.dl_logical_channels().dl_pending_bytes();
+        msg.tb_list.emplace_back(), u.logical_channels(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+    msg.context.buffer_occupancy = u.logical_channels().dl_pending_bytes();
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
@@ -1291,7 +1290,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
   h_ul->save_grant_params(ul_harq_alloc_context{pdcch.dci.type}, msg.pusch_cfg);
 
   // Notify UL TB scheduling.
-  u.ul_logical_channels().handle_ul_grant(msg.pusch_cfg.tb_size_bytes);
+  u.logical_channels().handle_ul_grant(msg.pusch_cfg.tb_size_bytes);
 }
 
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
@@ -1367,7 +1366,7 @@ static bool handle_conres_expiry(ue& u, slot_point sl_tx, srslog::basic_logger& 
   }
 
   // If the ConRes CE was never scheduled, then we deactivate the UE right away.
-  if (u.dl_logical_channels().is_con_res_id_pending()) {
+  if (u.logical_channels().is_con_res_id_pending()) {
     logger.warning("ue={} rnti={}: ra-ContentionResolutionTimer ({}ms{}) expired before ConRes CE was scheduled. UE "
                    "will stop being scheduled",
                    fmt::underlying(u.ue_index),
@@ -1456,7 +1455,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
-    if (not u.dl_logical_channels().has_dl_pending_bytes()) {
+    if (not u.logical_channels().has_dl_pending_bytes()) {
       // UE has no new txs pending. It can be removed.
       logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: no pending new transmissions",
                    fmt::underlying(ue_it->ue_index),

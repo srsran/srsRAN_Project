@@ -23,8 +23,8 @@ class ta_manager_tester : public ::testing::TestWithParam<duplex_mode>
 protected:
   ta_manager_tester() :
     ul_scs(GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30),
-    ue_dl_lc_chs(dl_lc_ch_sys.create_ue(to_du_ue_index(0), ul_scs, false, cfg_pool.create({}))),
-    ta_mgr(expert_cfg.ue.ta_control, ul_scs, time_alignment_group::id_t{0}, &ue_dl_lc_chs),
+    ue_lc_chs(lc_ch_sys.create_ue(to_du_ue_index(0), ul_scs, false, cfg_pool.create({}))),
+    ta_mgr(expert_cfg.ue.ta_control, ul_scs, time_alignment_group::id_t{0}, &ue_lc_chs),
     current_sl(to_numerology_value(ul_scs), test_rgen::uniform_int<unsigned>(0, 10239))
   {
     run_slot();
@@ -49,7 +49,7 @@ protected:
     static const lcid_dl_sch_t lcid            = lcid_dl_sch_t::TA_CMD;
     static const unsigned      remaining_bytes = lcid.sizeof_ce() + FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + 3;
     dl_msg_lc_info             subpdu{};
-    if (ue_dl_lc_chs.allocate_mac_ce(subpdu, remaining_bytes) > 0) {
+    if (ue_lc_chs.allocate_mac_ce(subpdu, remaining_bytes) > 0) {
       return subpdu;
     }
     return {};
@@ -58,8 +58,8 @@ protected:
   subcarrier_spacing               ul_scs;
   scheduler_expert_config          expert_cfg = config_helpers::make_default_scheduler_expert_config();
   logical_channel_config_pool      cfg_pool;
-  logical_channel_system           dl_lc_ch_sys;
-  ue_logical_channel_repository    ue_dl_lc_chs;
+  logical_channel_system           lc_ch_sys;
+  ue_logical_channel_repository    ue_lc_chs;
   ta_manager                       ta_mgr;
   slot_point                       current_sl;
 };

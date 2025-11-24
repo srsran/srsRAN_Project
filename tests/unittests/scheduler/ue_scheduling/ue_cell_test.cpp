@@ -9,9 +9,9 @@
  */
 
 #include "lib/scheduler/support/sch_pdu_builder.h"
+#include "lib/scheduler/ue_context/logical_channel_system.h"
 #include "lib/scheduler/ue_context/ue_cell.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
-#include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <gtest/gtest.h>
@@ -27,7 +27,10 @@ protected:
     sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request()),
     serv_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
     ue_cc_cfg(to_rnti(0x4601), cell_cfg, cfg_pool.update_ue(serv_cell_cfg)),
-    ul_lc_ch_mng(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, {})
+    lc_ch_mng(lc_ch_sys.create_ue(to_du_ue_index(0),
+                                  cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                  false,
+                                  lc_cfg_pool.create({})))
   {
   }
 
@@ -85,15 +88,17 @@ protected:
   sched_cell_configuration_request_message sched_cfg;
   cell_configuration                       cell_cfg{expert_cfg, sched_cfg};
   serving_cell_config                      serv_cell_cfg;
+  logical_channel_config_pool              lc_cfg_pool;
   du_cell_config_pool                      cfg_pool{sched_cfg};
   ue_cell_configuration                    ue_cc_cfg;
   cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS};
-  ul_logical_channel_manager               ul_lc_ch_mng;
+  logical_channel_system                   lc_ch_sys;
+  ue_logical_channel_repository            lc_ch_mng;
   srslog::basic_logger&                    logger = srslog::fetch_basic_logger("SCHED");
   ue_drx_controller                        drx_controller{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                                    cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
                                    std::nullopt,
-                                   ul_lc_ch_mng,
+                                   lc_ch_mng,
                                                           {},
                                    logger};
 };

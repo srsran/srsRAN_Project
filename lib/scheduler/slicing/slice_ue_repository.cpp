@@ -43,10 +43,10 @@ void slice_ue_repository::add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_i
   add_ue(u);
 
   // Add LCID to DL slice.
-  u.dl_logical_channels().set_lcid_ran_slice(lcid, slice_id);
+  u.logical_channels().set_lcid_ran_slice(lcid, slice_id);
 
   // Add LCG-ID to UL slice.
-  u.ul_logical_channels().set_lcg_ran_slice(lcg_id, slice_id);
+  u.logical_channels().set_lcg_ran_slice(lcg_id, slice_id);
 }
 
 void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
@@ -56,33 +56,33 @@ void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
   }
   auto& slice_u = ue_map[ue_idx];
 
-  ue_logical_channel_repository& dl_lc_mng = slice_u.u.dl_logical_channels();
-  srsran_sanity_check(dl_lc_mng.has_slice(slice_id), "slice_ue should not be created without slice");
-  if (dl_lc_mng.get_slice_id(lcid) != slice_id) {
+  ue_logical_channel_repository& lc_mng = slice_u.u.logical_channels();
+  srsran_sanity_check(lc_mng.has_slice(slice_id), "slice_ue should not be created without slice");
+  if (lc_mng.get_slice_id(lcid) != slice_id) {
     // LCID is not associated with this slice.
     return;
   }
 
   // Disconnect RAN slice from LCID.
-  dl_lc_mng.reset_lcid_ran_slice(lcid);
-
-  if (not slice_u.u.dl_logical_channels().has_slice(slice_id)) {
-    // If no more bearers active for this UE, remove it from the slice.
-    rem_ue(ue_idx);
-  }
+  lc_mng.reset_lcid_ran_slice(lcid);
 
   // If there are still other bearers in the slice, do not remove the LCG ID.
   logical_channel_config_list_ptr lc_chs = slice_u.u.ue_cfg_dedicated()->logical_channels();
   lcg_id_t lcg_id_to_rem = lc_chs.value().contains(lcid) ? lc_chs.value()[lcid]->lc_group : MAX_NOF_LCGS;
   bool     to_destroy    = true;
   for (logical_channel_config_ptr lc : *lc_chs) {
-    if (lc->lcid != lcid and lc->lc_group == lcg_id_to_rem and dl_lc_mng.get_slice_id(lc->lcid) == slice_id) {
+    if (lc->lcid != lcid and lc->lc_group == lcg_id_to_rem and lc_mng.get_slice_id(lc->lcid) == slice_id) {
       to_destroy = false;
       break;
     }
   }
   if (to_destroy) {
-    slice_u.u.ul_logical_channels().reset_lcg_ran_slice(lcg_id_to_rem);
+    slice_u.u.logical_channels().reset_lcg_ran_slice(lcg_id_to_rem);
+  }
+
+  if (not slice_u.u.logical_channels().has_slice(slice_id)) {
+    // If no more bearers active for this UE, remove it from the slice.
+    ue_map.erase(ue_idx);
   }
 }
 
@@ -91,8 +91,6 @@ void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
   if (not ue_map.contains(ue_index)) {
     return;
   }
-  auto& slice_u = ue_map[ue_index];
-  slice_u.u.ul_logical_channels().deregister_ran_slice(slice_id);
   ue_map.erase(ue_index);
 }
 
@@ -110,7 +108,7 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
 {
   static constexpr unsigned SR_GRANT_BYTES = 512;
 
-  int pending_bytes  = u.ul_logical_channels().pending_bytes(slice_id);
+  int pending_bytes  = u.logical_channels().ul_pending_bytes(slice_id);
   int harqs_in_bytes = -1;
 
   if (pending_bytes > 0) {
@@ -125,7 +123,7 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
   // In case a SR is pending and this is the SRB slice, we return a minimum SR grant size if no other bearers have
   // pending data.
   if (slice_id == SRB_RAN_SLICE_ID and has_pending_sr()) {
-    pending_bytes = u.ul_logical_channels().pending_bytes();
+    pending_bytes = u.logical_channels().ul_pending_bytes();
     if (harqs_in_bytes < 0) {
       // In case harq_in_bytes has not been computed earlier.
       harqs_in_bytes = sum_allocated_ul_harq_bytes(u);

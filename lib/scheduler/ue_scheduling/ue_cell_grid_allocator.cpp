@@ -372,12 +372,12 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   if (not is_retx) {
     // Set MAC logical channels to schedule in this PDU if it is a newtx.
     build_dl_transport_block_info(msg.tb_list.emplace_back(),
-                                  u.dl_logical_channels(),
+                                  u.logical_channels(),
                                   msg.pdsch_cfg.codewords[0].tb_size_bytes,
                                   grant.user->ran_slice_id());
 
     // Update context with buffer occupancy after the TB is built.
-    msg.context.buffer_occupancy = u.dl_logical_channels().dl_pending_bytes();
+    msg.context.buffer_occupancy = u.logical_channels().dl_pending_bytes();
   }
 
   // Save PDSCH parameters in DL HARQ.
@@ -766,7 +766,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   grant.h_ul.save_grant_params(pusch_sched_ctx, msg.pusch_cfg);
 
   // Register UL allocations for this slot.
-  u.ul_logical_channels().handle_ul_grant(grant.h_ul.get_grant_params().tbs_bytes);
+  u.logical_channels().handle_ul_grant(grant.h_ul.get_grant_params().tbs_bytes);
 
   // Update DRX state given the new allocation.
   u.drx_controller().on_new_ul_pdcch_alloc(pdcch_alloc.slot, pusch_alloc.slot);

@@ -14,7 +14,6 @@
 #include "ta_manager.h"
 #include "ue_cell.h"
 #include "ue_drx_controller.h"
-#include "ul_logical_channel_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/mac_scheduler.h"
 
@@ -91,10 +90,10 @@ public:
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
   /// \brief Handle received SR indication.
-  void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
+  void handle_sr_indication() { lc_ch_mgr.handle_sr_indication(); }
 
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
-  void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
+  void handle_bsr_indication(const ul_bsr_indication_message& msg) { lc_ch_mgr.handle_bsr_indication(msg); }
 
   /// \brief Handles received N_TA update indication by forwarding it to Timing Advance manager.
   void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
@@ -106,7 +105,7 @@ public:
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
-    if (not dl_lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}})) {
+    if (not lc_ch_mgr.handle_mac_ce_indication({.ce_lcid = msg.ce_lcid, .ce_payload = dummy_ce_payload{}})) {
       logger.warning("Dropped MAC CE, queue is full.");
     }
   }
@@ -127,13 +126,9 @@ public:
   /// \brief Retrieves UE DRX controller.
   ue_drx_controller& drx_controller() { return drx; }
 
-  /// \brief UE DL logical channels.
-  const ue_logical_channel_repository& dl_logical_channels() const { return dl_lc_ch_mgr; }
-  ue_logical_channel_repository&       dl_logical_channels() { return dl_lc_ch_mgr; }
-
-  /// \brief UE UL logical channels.
-  const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
-  ul_logical_channel_manager&       ul_logical_channels() { return ul_lc_ch_mgr; }
+  /// Retrieve UE logical channel manager.
+  const ue_logical_channel_repository& logical_channels() const { return lc_ch_mgr; }
+  ue_logical_channel_repository&       logical_channels() { return lc_ch_mgr; }
 
 private:
   /// Update UE configuration.
@@ -157,11 +152,8 @@ private:
   /// etc.
   static_vector<ue_cell*, MAX_NOF_DU_CELLS> ue_cells;
 
-  /// UE DL Logical Channel Manager.
-  ue_logical_channel_repository dl_lc_ch_mgr;
-
-  /// UE UL Logical Channel Manager.
-  ul_logical_channel_manager ul_lc_ch_mgr;
+  /// UE Logical Channel Manager.
+  ue_logical_channel_repository lc_ch_mgr;
 
   slot_point last_sl_tx;
 

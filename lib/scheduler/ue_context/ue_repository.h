@@ -141,7 +141,7 @@ private:
   srslog::basic_logger& logger;
 
   /// Management of all UE logical channels.
-  logical_channel_system dl_lc_ch_sys;
+  logical_channel_system lc_ch_sys;
 
   // Repository of UEs.
   ue_list ues;
