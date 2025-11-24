@@ -23,9 +23,9 @@ static constexpr size_t min_mac_subhdr_and_sdu_space_required(lcid_t lcid)
 {
   /// Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
   /// potential RLC header.
-  constexpr size_t RLC_HEADER_SIZE_ESTIM = 2;
+  constexpr size_t MIN_RLC_HEADER_SIZE = 2;
 
-  return MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (lcid != LCID_SRB0 ? RLC_HEADER_SIZE_ESTIM : 0);
+  return MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (lcid != LCID_SRB0 ? MIN_RLC_HEADER_SIZE : 0);
 }
 
 dl_sch_pdu::mac_sdu_encoder::mac_sdu_encoder(dl_sch_pdu& pdu_, lcid_t lcid_, unsigned max_sdu_size_) :

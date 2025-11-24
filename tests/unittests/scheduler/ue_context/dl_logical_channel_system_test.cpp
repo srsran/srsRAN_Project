@@ -15,7 +15,8 @@
 
 using namespace srsran;
 
-static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+/// (Implementation-defined) Estimation of how much space the MAC should leave for RLC segmentation header overhead.
+static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 3;
 
 static lcid_dl_sch_t get_random_dl_mac_ce()
 {
@@ -294,16 +295,22 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_sdu_is_scheduled_if_tb_has_
   unsigned sdu_size = test_rgen::uniform_int<unsigned>(1, 1000);
   ue_lchs.handle_dl_buffer_status_indication(lcid, sdu_size);
   unsigned tb_size = test_rgen::uniform_int<unsigned>(0, sdu_size * 2);
+  assert_ue_lch_valid(ue_lchs);
 
   unsigned rem_bytes = tb_size, rem_sdu_size = sdu_size;
   do {
     unsigned       pending_bytes = ue_lchs.total_pending_bytes();
     dl_msg_lc_info subpdu;
+    unsigned       allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, rem_bytes, lcid);
     assert_ue_lch_valid(ue_lchs);
-    unsigned allocated_bytes = ue_lchs.allocate_mac_sdu(subpdu, rem_bytes, lcid);
     if (not subpdu.lcid.is_valid()) {
-      // There was not enough space in the TB to deplete all the pending tx bytes.
-      ASSERT_LT(tb_size, get_mac_sdu_required_bytes(sdu_size));
+      if (tb_size > RLC_SEGMENTATION_OVERHEAD + MIN_MAC_SDU_SUBHEADER_SIZE) {
+        // The TB size was large enough to fit at least some MAC SDU + RLC overhead. However, there was not enough
+        // space in the TB to deplete all the pending tx bytes.
+        ASSERT_LT(tb_size, get_mac_sdu_required_bytes(sdu_size));
+      } else {
+        ASSERT_EQ(rem_bytes, tb_size);
+      }
       break;
     }
 
@@ -317,12 +324,8 @@ TEST_F(single_ue_dl_logical_channel_system_test, mac_sdu_is_scheduled_if_tb_has_
       rem_sdu_size -= subpdu.sched_bytes;
       // Note: In the case the logical channel was not totally flushed, the manager adds some extra bytes to account for
       // RLC overhead.
-      unsigned req_bytes        = get_mac_sdu_required_bytes(rem_sdu_size);
-      unsigned lc_pending_bytes = ue_lchs.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD;
-      if (req_bytes >= 254 and req_bytes <= 258) {
-        // Note: account for ambiguity in transition between MAC subheader sizes.
-        req_bytes++;
-      }
+      unsigned req_bytes        = get_mac_sdu_required_bytes(rem_sdu_size + RLC_SEGMENTATION_OVERHEAD);
+      unsigned lc_pending_bytes = ue_lchs.total_pending_bytes();
       ASSERT_EQ(req_bytes, lc_pending_bytes)
           << fmt::format("incorrect calculation of remaining pending tx bytes for SDU of size={}", subpdu.sched_bytes);
     }

@@ -12,8 +12,8 @@
 
 using namespace srsran;
 
-/// Estimation of much space the MAC should leave for RLC segmentation header overhead.
-static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+/// (Implementation-defined) Estimation of how much space the MAC should leave for RLC segmentation header overhead.
+static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 3;
 
 static constexpr unsigned get_mac_sdu_with_subhdr_and_rlc_hdr_estim(lcid_t lcid, unsigned payload)
 {
@@ -359,7 +359,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
   const unsigned min_bytes_needed = get_mac_sdu_with_subhdr_and_rlc_hdr_estim(lcid, 1);
-  if (rem_bytes <= min_bytes_needed) {
+  if (rem_bytes < min_bytes_needed) {
     // There is no space even for a minimal MAC SDU.
     return 0;
   }
