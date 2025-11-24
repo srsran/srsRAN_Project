@@ -51,12 +51,12 @@ public:
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  bool has_pending_dl_newtx_bytes() const { return u.dl_logical_channels().has_pending_bytes(slice_id); }
+  bool has_pending_dl_newtx_bytes() const { return u.dl_logical_channels().has_pending_dl_bytes(slice_id); }
 
   /// \brief Computes the number of DL pending bytes for a given RAN slice that are not already allocated in a DL HARQ.
   /// \return Computed DL pending bytes.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  unsigned pending_dl_newtx_bytes() const { return u.dl_logical_channels().pending_bytes(slice_id); }
+  unsigned pending_dl_newtx_bytes() const { return u.dl_logical_channels().dl_pending_bytes(slice_id); }
 
   /// \brief Computes the number of DL pending bytes for a given LCID that are not already allocated in a DL HARQ.
   /// \return Computed DL pending bytes.
@@ -85,7 +85,7 @@ public:
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const
   {
-    return contains(lcid) ? u.dl_logical_channels().average_bit_rate(lcid) : 0;
+    return contains(lcid) ? u.dl_logical_channels().average_dl_bit_rate(lcid) : 0;
   }
 
   /// Average UL bit rate, in bps, for a given UE logical channel group.

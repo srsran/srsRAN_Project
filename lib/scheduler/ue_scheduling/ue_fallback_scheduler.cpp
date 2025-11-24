@@ -266,7 +266,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       // The UE is not in a state for scheduling
       logger.error("ue={}: UE is an inconsistent state in the fallback scheduler. Pending bytes={}",
                    fmt::underlying(next_ue->ue_index),
-                   u.dl_logical_channels().pending_bytes());
+                   u.dl_logical_channels().dl_pending_bytes());
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
     }
@@ -302,7 +302,7 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
     // Move to the next UE ONLY IF the UE has no more pending bytes. This is to give priority to the same UE, if
     // there are still some bytes left in the buffer. At the next iteration, the scheduler will try
     // again with the same scheduler, but starting from the next available slot.
-    if (not u.dl_logical_channels().has_pending_bytes()) {
+    if (not u.dl_logical_channels().has_dl_pending_bytes()) {
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
     }
   }
@@ -919,7 +919,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   if (not is_retx) {
     build_dl_fallback_transport_block_info(
         msg.tb_list.emplace_back(), u.dl_logical_channels(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
-    msg.context.buffer_occupancy = u.dl_logical_channels().pending_bytes();
+    msg.context.buffer_occupancy = u.dl_logical_channels().dl_pending_bytes();
   }
 
   // Save in HARQ the parameters set for this PDCCH and PDSCH PDUs.
@@ -1456,7 +1456,7 @@ void ue_fallback_scheduler::slot_indication(slot_point sl)
       ue_it = pending_dl_ues_new_tx.erase(ue_it);
       continue;
     }
-    if (not u.dl_logical_channels().has_pending_bytes()) {
+    if (not u.dl_logical_channels().has_dl_pending_bytes()) {
       // UE has no new txs pending. It can be removed.
       logger.debug("ue={} rnti={}: will be removed from fallback scheduler. Cause: no pending new transmissions",
                    fmt::underlying(ue_it->ue_index),

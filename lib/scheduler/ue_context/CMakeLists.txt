@@ -7,7 +7,7 @@
 #
 
 set(SOURCES
-        dl_logical_channel_system.cpp
+        logical_channel_system.cpp
         ul_logical_channel_manager.cpp
         ta_manager.cpp
         ue_channel_state_manager.cpp

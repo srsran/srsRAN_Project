@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "../ue_context/dl_logical_channel_system.h"
+#include "../ue_context/logical_channel_system.h"
 #include "../ue_context/ue.h"
 #include "srsran/adt/flat_map.h"
 #include "srsran/adt/ring_buffer.h"
@@ -141,7 +141,7 @@ private:
   srslog::basic_logger& logger;
 
   /// Management of all UE logical channels.
-  dl_logical_channel_system dl_lc_ch_sys;
+  logical_channel_system dl_lc_ch_sys;
 
   // Repository of UEs.
   ue_list ues;

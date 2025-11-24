@@ -1479,7 +1479,7 @@ TEST_P(fallback_scheduler_srb1_segmentation, test_scheduling_srb1_segmentation)
 
   for (auto& tester : ues_testers) {
     ASSERT_EQ(0, tester.missing_retx);
-    ASSERT_FALSE(tester.test_ue.dl_logical_channels().has_pending_bytes())
+    ASSERT_FALSE(tester.test_ue.dl_logical_channels().has_dl_pending_bytes())
         << fmt::format("UE {} has still pending DL bytes", fmt::underlying(tester.test_ue.ue_index));
   }
 }

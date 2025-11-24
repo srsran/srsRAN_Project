@@ -58,8 +58,8 @@ protected:
   subcarrier_spacing               ul_scs;
   scheduler_expert_config          expert_cfg = config_helpers::make_default_scheduler_expert_config();
   logical_channel_config_pool      cfg_pool;
-  dl_logical_channel_system        dl_lc_ch_sys;
-  ue_dl_logical_channel_repository ue_dl_lc_chs;
+  logical_channel_system           dl_lc_ch_sys;
+  ue_logical_channel_repository    ue_dl_lc_chs;
   ta_manager                       ta_mgr;
   slot_point                       current_sl;
 };

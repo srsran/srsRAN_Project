@@ -21,13 +21,13 @@
 
 namespace srsran {
 
-class ue_dl_logical_channel_repository;
+class ue_logical_channel_repository;
 
-/// System responsible for handling the logical channel configuration and buffer occupancy status of UEs in DL.
-class dl_logical_channel_system
+/// System responsible for handling the logical channel configuration and buffer occupancy status of UEs.
+class logical_channel_system
 {
 public:
-  /// Holds the MAC CE information.
+  /// Holds the information relative to a MAC CE that needs to be scheduled.
   struct mac_ce_info {
     /// LCID of the MAC CE.
     lcid_dl_sch_t ce_lcid;
@@ -35,16 +35,21 @@ public:
     std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload = dummy_ce_payload{0};
   };
 
-  dl_logical_channel_system();
+  logical_channel_system();
 
   /// Signal the start of a new slot.
   void slot_indication();
 
   /// Creates a new UE logical channel repository.
-  ue_dl_logical_channel_repository create_ue(du_ue_index_t                   ue_index,
-                                             subcarrier_spacing              scs_common,
-                                             bool                            starts_in_fallback,
-                                             logical_channel_config_list_ptr log_channels_configs);
+  /// \param[in] ue_index DU UE index.
+  /// \param[in] slot_ind_scs Subcarrier spacing associated with slot indications.
+  /// \param[in] starts_in_fallback Whether the UE starts in fallback mode (no DRB tx).
+  /// \param[in] log_channels_configs List of logical channel configurations for this UE.
+  /// \return Handle to the created UE logical channel repository.
+  ue_logical_channel_repository create_ue(du_ue_index_t                   ue_index,
+                                          subcarrier_spacing              slot_ind_scs,
+                                          bool                            starts_in_fallback,
+                                          logical_channel_config_list_ptr log_channels_configs);
 
   /// Number of UEs managed by the system.
   size_t nof_ues() const { return ues.size(); }
@@ -52,14 +57,22 @@ public:
   /// Number of logical channels managed by the system.
   size_t nof_logical_channels() const;
 
-  /// Fills list with UEs that have pending data for the given RAN slice.
+  /// Fills list with UEs that have DL pending newTx data for the given RAN slice.
   /// \param[in] slice_id RAN slice identifier.
   /// \return Bitset of UEs with pending data for the provided RANslice.
-  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_data(ran_slice_id_t slice_id) const;
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_dl_pending_data(ran_slice_id_t slice_id) const;
 
 private:
-  friend class ue_dl_logical_channel_repository;
+  friend class ue_logical_channel_repository;
   static constexpr size_t MAX_RAN_SLICES_PER_UE = 8;
+
+  /// Information relative to a slice of the scheduler.
+  struct ran_slice_context {
+    /// Bitset of UE indexes for UEs with pending newTx DL data for this RAN slice.
+    bounded_bitset<MAX_NOF_DU_UES> pending_dl_ues;
+    /// Bitset of UE indexes for UEs with pending newTx UL data for this RAN slice.
+    bounded_bitset<MAX_NOF_DU_UES> pending_ul_ues;
+  };
 
   /// Context of a single pending CE.
   struct mac_ce_context {
@@ -68,13 +81,17 @@ private:
   };
   /// QoS context relative to a single logical channel of a UE, which has QoS enabled.
   struct qos_context {
-    /// Bytes-per-slot average for this logical channel.
-    moving_averager<unsigned> avg_bytes_per_slot;
-    /// Current slot sched bytes.
-    unsigned last_sched_bytes = 0;
+    /// DL Bytes-per-slot average for this logical channel.
+    moving_averager<unsigned> dl_avg_bytes_per_slot;
+    /// Current slot DL sched bytes.
+    unsigned dl_last_sched_bytes = 0;
+    /// UL Bytes-per-slot average for this logical channel.
+    moving_averager<unsigned> ul_avg_bytes_per_slot;
+    /// Last slot UL sched bytes.
+    unsigned ul_last_sched_bytes = 0;
   };
   /// Context of a single logical channel of a UE.
-  struct channel_context {
+  struct dl_logical_channel_context {
     /// Whether the configured logical channel is currently active.
     bool active = false;
     /// DL Buffer status of this logical channel.
@@ -87,7 +104,18 @@ private:
     std::optional<ran_slice_id_t> slice_id;
 
     // Note: clang 18.1.3 std::is_constructible_v<channel_context> return false without this.
-    channel_context() noexcept = default;
+    dl_logical_channel_context() noexcept = default;
+  };
+  /// Context of a single UL logical channel group of a UE.
+  struct ul_logical_channel_group_context {
+    /// Whether the configured logical channel is currently active.
+    bool active = false;
+    /// UL Buffer status of this logical channel.
+    unsigned buf_st = 0;
+    /// Sched bytes since last BSR.
+    unsigned sched_bytes_accum = 0;
+    /// Slice associated with this channel.
+    std::optional<ran_slice_id_t> slice_id;
   };
   /// UE context relative to its configuration.
   struct ue_config_context {
@@ -106,8 +134,14 @@ private:
     /// priority.
     static_vector<lcid_t, MAX_NOF_RB_LCIDS> sorted_channels;
     /// Context of channels currently configured. The index of the array matches the LCID.
-    static_flat_map<lcid_t, channel_context, MAX_NOF_RB_LCIDS> channels;
+    static_flat_map<lcid_t, dl_logical_channel_context, MAX_NOF_RB_LCIDS> channels;
   };
+  /// UE context relative to its UL channel management.
+  struct ue_ul_channel_context {
+    /// Context of logical channel groups (LCGs) currently configured.
+    static_flat_map<lcg_id_t, ul_logical_channel_group_context, MAX_NOF_LCGS> lcgs;
+  };
+  /// UE context relative to its DL state.
   struct ue_context {
     /// Whether the UE is in fallback (no DRB tx).
     bool fallback_state{false};
@@ -118,8 +152,14 @@ private:
     /// Mapping of RAN slice ID to the pending bytes of that slice, excluding any CE.
     static_flat_map<ran_slice_id_t, unsigned, MAX_RAN_SLICES_PER_UE> pending_bytes_per_slice;
   };
-  enum class ue_column_id { config, context, channel };
-  using ue_table     = soa::table<ue_column_id, ue_config_context, ue_context, ue_channel_context>;
+  // UE context relative to its UL state.
+  struct ue_ul_context {
+    /// Mapping of RAN slice ID to the pending bytes of that slice, excluding SRs.
+    static_flat_map<ran_slice_id_t, unsigned, MAX_RAN_SLICES_PER_UE> pending_bytes_per_slice;
+  };
+  enum class ue_column_id { config, context, ul_context, channel };
+  using ue_table =
+      soa::table<ue_column_id, ue_config_context, ue_context, ue_ul_context, ue_channel_context, ue_ul_channel_context>;
   using ue_row       = soa::row_view<ue_table>;
   using const_ue_row = soa::row_view<const ue_table>;
 
@@ -143,12 +183,12 @@ private:
   unsigned allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& lch_info, unsigned rem_bytes);
 
   // Helper inlined methods
-  static const channel_context* find_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
+  static const dl_logical_channel_context* find_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
   {
     auto& ue_ch = ue_row.at<ue_channel_context>();
     return ue_ch.channels.contains(lcid) ? &ue_ch.channels.at(lcid) : nullptr;
   }
-  static const channel_context* find_active_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
+  static const dl_logical_channel_context* find_active_ch_ctx(const const_ue_row& ue_row, lcid_t lcid)
   {
     auto* ch_ctx = find_ch_ctx(ue_row, lcid);
     return ch_ctx != nullptr and ch_ctx->active ? ch_ctx : nullptr;
@@ -163,7 +203,7 @@ private:
     const auto* ch_ctx = find_active_ch_ctx(ue_row, lcid);
     return ch_ctx != nullptr ? get_mac_sdu_required_bytes(ch_ctx->buf_st) : 0;
   }
-  unsigned        total_pending_bytes(const const_ue_row& ue_row) const;
+  unsigned        total_dl_pending_bytes(const const_ue_row& ue_row) const;
   static unsigned pending_con_res_ce_bytes(const const_ue_row& ue_row)
   {
     static const auto ce_size = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce();
@@ -190,8 +230,11 @@ private:
   /// Bitset of UEs with pending CEs.
   bounded_bitset<MAX_NOF_DU_UES> ues_with_pending_ces;
 
-  /// List of bitsets of UEs with pending data per RAN slice.
-  flat_map<ran_slice_id_t, bounded_bitset<MAX_NOF_DU_UES>> ran_slices_to_ues_with_pending_data;
+  /// Bitset of UEs with pending SRs.
+  bounded_bitset<MAX_NOF_DU_UES> ues_with_pending_sr;
+
+  /// List of bitsets of UEs with pending newTx DL data per RAN slice.
+  flat_map<ran_slice_id_t, ran_slice_context> slices;
 
   /// List of MAC CEs pending transmission.
   enum class ce_column_id { ce };
@@ -205,40 +248,40 @@ private:
   ue_table ues;
 };
 
-/// Handle of UE DL logical channel repository.
-class ue_dl_logical_channel_repository
+/// Handle of UE logical channel repository.
+class ue_logical_channel_repository
 {
-  using mac_ce_info        = dl_logical_channel_system::mac_ce_info;
-  using ue_config_context  = dl_logical_channel_system::ue_config_context;
-  using ue_context         = dl_logical_channel_system::ue_context;
-  using ue_channel_context = dl_logical_channel_system::ue_channel_context;
-  using channel_context    = dl_logical_channel_system::channel_context;
-  using ue_row             = dl_logical_channel_system::ue_row;
-  using const_ue_row       = dl_logical_channel_system::const_ue_row;
+  using mac_ce_info        = logical_channel_system::mac_ce_info;
+  using ue_config_context  = logical_channel_system::ue_config_context;
+  using ue_context         = logical_channel_system::ue_context;
+  using ue_channel_context = logical_channel_system::ue_channel_context;
+  using channel_context    = logical_channel_system::dl_logical_channel_context;
+  using ue_row             = logical_channel_system::ue_row;
+  using const_ue_row       = logical_channel_system::const_ue_row;
 
-  ue_dl_logical_channel_repository(dl_logical_channel_system& parent_, du_ue_index_t ue_index_, soa::row_id ue_row_) :
+  ue_logical_channel_repository(logical_channel_system& parent_, du_ue_index_t ue_index_, soa::row_id ue_row_) :
     parent(&parent_), ue_index(ue_index_), ue_row_id(ue_row_)
   {
   }
 
 public:
-  ue_dl_logical_channel_repository()                                        = default;
-  ue_dl_logical_channel_repository(const ue_dl_logical_channel_repository&) = delete;
-  ue_dl_logical_channel_repository(ue_dl_logical_channel_repository&& other) noexcept :
+  ue_logical_channel_repository()                                     = default;
+  ue_logical_channel_repository(const ue_logical_channel_repository&) = delete;
+  ue_logical_channel_repository(ue_logical_channel_repository&& other) noexcept :
     parent(std::exchange(other.parent, nullptr)),
     ue_index(std::exchange(other.ue_index, INVALID_DU_UE_INDEX)),
     ue_row_id(other.ue_row_id)
   {
   }
-  ue_dl_logical_channel_repository& operator=(const ue_dl_logical_channel_repository&) = delete;
-  ue_dl_logical_channel_repository& operator=(ue_dl_logical_channel_repository&& other) noexcept
+  ue_logical_channel_repository& operator=(const ue_logical_channel_repository&) = delete;
+  ue_logical_channel_repository& operator=(ue_logical_channel_repository&& other) noexcept
   {
     parent    = std::exchange(other.parent, nullptr);
     ue_index  = other.ue_index;
     ue_row_id = other.ue_row_id;
     return *this;
   }
-  ~ue_dl_logical_channel_repository() { reset(); }
+  ~ue_logical_channel_repository() { reset(); }
 
   void reset()
   {
@@ -277,18 +320,18 @@ public:
   /// Get the RAN slice ID associated with a logical channel.
   std::optional<ran_slice_id_t> get_slice_id(lcid_t lcid) const
   {
-    const auto* ch = dl_logical_channel_system::find_ch_ctx(get_ue_row(), lcid);
+    const auto* ch = logical_channel_system::find_ch_ctx(get_ue_row(), lcid);
     return ch != nullptr ? ch->slice_id : std::nullopt;
   }
 
   /// \brief Verifies if logical channel is activated for DL.
   [[nodiscard]] bool is_active(lcid_t lcid) const
   {
-    return dl_logical_channel_system::find_active_ch_ctx(get_ue_row(), lcid) != nullptr;
+    return logical_channel_system::find_active_ch_ctx(get_ue_row(), lcid) != nullptr;
   }
 
   /// \brief Check whether the UE has pending data, given its current state.
-  [[nodiscard]] bool has_pending_bytes() const
+  [[nodiscard]] bool has_dl_pending_bytes() const
   {
     auto        u      = get_ue_row();
     const auto& ue_ctx = u.at<ue_context>();
@@ -308,11 +351,10 @@ public:
   /// \brief Check whether the UE has pending data in the provided RAN slice.
   /// \return Returns true if the UE is active, in non-fallback mode, its has pendign bytes for the provided RAN slice
   /// ID and the slice is configured. Returns 0, otherwise.
-  [[nodiscard]] bool has_pending_bytes(ran_slice_id_t slice_id) const
+  [[nodiscard]] bool has_pending_dl_bytes(ran_slice_id_t slice_id) const
   {
-    auto slice_bitset_it = parent->ran_slices_to_ues_with_pending_data.find(slice_id);
-    if (slice_bitset_it != parent->ran_slices_to_ues_with_pending_data.end() and
-        slice_bitset_it->second.test(ue_index)) {
+    auto slice_bitset_it = parent->slices.find(slice_id);
+    if (slice_bitset_it != parent->slices.end() and slice_bitset_it->second.pending_dl_ues.test(ue_index)) {
       return true;
     }
 
@@ -321,16 +363,15 @@ public:
     if (slice_id == SRB_RAN_SLICE_ID and parent->ues_with_pending_ces.test(ue_index)) {
       // Check if any other slices have pending data. If they do, CE is not considered.
       // Note: This extra check is to avoid multiple slices report pending data when CEs are pending.
-      return std::all_of(
-          parent->ran_slices_to_ues_with_pending_data.begin(),
-          parent->ran_slices_to_ues_with_pending_data.end(),
-          [this, slice_id](const auto& p) { return p.first == slice_id or not p.second.test(ue_index); });
+      return std::all_of(parent->slices.begin(), parent->slices.end(), [this, slice_id](const auto& p) {
+        return p.first == slice_id or not p.second.pending_dl_ues.test(ue_index);
+      });
     }
     return false;
   }
 
   /// \brief Checks whether a logical channel has pending data.
-  bool has_pending_bytes(lcid_t lcid) const { return dl_logical_channel_system::has_pending_bytes(get_ue_row(), lcid); }
+  bool has_pending_bytes(lcid_t lcid) const { return logical_channel_system::has_pending_bytes(get_ue_row(), lcid); }
 
   /// \brief Checks whether a ConRes CE is pending for transmission.
   bool is_con_res_id_pending() const { return get_ue_row().at<ue_context>().pending_con_res_id; }
@@ -343,13 +384,13 @@ public:
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
   /// the UE state.
-  unsigned total_pending_bytes() const { return parent->total_pending_bytes(get_ue_row()); }
+  unsigned total_dl_pending_bytes() const { return parent->total_dl_pending_bytes(get_ue_row()); }
 
   /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
-  unsigned pending_bytes() const;
+  unsigned dl_pending_bytes() const;
 
   /// Calculates the number of DL pending bytes, including MAC header overhead, for a RAN slice.
-  unsigned pending_bytes(ran_slice_id_t slice_id) const
+  unsigned dl_pending_bytes(ran_slice_id_t slice_id) const
   {
     const auto& ue_ctx = get_ue_row().at<ue_context>();
     if (ue_ctx.fallback_state) {
@@ -385,23 +426,20 @@ public:
   }
 
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
-  unsigned pending_ce_bytes() const { return dl_logical_channel_system::pending_ce_bytes(get_ue_row()); }
+  unsigned pending_ce_bytes() const { return logical_channel_system::pending_ce_bytes(get_ue_row()); }
 
   /// \brief Checks whether UE has pending UE Contention Resolution Identity CE to be scheduled.
-  unsigned pending_con_res_ce_bytes() const
-  {
-    return dl_logical_channel_system::pending_con_res_ce_bytes(get_ue_row());
-  }
+  unsigned pending_con_res_ce_bytes() const { return logical_channel_system::pending_con_res_ce_bytes(get_ue_row()); }
 
   /// \brief Last DL buffer status for given LCID (MAC subheader included).
-  unsigned pending_bytes(lcid_t lcid) const { return dl_logical_channel_system::pending_bytes(get_ue_row(), lcid); }
+  unsigned pending_bytes(lcid_t lcid) const { return logical_channel_system::pending_bytes(get_ue_row(), lcid); }
 
   /// \brief Average bit rate, in bps, for a given LCID.
-  double average_bit_rate(lcid_t lcid) const;
+  double average_dl_bit_rate(lcid_t lcid) const;
 
   slot_point hol_toa(lcid_t lcid) const
   {
-    const channel_context* ch_ctx = dl_logical_channel_system::find_ch_ctx(get_ue_row(), lcid);
+    const channel_context* ch_ctx = logical_channel_system::find_ch_ctx(get_ue_row(), lcid);
     return ch_ctx != nullptr and ch_ctx->active ? ch_ctx->hol_toa : slot_point{};
   }
 
@@ -435,14 +473,14 @@ public:
   }
 
 private:
-  friend class dl_logical_channel_system;
+  friend class logical_channel_system;
 
   const_ue_row get_ue_row() const { return parent->get_ue(ue_row_id); }
   ue_row       get_ue_row() { return parent->ues.row(ue_row_id); }
 
-  dl_logical_channel_system* parent   = nullptr;
-  du_ue_index_t              ue_index = INVALID_DU_UE_INDEX;
-  soa::row_id                ue_row_id{std::numeric_limits<uint32_t>::max()};
+  logical_channel_system* parent   = nullptr;
+  du_ue_index_t           ue_index = INVALID_DU_UE_INDEX;
+  soa::row_id             ue_row_id{std::numeric_limits<uint32_t>::max()};
 };
 
 /// \brief Allocate MAC SDUs and corresponding MAC subPDU subheaders.
@@ -452,10 +490,10 @@ private:
 /// \param[in] lcid if provided, LCID of the logical channel to be allocated. Otherwise, the LCID with higher priority
 /// is chosen.
 /// \return Total number of bytes allocated (including MAC subheaders).
-unsigned allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
-                           ue_dl_logical_channel_repository& lch_mng,
-                           unsigned                          total_tbs,
-                           lcid_t                            lcid = INVALID_LCID);
+unsigned allocate_mac_sdus(dl_msg_tb_info&                tb_info,
+                           ue_logical_channel_repository& lch_mng,
+                           unsigned                       total_tbs,
+                           lcid_t                         lcid = INVALID_LCID);
 
 /// \brief Allocate MAC subPDUs for pending MAC CEs.
 /// \param[in] tb_info TB on which MAC subPDUs will be stored.
@@ -463,7 +501,7 @@ unsigned allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
 /// \param[in] total_tbs available space in bytes for subPDUs.
 /// \return Total number of bytes allocated (including MAC subheaders).
 /// \remark Excludes UE Contention Resolution Identity CE.
-unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs);
+unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, ue_logical_channel_repository& lch_mng, unsigned total_tbs);
 
 /// \brief Allocate MAC subPDUs for pending UE Contention Resolution Identity MAC CE.
 /// \param[in] tb_info TB on which MAC subPDUs will be stored.
@@ -471,23 +509,23 @@ unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_reposit
 /// \param[in] total_tbs available space in bytes for subPDUs.
 /// \return Total number of bytes allocated (including MAC subheaders).
 unsigned
-allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs);
+allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, ue_logical_channel_repository& lch_mng, unsigned total_tbs);
 
 /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
 /// SRB0 or for SRB1 in fallback mode.
 /// It includes the UE Contention Resolution Identity CE if it is pending.
 /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info&                   tb_info,
-                                                ue_dl_logical_channel_repository& lch_mng,
-                                                unsigned                          tb_size_bytes);
+unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info&                tb_info,
+                                                ue_logical_channel_repository& lch_mng,
+                                                unsigned                       tb_size_bytes);
 
 /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for a
 /// given RAN slice.
 /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
 /// \remark Excludes SRB0, as this operation is specific to a given RAN slice.
-unsigned build_dl_transport_block_info(dl_msg_tb_info&                   tb_info,
-                                       ue_dl_logical_channel_repository& lch_mng,
-                                       unsigned                          tb_size_bytes,
-                                       ran_slice_id_t                    slice_id);
+unsigned build_dl_transport_block_info(dl_msg_tb_info&                tb_info,
+                                       ue_logical_channel_repository& lch_mng,
+                                       unsigned                       tb_size_bytes,
+                                       ran_slice_id_t                 slice_id);
 
 } // namespace srsran

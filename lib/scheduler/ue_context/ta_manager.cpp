@@ -16,7 +16,7 @@ using namespace srsran;
 ta_manager::ta_manager(const scheduler_ta_control_config& ta_cfg_,
                        subcarrier_spacing                 ul_scs_,
                        time_alignment_group::id_t         pcell_tag_id,
-                       ue_dl_logical_channel_repository*  dl_lc_ch_mgr_) :
+                       ue_logical_channel_repository*     dl_lc_ch_mgr_) :
   ul_scs(ul_scs_),
   dl_lc_ch_mgr(dl_lc_ch_mgr_),
   ta_cfg(ta_cfg_),

@@ -45,7 +45,7 @@ ue::ue(const ue_creation_command& cmd) :
   }
 }
 
-void ue::setup(ue_dl_logical_channel_repository dl_lch_repo)
+void ue::setup(ue_logical_channel_repository dl_lch_repo)
 {
   // Setups UE DL logical channel manager.
   dl_lc_ch_mgr = std::move(dl_lch_repo);

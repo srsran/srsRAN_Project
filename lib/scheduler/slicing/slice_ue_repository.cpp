@@ -56,7 +56,7 @@ void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
   }
   auto& slice_u = ue_map[ue_idx];
 
-  ue_dl_logical_channel_repository& dl_lc_mng = slice_u.u.dl_logical_channels();
+  ue_logical_channel_repository& dl_lc_mng = slice_u.u.dl_logical_channels();
   srsran_sanity_check(dl_lc_mng.has_slice(slice_id), "slice_ue should not be created without slice");
   if (dl_lc_mng.get_slice_id(lcid) != slice_id) {
     // LCID is not associated with this slice.

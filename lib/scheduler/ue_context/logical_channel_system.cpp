@@ -8,7 +8,7 @@
  *
  */
 
-#include "dl_logical_channel_system.h"
+#include "logical_channel_system.h"
 
 using namespace srsran;
 
@@ -32,7 +32,7 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
   return sdu_size < MAC_SDU_SUBHEADER_LENGTH_THRES ? sdu_size : sdu_size - 1;
 }
 
-dl_logical_channel_system::dl_logical_channel_system()
+logical_channel_system::logical_channel_system()
 {
   static constexpr unsigned PRERESERVED_NOF_DRBS_PER_UE = 2;
   static constexpr unsigned PRERESERVED_NOF_CES         = MAX_NOF_DU_UES;
@@ -41,30 +41,30 @@ dl_logical_channel_system::dl_logical_channel_system()
   // Pre-reserve space to avoid allocations in latency-critical path.
   pending_ces.reserve(PRERESERVED_NOF_CES);
   qos_channels.reserve(PRERESERVED_NOF_DRBS_PER_UE * MAX_NOF_DU_UES);
-  ran_slices_to_ues_with_pending_data.reserve(PRERESERVED_SLICES);
+  slices.reserve(PRERESERVED_SLICES);
   ues.reserve(MAX_NOF_DU_UES);
 }
 
-void dl_logical_channel_system::slot_indication()
+void logical_channel_system::slot_indication()
 {
   // Update the bit rates of the UE logical channels with tracked bit rates.
   for (auto row_view : qos_channels) {
     auto& item = row_view.at<qos_context>();
-    item.avg_bytes_per_slot.push(item.last_sched_bytes);
-    item.last_sched_bytes = 0;
+    item.dl_avg_bytes_per_slot.push(item.dl_last_sched_bytes);
+    item.dl_last_sched_bytes = 0;
   }
 }
 
-ue_dl_logical_channel_repository
-dl_logical_channel_system::create_ue(du_ue_index_t                   ue_index,
-                                     subcarrier_spacing              scs_common,
-                                     bool                            starts_in_fallback,
-                                     logical_channel_config_list_ptr log_channels_configs)
+ue_logical_channel_repository logical_channel_system::create_ue(du_ue_index_t                   ue_index,
+                                                                subcarrier_spacing              scs_common,
+                                                                bool                            starts_in_fallback,
+                                                                logical_channel_config_list_ptr log_channels_configs)
 {
   srsran_assert(configured_ues.size() <= ue_index or not configured_ues.test(ue_index), "duplicate UE index");
   // Creates a UE entry in the table.
-  soa::row_id ue_rid                         = ues.insert(ue_config_context{}, ue_context{}, ue_channel_context{});
-  auto        row                            = ues.row(ue_rid);
+  soa::row_id ue_rid =
+      ues.insert(ue_config_context{}, ue_context{}, ue_ul_context{}, ue_channel_context{}, ue_ul_channel_context{});
+  auto row                                   = ues.row(ue_rid);
   row.at<ue_context>().fallback_state        = starts_in_fallback;
   row.at<ue_config_context>().ue_index       = ue_index;
   row.at<ue_config_context>().slots_per_msec = get_nof_slots_per_subframe(scs_common);
@@ -72,8 +72,10 @@ dl_logical_channel_system::create_ue(du_ue_index_t                   ue_index,
     // Need to resize UE bitsets.
     configured_ues.resize(ue_index + 1);
     ues_with_pending_ces.resize(ue_index + 1);
-    for (auto it = ran_slices_to_ues_with_pending_data.begin(); it != ran_slices_to_ues_with_pending_data.end(); ++it) {
-      it->second.resize(ue_index + 1);
+    ues_with_pending_sr.resize(ue_index + 1);
+    for (auto it = slices.begin(); it != slices.end(); ++it) {
+      it->second.pending_dl_ues.resize(ue_index + 1);
+      it->second.pending_ul_ues.resize(ue_index + 1);
     }
   }
   configured_ues.set(ue_index);
@@ -83,10 +85,10 @@ dl_logical_channel_system::create_ue(du_ue_index_t                   ue_index,
   }
 
   // Return handle to UE logical channel repository.
-  return ue_dl_logical_channel_repository{*this, ue_index, ue_rid};
+  return ue_logical_channel_repository{*this, ue_index, ue_rid};
 }
 
-size_t dl_logical_channel_system::nof_logical_channels() const
+size_t logical_channel_system::nof_logical_channels() const
 {
   size_t count = 0;
   for (const_ue_row u : ues) {
@@ -95,20 +97,20 @@ size_t dl_logical_channel_system::nof_logical_channels() const
   return count;
 }
 
-bounded_bitset<MAX_NOF_DU_UES> dl_logical_channel_system::get_ues_with_pending_data(ran_slice_id_t slice_id) const
+bounded_bitset<MAX_NOF_DU_UES> logical_channel_system::get_ues_with_dl_pending_data(ran_slice_id_t slice_id) const
 {
-  auto slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
-  if (slice_it == ran_slices_to_ues_with_pending_data.end()) {
+  auto slice_it = slices.find(slice_id);
+  if (slice_it == slices.end()) {
     // This slice is not configured.
     return bounded_bitset<MAX_NOF_DU_UES>{};
   }
   if (slice_id != SRB_RAN_SLICE_ID) {
-    return slice_it->second;
+    return slice_it->second.pending_dl_ues;
   }
-  return slice_it->second | ues_with_pending_ces;
+  return slice_it->second.pending_dl_ues | ues_with_pending_ces;
 }
 
-void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
+void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
 {
   auto        u      = get_ue_row();
   ue_context& ue_ctx = u.at<ue_context>();
@@ -126,10 +128,11 @@ void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
     for (auto it = ue_ctx.pending_bytes_per_slice.begin(); it != ue_ctx.pending_bytes_per_slice.end(); ++it) {
       if (it->second > 0) {
         it->second = 0;
-        parent->ran_slices_to_ues_with_pending_data.at(it->first).reset(ueidx);
+        parent->slices.at(it->first).pending_dl_ues.reset(ueidx);
       }
     }
     parent->ues_with_pending_ces.reset(ueidx);
+    parent->ues_with_pending_sr.reset(ueidx);
   } else {
     // Exiting fallback mode, recompute pending data in slices.
     auto ue_ch = u.at<ue_channel_context>();
@@ -139,6 +142,7 @@ void ue_dl_logical_channel_repository::set_fallback_state(bool enter_fallback)
     if (ue_ch.pending_ces.has_value()) {
       parent->ues_with_pending_ces.set(ueidx);
     }
+    // TODO: update ues_with_pending_srs if needed.
   }
 }
 
@@ -155,7 +159,7 @@ static uint16_t get_lc_prio(const logical_channel_config& cfg)
   return prio;
 }
 
-void dl_logical_channel_system::remove_ue(soa::row_id ue_rid)
+void logical_channel_system::remove_ue(soa::row_id ue_rid)
 {
   srsran_assert(ues.has_row_id(ue_rid), "trying to remove non-existing UE");
   const auto ue_index = ues.row(ue_rid).at<ue_config_context>().ue_index;
@@ -173,13 +177,14 @@ void dl_logical_channel_system::remove_ue(soa::row_id ue_rid)
   if (configured_ues.size() != new_size) {
     configured_ues.resize(new_size);
     ues_with_pending_ces.resize(new_size);
-    for (auto it = ran_slices_to_ues_with_pending_data.begin(); it != ran_slices_to_ues_with_pending_data.end(); ++it) {
-      it->second.resize(new_size);
+    ues_with_pending_sr.resize(new_size);
+    for (auto it = slices.begin(); it != slices.end(); ++it) {
+      it->second.pending_dl_ues.resize(new_size);
     }
   }
 }
 
-void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_config_list_ptr log_channels_configs)
+void logical_channel_system::configure(soa::row_id ue_rid, logical_channel_config_list_ptr log_channels_configs)
 {
   auto  u      = ues.row(ue_rid);
   auto& ue_cfg = u.at<ue_config_context>();
@@ -195,7 +200,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
     for (const auto& old_lc : *old_cfgs) {
       if (not ue_cfg.channel_configs->contains(old_lc->lcid)) {
         // LCID got removed.
-        channel_context& ch_ctx = ue_ch.channels.at(old_lc->lcid);
+        dl_logical_channel_context& ch_ctx = ue_ch.channels.at(old_lc->lcid);
 
         // Detach from QoS tracking.
         if (ch_ctx.qos_row.has_value()) {
@@ -216,9 +221,9 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
     const bool new_ch = not ue_ch.channels.contains(ch_cfg->lcid);
     if (new_ch) {
       // New LCID, create context.
-      ue_ch.channels.emplace(ch_cfg->lcid, channel_context{});
+      ue_ch.channels.emplace(ch_cfg->lcid, dl_logical_channel_context{});
     }
-    channel_context& ch_ctx = ue_ch.channels.at(ch_cfg->lcid);
+    dl_logical_channel_context& ch_ctx = ue_ch.channels.at(ch_cfg->lcid);
 
     // Implicitly set channel as active when configured.
     if (not ch_ctx.active and ch_ctx.slice_id.has_value()) {
@@ -239,7 +244,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
       }
       qos_channels.row(*ch_ctx.qos_row)
           .at<qos_context>()
-          .avg_bytes_per_slot.resize(win_size_msec * ue_cfg.slots_per_msec);
+          .dl_avg_bytes_per_slot.resize(win_size_msec * ue_cfg.slots_per_msec);
     } else if (ch_ctx.qos_row.has_value()) {
       // Remove from QoS tracking.
       qos_channels.erase(*ch_ctx.qos_row);
@@ -257,7 +262,7 @@ void dl_logical_channel_system::configure(soa::row_id ue_rid, logical_channel_co
   });
 }
 
-void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
+void logical_channel_system::deactivate(soa::row_id ue_rid)
 {
   auto                u      = ues.row(ue_rid);
   ue_channel_context& ue_ch  = u.at<ue_channel_context>();
@@ -274,6 +279,7 @@ void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
   ue_ch.pending_ces       = std::nullopt;
   ue_ctx.pending_ce_bytes = 0;
   ues_with_pending_ces.reset(ue_idx);
+  ues_with_pending_sr.reset(ue_idx);
 
   // Deactivate (not erase) all bearers.
   for (const auto& [lcid, ch_ctx] : ue_ch.channels) {
@@ -295,20 +301,20 @@ void dl_logical_channel_system::deactivate(soa::row_id ue_rid)
   // Remove slices.
   for (const auto& [slice_id, bytes] : ue_ctx.pending_bytes_per_slice) {
     if (bytes > 0) {
-      ran_slices_to_ues_with_pending_data.at(slice_id).reset(ue_idx);
+      slices.at(slice_id).pending_dl_ues.reset(ue_idx);
     }
   }
   ue_ctx.pending_bytes_per_slice.clear();
 }
 
-void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lcid, ran_slice_id_t slice_id)
+void logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lcid, ran_slice_id_t slice_id)
 {
   auto        u      = ues.row(ue_rid);
   auto&       ue_ch  = u.at<ue_channel_context>();
   ue_context& ue_ctx = u.at<ue_context>();
   srsran_assert(ue_ch.channels.contains(lcid), "LCID not configured");
 
-  channel_context& ch_ctx = ue_ch.channels.at(lcid);
+  dl_logical_channel_context& ch_ctx = ue_ch.channels.at(lcid);
   if (ch_ctx.slice_id == slice_id) {
     // No-op.
     return;
@@ -321,10 +327,12 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   auto slice_it = ue_ctx.pending_bytes_per_slice.find(slice_id);
   if (slice_it == ue_ctx.pending_bytes_per_slice.end()) {
     // New slice, add to the list.
-    auto data_slice_it = ran_slices_to_ues_with_pending_data.find(slice_id);
-    if (data_slice_it == ran_slices_to_ues_with_pending_data.end()) {
+    auto data_slice_it = slices.find(slice_id);
+    if (data_slice_it == slices.end()) {
       // Create slice if not existing yet.
-      ran_slices_to_ues_with_pending_data.emplace(slice_id, bounded_bitset<MAX_NOF_DU_UES>(configured_ues.size()));
+      slices.emplace(slice_id,
+                     ran_slice_context{bounded_bitset<MAX_NOF_DU_UES>(configured_ues.size()),
+                                       bounded_bitset<MAX_NOF_DU_UES>(configured_ues.size())});
     }
     ue_ctx.pending_bytes_per_slice.emplace(slice_id, 0);
   }
@@ -334,12 +342,12 @@ void dl_logical_channel_system::set_lcid_ran_slice(soa::row_id ue_rid, lcid_t lc
   on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, ch_ctx.buf_st, 0);
 }
 
-void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
+void logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid_t lcid)
 {
   auto  u     = get_ue(ue_rid);
   auto& ue_ch = u.at<ue_channel_context>();
   if (ue_ch.channels.contains(lcid)) {
-    channel_context& ch_ctx = ue_ch.channels.at(lcid);
+    dl_logical_channel_context& ch_ctx = ue_ch.channels.at(lcid);
     on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, 0, ch_ctx.buf_st);
     if (ch_ctx.slice_id.has_value()) {
       // Remove slice from LC.
@@ -357,10 +365,10 @@ void dl_logical_channel_system::deregister_lc_ran_slice(soa::row_id ue_rid, lcid
   }
 }
 
-void dl_logical_channel_system::handle_dl_buffer_status_indication(soa::row_id ue_row_id,
-                                                                   lcid_t      lcid,
-                                                                   unsigned    buffer_status,
-                                                                   slot_point  hol_toa)
+void logical_channel_system::handle_dl_buffer_status_indication(soa::row_id ue_row_id,
+                                                                lcid_t      lcid,
+                                                                unsigned    buffer_status,
+                                                                slot_point  hol_toa)
 {
   // We apply this limit to avoid potential overflows.
   static constexpr unsigned max_buffer_status = 1U << 24U;
@@ -376,11 +384,11 @@ void dl_logical_channel_system::handle_dl_buffer_status_indication(soa::row_id u
   }
 }
 
-void dl_logical_channel_system::on_single_channel_buf_st_update(ue_row&                              u,
-                                                                bool                                 channel_active,
-                                                                const std::optional<ran_slice_id_t>& slice_id,
-                                                                unsigned                             new_buf_st,
-                                                                unsigned                             prev_buf_st)
+void logical_channel_system::on_single_channel_buf_st_update(ue_row&                              u,
+                                                             bool                                 channel_active,
+                                                             const std::optional<ran_slice_id_t>& slice_id,
+                                                             unsigned                             new_buf_st,
+                                                             unsigned                             prev_buf_st)
 {
   if (not slice_id.has_value() or not channel_active) {
     // No slice associated with this logical channel or it is inactive.
@@ -404,11 +412,11 @@ void dl_logical_channel_system::on_single_channel_buf_st_update(ue_row&         
   if ((prev_slice_pending_bytes > 0) != (slice_pending_bytes > 0)) {
     // zero crossing detected. Update the slice UE with pending data bitmap.
     auto& ue_cfg = u.at<ue_config_context>();
-    ran_slices_to_ues_with_pending_data.at(*slice_id).set(ue_cfg.ue_index, slice_pending_bytes > 0);
+    slices.at(*slice_id).pending_dl_ues.set(ue_cfg.ue_index, slice_pending_bytes > 0);
   }
 }
 
-bool dl_logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, const mac_ce_info& ce)
+bool logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, const mac_ce_info& ce)
 {
   auto  u      = get_ue(ue_row_id);
   auto& ue_ctx = u.at<ue_context>();
@@ -446,7 +454,7 @@ bool dl_logical_channel_system::handle_mac_ce_indication(soa::row_id ue_row_id, 
   return true;
 }
 
-unsigned dl_logical_channel_system::total_pending_bytes(const const_ue_row& u) const
+unsigned logical_channel_system::total_dl_pending_bytes(const const_ue_row& u) const
 {
   unsigned bytes = pending_ce_bytes(u);
   for (lcid_t lcid : u.at<ue_channel_context>().sorted_channels) {
@@ -455,7 +463,7 @@ unsigned dl_logical_channel_system::total_pending_bytes(const const_ue_row& u) c
   return bytes;
 }
 
-lcid_t dl_logical_channel_system::get_max_prio_lcid(const const_ue_row& u) const
+lcid_t logical_channel_system::get_max_prio_lcid(const const_ue_row& u) const
 {
   for (const auto lcid : u.at<ue_channel_context>().sorted_channels) {
     if (has_pending_bytes(u, lcid)) {
@@ -466,7 +474,7 @@ lcid_t dl_logical_channel_system::get_max_prio_lcid(const const_ue_row& u) const
 }
 
 unsigned
-dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes)
+logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes)
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
   const unsigned min_bytes_needed = get_mac_sdu_with_subhdr_and_rlc_hdr_estim(lcid, 1);
@@ -504,7 +512,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   const unsigned sdu_size = get_mac_sdu_size(alloc_bytes);
 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
-  channel_context& ch_ctx           = ue_ch_ctx.channels.at(lcid);
+  dl_logical_channel_context& ch_ctx           = ue_ch_ctx.channels.at(lcid);
   const unsigned   last_sched_bytes = std::min(sdu_size, ch_ctx.buf_st);
   auto             new_buf_st       = ch_ctx.buf_st - last_sched_bytes;
   if (lcid != LCID_SRB0 and new_buf_st > 0) {
@@ -519,7 +527,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   on_single_channel_buf_st_update(u, ch_ctx.active, ch_ctx.slice_id, new_buf_st, prev_buf_st);
   if (ch_ctx.qos_row.has_value()) {
     // In case of QoS tracking is activated, set the last scheduled bytes.
-    qos_channels.at<qos_context>(*ch_ctx.qos_row).last_sched_bytes = last_sched_bytes;
+    qos_channels.at<qos_context>(*ch_ctx.qos_row).dl_last_sched_bytes = last_sched_bytes;
   }
 
   // Set subPDU info.
@@ -530,7 +538,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
 }
 
 unsigned
-dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
+logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
 {
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
@@ -544,7 +552,7 @@ dl_logical_channel_system::allocate_mac_sdu(soa::row_id ue_rid, dl_msg_lc_info& 
   return allocate_mac_sdu(ue_rid, subpdu, lcid_with_prio, rem_bytes);
 }
 
-unsigned dl_logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes)
+unsigned logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
@@ -594,7 +602,7 @@ unsigned dl_logical_channel_system::allocate_mac_ce(soa::row_id ue_rid, dl_msg_l
 }
 
 unsigned
-dl_logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes)
+logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_msg_lc_info& subpdu, unsigned rem_bytes)
 {
   auto& ue_ctx = get_ue(ue_rid).at<ue_context>();
   if (not ue_ctx.pending_con_res_id) {
@@ -624,27 +632,27 @@ dl_logical_channel_system::allocate_ue_con_res_id_mac_ce(soa::row_id ue_rid, dl_
 
 // class logical_channel_system::ue_logical_channel_repository
 
-void ue_dl_logical_channel_repository::configure(logical_channel_config_list_ptr log_channels_configs)
+void ue_logical_channel_repository::configure(logical_channel_config_list_ptr log_channels_configs)
 {
   parent->configure(ue_row_id, log_channels_configs);
 }
 
-void ue_dl_logical_channel_repository::deactivate()
+void ue_logical_channel_repository::deactivate()
 {
   parent->deactivate(ue_row_id);
 }
 
-void ue_dl_logical_channel_repository::set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t slice_id)
+void ue_logical_channel_repository::set_lcid_ran_slice(lcid_t lcid, ran_slice_id_t slice_id)
 {
   parent->set_lcid_ran_slice(ue_row_id, lcid, slice_id);
 }
 
-void ue_dl_logical_channel_repository::reset_lcid_ran_slice(lcid_t lcid)
+void ue_logical_channel_repository::reset_lcid_ran_slice(lcid_t lcid)
 {
   parent->deregister_lc_ran_slice(ue_row_id, lcid);
 }
 
-unsigned ue_dl_logical_channel_repository::pending_bytes() const
+unsigned ue_logical_channel_repository::dl_pending_bytes() const
 {
   auto u = get_ue_row();
   if (u.at<ue_context>().fallback_state) {
@@ -657,48 +665,49 @@ unsigned ue_dl_logical_channel_repository::pending_bytes() const
   return bytes;
 }
 
-double ue_dl_logical_channel_repository::average_bit_rate(lcid_t lcid) const
+double ue_logical_channel_repository::average_dl_bit_rate(lcid_t lcid) const
 {
   auto  u      = get_ue_row();
-  auto* ch_ctx = dl_logical_channel_system::find_active_ch_ctx(u, lcid);
+  auto* ch_ctx = logical_channel_system::find_active_ch_ctx(u, lcid);
   auto* qos_ch = (ch_ctx != nullptr and ch_ctx->qos_row.has_value())
-                     ? &parent->qos_channels.row(ch_ctx->qos_row.value()).at<dl_logical_channel_system::qos_context>()
+                     ? &parent->qos_channels.row(ch_ctx->qos_row.value()).at<logical_channel_system::qos_context>()
                      : nullptr;
-  return qos_ch != nullptr ? qos_ch->avg_bytes_per_slot.average() * 8 * u.at<ue_config_context>().slots_per_msec * 1000
-                           : 0.0;
+  return qos_ch != nullptr
+             ? qos_ch->dl_avg_bytes_per_slot.average() * 8 * u.at<ue_config_context>().slots_per_msec * 1000
+             : 0.0;
 }
 
-void ue_dl_logical_channel_repository::handle_dl_buffer_status_indication(lcid_t     lcid,
-                                                                          unsigned   buffer_status,
-                                                                          slot_point hol_toa)
+void ue_logical_channel_repository::handle_dl_buffer_status_indication(lcid_t     lcid,
+                                                                       unsigned   buffer_status,
+                                                                       slot_point hol_toa)
 {
   parent->handle_dl_buffer_status_indication(ue_row_id, lcid, buffer_status, hol_toa);
 }
 
-bool ue_dl_logical_channel_repository::handle_mac_ce_indication(const mac_ce_info& ce)
+bool ue_logical_channel_repository::handle_mac_ce_indication(const mac_ce_info& ce)
 {
   return parent->handle_mac_ce_indication(ue_row_id, ce);
 }
 
-unsigned ue_dl_logical_channel_repository::allocate_mac_sdu(dl_msg_lc_info& lch_info, unsigned rem_bytes, lcid_t lcid)
+unsigned ue_logical_channel_repository::allocate_mac_sdu(dl_msg_lc_info& lch_info, unsigned rem_bytes, lcid_t lcid)
 {
   return parent->allocate_mac_sdu(ue_row_id, lch_info, rem_bytes, lcid);
 }
 
-unsigned ue_dl_logical_channel_repository::allocate_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes)
+unsigned ue_logical_channel_repository::allocate_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes)
 {
   return parent->allocate_mac_ce(ue_row_id, lch_info, rem_bytes);
 }
 
-unsigned ue_dl_logical_channel_repository::allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes)
+unsigned ue_logical_channel_repository::allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes)
 {
   return parent->allocate_ue_con_res_id_mac_ce(ue_row_id, lch_info, rem_bytes);
 }
 
-unsigned srsran::allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
-                                   ue_dl_logical_channel_repository& lch_mng,
-                                   unsigned                          total_tbs,
-                                   lcid_t                            lcid)
+unsigned srsran::allocate_mac_sdus(dl_msg_tb_info&                tb_info,
+                                   ue_logical_channel_repository& lch_mng,
+                                   unsigned                       total_tbs,
+                                   lcid_t                         lcid)
 {
   static constexpr unsigned min_mac_sdu_space = 4; // Needs to fit at least MAC SDU subheader and RLC header.
   unsigned                  rem_tbs           = total_tbs;
@@ -722,8 +731,7 @@ unsigned srsran::allocate_mac_sdus(dl_msg_tb_info&                   tb_info,
   return total_tbs - rem_tbs;
 }
 
-unsigned
-srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_repository& lch_mng, unsigned total_tbs)
+unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, ue_logical_channel_repository& lch_mng, unsigned total_tbs)
 {
   unsigned rem_tbs = total_tbs;
 
@@ -743,9 +751,9 @@ srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, ue_dl_logical_channel_reposito
   return total_tbs - rem_tbs;
 }
 
-unsigned srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info&                   tb_info,
-                                               ue_dl_logical_channel_repository& lch_mng,
-                                               unsigned                          total_tbs)
+unsigned srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info&                tb_info,
+                                               ue_logical_channel_repository& lch_mng,
+                                               unsigned                       total_tbs)
 {
   unsigned rem_tbs = total_tbs;
 
@@ -763,9 +771,9 @@ unsigned srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info&                  
   return total_tbs - rem_tbs;
 }
 
-unsigned srsran::build_dl_fallback_transport_block_info(dl_msg_tb_info&                   tb_info,
-                                                        ue_dl_logical_channel_repository& lch_mng,
-                                                        unsigned                          tb_size_bytes)
+unsigned srsran::build_dl_fallback_transport_block_info(dl_msg_tb_info&                tb_info,
+                                                        ue_logical_channel_repository& lch_mng,
+                                                        unsigned                       tb_size_bytes)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_ue_con_res_id_mac_ce(tb_info, lch_mng, tb_size_bytes);
@@ -779,10 +787,10 @@ unsigned srsran::build_dl_fallback_transport_block_info(dl_msg_tb_info&         
   return total_subpdu_bytes;
 }
 
-unsigned srsran::build_dl_transport_block_info(dl_msg_tb_info&                   tb_info,
-                                               ue_dl_logical_channel_repository& lch_mng,
-                                               unsigned                          tb_size_bytes,
-                                               ran_slice_id_t                    slice_id)
+unsigned srsran::build_dl_transport_block_info(dl_msg_tb_info&                tb_info,
+                                               ue_logical_channel_repository& lch_mng,
+                                               unsigned                       tb_size_bytes,
+                                               ran_slice_id_t                 slice_id)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, lch_mng, tb_size_bytes);

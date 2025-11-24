@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "dl_logical_channel_system.h"
+#include "logical_channel_system.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -25,7 +25,7 @@ public:
   explicit ta_manager(const scheduler_ta_control_config& ta_cfg_,
                       subcarrier_spacing                 ul_scs_,
                       time_alignment_group::id_t         pcell_tag_id,
-                      ue_dl_logical_channel_repository*  dl_lc_ch_mgr_);
+                      ue_logical_channel_repository*     dl_lc_ch_mgr_);
 
   void update_tags(span<const time_alignment_group::id_t> tag_ids);
 
@@ -69,7 +69,7 @@ private:
   /// Subcarrier spacing of UL BWP for which Timing Advance Command is applicable.
   const subcarrier_spacing ul_scs;
   /// DL logical channel manager to push Timing Advance Command to UE.
-  ue_dl_logical_channel_repository* dl_lc_ch_mgr = nullptr;
+  ue_logical_channel_repository* dl_lc_ch_mgr = nullptr;
   /// TA control config parameters.
   const scheduler_ta_control_config& ta_cfg;
   srslog::basic_logger&              logger;

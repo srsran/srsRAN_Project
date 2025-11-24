@@ -377,7 +377,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
                                   grant.user->ran_slice_id());
 
     // Update context with buffer occupancy after the TB is built.
-    msg.context.buffer_occupancy = u.dl_logical_channels().pending_bytes();
+    msg.context.buffer_occupancy = u.dl_logical_channels().dl_pending_bytes();
   }
 
   // Save PDSCH parameters in DL HARQ.
