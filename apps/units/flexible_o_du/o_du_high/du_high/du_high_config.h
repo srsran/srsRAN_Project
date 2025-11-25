@@ -23,6 +23,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/radio_link_monitoring.h"
@@ -347,12 +348,10 @@ struct du_high_unit_pucch_config {
   std::optional<unsigned> pucch_resource_common;
 
   /// \c PUCCH-Config parameters.
-  /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
-  bool use_format_0 = false;
-  /// Select the format for the PUCCH resources belonging to PUCCH resource set 1. Values: {2, 3, 4}.
-  pucch_format set1_format = pucch_format::FORMAT_2;
+  /// PUCCH format combination. See \ref pucch_formats for details.
+  pucch_formats formats;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
-  /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
+  /// Values {3,...,8} if \c formats == pucch_formats::f0_and_f2. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.
   unsigned nof_ue_pucch_res_harq_per_set = 8;
@@ -470,8 +469,7 @@ struct du_high_unit_pucch_config {
   bool operator==(const du_high_unit_pucch_config& rhs) const
   {
     return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
-           use_format_0 == rhs.use_format_0 && set1_format == rhs.set1_format &&
-           nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
+           formats == rhs.formats && nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
            nof_cell_harq_pucch_sets == rhs.nof_cell_harq_pucch_sets &&
            nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
            almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&

@@ -18,6 +18,7 @@
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/slot_point_extended.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -991,22 +992,23 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
       ->capture_default_str()
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
-  add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
-      ->capture_default_str();
-  app.add_option_function<unsigned>(
-         "--pucch_set1_format",
-         [&pucch_params](unsigned value) {
-           if (value == 3) {
-             pucch_params.set1_format = pucch_format::FORMAT_3;
-           } else if (value == 4) {
-             pucch_params.set1_format = pucch_format::FORMAT_4;
-           } else {
-             pucch_params.set1_format = pucch_format::FORMAT_2;
-           }
-         },
-         "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
-      ->default_val(2U)
-      ->check(CLI::Range(2U, 4U));
+  add_option_function<std::string>(
+      app,
+      "--formats",
+      [&pucch_params](const std::string& value) {
+        if (value == "f0_and_f2") {
+          pucch_params.formats = pucch_formats::f0_and_f2;
+        } else if (value == "f1_and_f2") {
+          pucch_params.formats = pucch_formats::f1_and_f2;
+        } else if (value == "f1_and_f3") {
+          pucch_params.formats = pucch_formats::f1_and_f3;
+        } else if (value == "f1_and_f4") {
+          pucch_params.formats = pucch_formats::f1_and_f4;
+        }
+      },
+      "PUCCH formats combination to use. Values: {f0_and_f2, f1_and_f2, f1_and_f3, f1_and_f4}. Default: f1_and_f2")
+      ->default_str("f1_and_f2")
+      ->check(CLI::IsMember({"f0_and_f2", "f1_and_f2", "f1_and_f3", "f1_and_f4"}, CLI::ignore_case));
   add_option(app,
              "--nof_ue_res_harq_per_set",
              pucch_params.nof_ue_pucch_res_harq_per_set,

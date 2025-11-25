@@ -21,9 +21,9 @@ class test_pucch_allocator_format_4 : public ::testing::Test, public pucch_alloc
 {
 public:
   test_pucch_allocator_format_4() :
-    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .set1_format = pucch_format::FORMAT_4})
+    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .formats = pucch_formats::f1_and_f4})
   {
-    // Set expected grant for PUCCH Format 1 SR.
+    // Set expected grant for PUCCH Format 1 SR.set1_format
     // The expected resource for SR corresponds to the second to last of the FORMAT 1 resources in the resource list.
     auto& format1_sr             = pucch_expected_f1_sr.format_params.emplace<pucch_format_1>();
     pucch_expected_f1_sr.crnti   = to_rnti(0x4601);

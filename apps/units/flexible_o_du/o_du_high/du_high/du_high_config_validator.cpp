@@ -16,6 +16,7 @@
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
 #include <algorithm>
@@ -446,11 +447,6 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  if (pucch_cfg.use_format_0 and pucch_cfg.set1_format != pucch_format::FORMAT_2) {
-    fmt::print("Using PUCCH Formats 3 and 4 is not supported when Format 0 is used.\n");
-    return false;
-  }
-
   // See \c periodicityAndOffset in \c SchedulingRequestResourceConfig of TS 38.331.
   static const std::map<unsigned, std::vector<unsigned>> mu_to_valid_sr_period_slots_lookup{
       {0, {1, 2, 4, 5, 8, 10, 16, 20, 40, 80}},
@@ -497,11 +493,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set 0 to use
   // the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
   if (pucch_cfg.pucch_resource_common.has_value()) {
-    if (pucch_cfg.use_format_0 and pucch_cfg.pucch_resource_common.value() > 2) {
+    if (pucch_f0f1_format(pucch_cfg.formats) == pucch_format::FORMAT_0 and
+        pucch_cfg.pucch_resource_common.value() > 2) {
       fmt::print("When using PUCCH Format 0, the valid values for pucch_resource_common are {{0, 1, 2}}.\n");
       return false;
     }
-    if (not pucch_cfg.use_format_0 and pucch_cfg.pucch_resource_common.value() <= 2) {
+    if (pucch_f0f1_format(pucch_cfg.formats) == pucch_format::FORMAT_1 and
+        pucch_cfg.pucch_resource_common.value() <= 2) {
       fmt::print("When using PUCCH Format 1, the valid values for pucch_resource_common are {{3, ..., 15}}.\n");
       return false;
     }
@@ -513,7 +511,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
       config.srs_cfg.srs_period_ms.has_value() ? config.srs_cfg.max_nof_symbols_per_slot : 0U;
   const unsigned max_nof_pucch_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_srs_symbols;
   unsigned       nof_f0_f1_rbs         = 0U;
-  if (pucch_cfg.use_format_0) {
+  if (pucch_f0f1_format(pucch_cfg.formats) == pucch_format::FORMAT_0) {
     // The number of symbols per PUCCH resource F0 is not exposed to the DU user interface and set by default to 2.
     constexpr unsigned pucch_f0_nof_symbols = 2U;
     // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
@@ -551,7 +549,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   const unsigned nof_res_f2_f3_f4 =
       pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
   unsigned f2_f3_f4_max_payload = 0U;
-  switch (pucch_cfg.set1_format) {
+  switch (pucch_f2f3f4_format(pucch_cfg.formats)) {
     case pucch_format::FORMAT_2: {
       // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
       constexpr unsigned pucch_f2_nof_symbols = 2U;

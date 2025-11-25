@@ -25,7 +25,7 @@ constexpr unsigned max_ue_f0_f1_res_harq = 8;
 /// Maximum number of PUCCH F2/F3/F4 resources per UE for HARQ-ACK reporting.
 constexpr unsigned max_ue_f2_f3_f4_res_harq = 8;
 
-/// \brief Validates the user-defined parameters for building the PUCCH resource list.
+/// \brief Validates the user-defined parameters for building the cell PUCCH resource list.
 /// \param[in] nof_res_f0_f1 number of PUCCH F0/F1 resources to be generated.
 /// \param[in] nof_res_f2_f3_f4 number of PUCCH F2/F3/F4 resources to be generated.
 /// \param[in] f0_f1_params PUCCH F0/F1 resource parameters.

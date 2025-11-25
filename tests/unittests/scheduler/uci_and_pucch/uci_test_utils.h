@@ -19,6 +19,7 @@
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
 
@@ -288,8 +289,7 @@ struct test_bench_params {
   bool                   is_tdd                = false;
   bool                   pucch_f2_f3_more_prbs = false;
   bool                   cfg_for_mimo_4x4      = false;
-  bool                   use_format_0          = false;
-  pucch_format           set1_format           = pucch_format::FORMAT_2;
+  pucch_formats          formats               = pucch_formats::f1_and_f2;
   bool                   no_csi                = false;
   max_pucch_code_rate    max_c_rate            = max_pucch_code_rate::dot_25;
 };
@@ -331,8 +331,7 @@ public:
   ue_repository           ues;
   ue_cell_repository&     ue_cell_db;
   bool                    pucch_f2_f3_more_prbs;
-  const bool              use_format_0;
-  const pucch_format      set1_format;
+  const pucch_formats     formats;
 
   // last_allocated_rnti keeps track of the last RNTI allocated.
   rnti_t                        last_allocated_rnti;

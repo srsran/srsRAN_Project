@@ -172,15 +172,15 @@ test_bench::test_bench(const test_bench_params& params,
 
     cell_pucch_resources = test_helpers::make_test_cell_dedicated_pucch_resources(cfg_params);
 
-    if (params.use_format_0 or params.set1_format != pucch_format::FORMAT_2 or params.pucch_f2_f3_more_prbs) {
+    if (params.formats != pucch_formats::f1_and_f2 or params.pucch_f2_f3_more_prbs) {
       // Generate the cell resource list through the DU PUCCH builder.
       pucch_builder_params pucch_params{};
-      if (params.use_format_0) {
+      if (pucch_f0f1_format(params.formats) == pucch_format::FORMAT_0) {
         pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
         pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
         pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
       }
-      switch (params.set1_format) {
+      switch (pucch_f2f3f4_format(params.formats)) {
         case pucch_format::FORMAT_2:
           break;
         case pucch_format::FORMAT_3:
@@ -201,7 +201,7 @@ test_bench::test_bench(const test_bench_params& params,
         // TODO: extend for PUCCH Formats 3/4
         const unsigned pucch_f2_f3_nof_prbs = params.cfg_for_mimo_4x4 ? 2U : 3U;
         for (auto& pucch_res : cell_pucch_resources) {
-          if (pucch_res.format == params.set1_format and
+          if (pucch_res.format == pucch_f2f3f4_format(params.formats) and
               std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
             std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_f3_nof_prbs;
           }
@@ -218,8 +218,7 @@ test_bench::test_bench(const test_bench_params& params,
   max_ul_grants_per_slot{max_ul_grants_per_slot_},
   ue_cell_db(ues.add_cell(to_du_cell_index(0))),
   pucch_f2_f3_more_prbs{params.pucch_f2_f3_more_prbs},
-  use_format_0(params.use_format_0),
-  set1_format(params.set1_format),
+  formats(params.formats),
   pucch_alloc{cell_cfg, max_pucchs_per_slot, max_ul_grants_per_slot},
   uci_alloc(pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
@@ -259,14 +258,14 @@ test_bench::test_bench(const test_bench_params& params,
     csi_report.report_slot_offset = params.csi_offset;
   }
 
-  if (set1_format != pucch_format::FORMAT_2 || use_format_0) {
+  if (formats != pucch_formats::f1_and_f2) {
     pucch_builder_params pucch_params{};
-    if (use_format_0) {
+    if (pucch_f0f1_format(formats) == pucch_format::FORMAT_0) {
       pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
       pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
       pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
     }
-    switch (set1_format) {
+    switch (pucch_f2f3f4_format(formats)) {
       case pucch_format::FORMAT_2:
         break;
       case pucch_format::FORMAT_3:
@@ -292,7 +291,8 @@ test_bench::test_bench(const test_bench_params& params,
   if (pucch_f2_f3_more_prbs) {
     static constexpr unsigned pucch_f2_f3_nof_prbs = 3U;
     for (auto& pucch_res : ul_cfg.init_ul_bwp.pucch_cfg.value().pucch_res_list) {
-      if (pucch_res.format == set1_format and std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
+      if (pucch_res.format == pucch_f2f3f4_format(formats) and
+          std::holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params)) {
         std::get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_prbs = pucch_f2_f3_nof_prbs;
       }
     }
@@ -304,7 +304,8 @@ test_bench::test_bench(const test_bench_params& params,
     pucch_cfg.format_2_common_param.value().max_c_rate = max_pucch_code_rate::dot_35;
     if (params.pucch_f2_f3_more_prbs) {
       for (auto& res_it : pucch_cfg.pucch_res_list) {
-        if (res_it.format == set1_format and std::holds_alternative<pucch_format_2_3_cfg>(res_it.format_params)) {
+        if (res_it.format == pucch_f2f3f4_format(formats) and
+            std::holds_alternative<pucch_format_2_3_cfg>(res_it.format_params)) {
           std::get<pucch_format_2_3_cfg>(res_it.format_params).nof_prbs = 2U;
         }
       }
@@ -373,7 +374,7 @@ void test_bench::add_ue()
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type_t<rnti_t>>(last_allocated_rnti) + 1);
 
-  srsran_assert(not use_format_0 or
+  srsran_assert(formats == pucch_formats::f1_and_f2 or
                     pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
                 "UE PUCCH configuration couldn't be built");
 

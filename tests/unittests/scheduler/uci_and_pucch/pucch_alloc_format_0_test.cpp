@@ -21,7 +21,7 @@ class test_pucch_allocator_format_0 : public ::testing::Test, public pucch_alloc
 {
 public:
   test_pucch_allocator_format_0() :
-    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .use_format_0 = true}),
+    pucch_allocator_base_tester(test_bench_params{.pucch_res_common = 0, .formats = pucch_formats::f0_and_f2}),
     pucch_res_idx_f0_for_sr(t_bench.get_main_ue()
                                 .get_pcell()
                                 .cfg()
