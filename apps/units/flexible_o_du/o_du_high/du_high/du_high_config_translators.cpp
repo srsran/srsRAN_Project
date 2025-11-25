@@ -701,7 +701,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       constexpr unsigned nof_cell_harq_pucch_res_sets_bw_5mhz = 1;
       constexpr unsigned f1_nof_cell_res_sr_5mhz              = 7;
       constexpr unsigned f2_nof_cell_res_csi_5mhz             = 7;
-      user_pucch_cfg.nof_cell_harq_pucch_sets                 = nof_cell_harq_pucch_res_sets_bw_5mhz;
+      user_pucch_cfg.nof_cell_res_set_configs                 = nof_cell_harq_pucch_res_sets_bw_5mhz;
       user_pucch_cfg.nof_ue_pucch_res_harq_per_set =
           std::min(nof_ue_res_harq_per_set_bw_5mhz, user_pucch_cfg_pre_processing.nof_ue_pucch_res_harq_per_set);
       user_pucch_cfg.nof_cell_sr_resources =
@@ -710,9 +710,9 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
           std::min(f2_nof_cell_res_csi_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
       user_pucch_cfg.f1_enable_occ = true;
     }
-    du_pucch_cfg.nof_cell_harq_pucch_res_sets = user_pucch_cfg.nof_cell_harq_pucch_sets;
-    du_pucch_cfg.nof_sr_resources             = user_pucch_cfg.nof_cell_sr_resources;
-    du_pucch_cfg.nof_csi_resources            = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
+    du_pucch_cfg.nof_cell_res_set_configs = user_pucch_cfg.nof_cell_res_set_configs;
+    du_pucch_cfg.nof_cell_sr_resources    = user_pucch_cfg.nof_cell_sr_resources;
+    du_pucch_cfg.nof_cell_csi_resources   = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
 
     if (pucch_f0f1_format(user_pucch_cfg.formats) == pucch_format::FORMAT_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();

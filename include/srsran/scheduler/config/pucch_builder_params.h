@@ -94,17 +94,18 @@ struct pucch_builder_params {
   /// \remark Format 2 and Format 3 and Format 4 resources are mutually exclusive.
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq       = 6;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
-  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
-  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
-  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of resources.
-  /// However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
-  unsigned nof_cell_harq_pucch_res_sets = 1;
-  /// Defines how many PUCCH F0 or F1 resources should be dedicated for SR at cell level; each UE will be allocated 1
-  /// resource for SR.
-  unsigned nof_sr_resources = 2;
-  /// Defines how many PUCCH F2 or F3 or F4 resources should be dedicated for CSI at cell level; each UE will be
-  /// allocated 1 resource for CSI.
-  unsigned nof_csi_resources = 1;
+  /// \brief Number of separate PUCCH resource set configurations for HARQ-ACK reporting that are available in a cell.
+  /// \remark A resource set configuration defines the PUCCH resources present in Resource Set ID 0 and Resource Set ID
+  /// 1 for a given UE. UEs will be distributed possibly over different configurations. The more configurations, the
+  /// fewer UEs will have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack
+  /// of resources. However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_res_set_configs = 1;
+  /// \brief Defines how many PUCCH F0/F1 resources should be dedicated for SR at cell level.
+  /// Each UE will be allocated 1 resource for SR.
+  unsigned nof_cell_sr_resources = 2;
+  /// \brief Defines how many PUCCH F2/F3/F4 resources should be dedicated for CSI at cell level.
+  /// Each UE will be allocated 1 resource for CSI.
+  unsigned nof_cell_csi_resources = 1;
 
   /// PUCCH Format specific parameters.
   // NOTE: Having \c pucch_f1_params first forces the variant to use the Format 1 in the default constructor.

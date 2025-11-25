@@ -21,10 +21,10 @@ std::vector<pucch_resource> srsran::config_helpers::build_pucch_resource_list(co
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   auto res_list = config_helpers::generate_cell_pucch_res_list(
-      user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
-          user_params.nof_sr_resources,
-      user_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
-          user_params.nof_csi_resources,
+      user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_res_set_configs +
+          user_params.nof_cell_sr_resources,
+      user_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * user_params.nof_cell_res_set_configs +
+          user_params.nof_cell_csi_resources,
       user_params.f0_or_f1_params,
       user_params.f2_or_f3_or_f4_params,
       bwp_size,

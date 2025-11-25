@@ -47,7 +47,7 @@ sched_cell_configuration_request_message srsran::sched_config_helper::make_defau
   pucch_builder_params default_pucch_builder_params;
   default_pucch_builder_params.nof_ue_pucch_f0_or_f1_res_harq       = 3;
   default_pucch_builder_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
-  default_pucch_builder_params.nof_sr_resources                     = 2;
+  default_pucch_builder_params.nof_cell_sr_resources                = 2;
   default_pucch_builder_params.f0_or_f1_params.emplace<pucch_f1_params>();
   default_pucch_builder_params.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
 

@@ -99,16 +99,16 @@ void config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_p
         std::ceil(static_cast<double>(max_pucch_grants_per_sr_csi * csi_period_msec.value()) /
                   (static_cast<double>(sr_period_msec) + static_cast<double>(csi_period_msec.value())));
 
-    user_params.nof_sr_resources = std::min(required_nof_sr_resources, user_params.nof_sr_resources);
+    user_params.nof_cell_sr_resources = std::min(required_nof_sr_resources, user_params.nof_cell_sr_resources);
 
     const unsigned required_nof_csi_resources =
         std::ceil(static_cast<double>(max_pucch_grants_per_sr_csi * sr_period_msec) /
                   (static_cast<double>(sr_period_msec) + static_cast<double>(csi_period_msec.value())));
 
-    user_params.nof_csi_resources = std::min(required_nof_csi_resources, user_params.nof_csi_resources);
+    user_params.nof_cell_csi_resources = std::min(required_nof_csi_resources, user_params.nof_cell_csi_resources);
   } else {
-    user_params.nof_sr_resources  = std::min(max_pucch_grants_per_sr_csi, user_params.nof_sr_resources);
-    user_params.nof_csi_resources = 0;
+    user_params.nof_cell_sr_resources  = std::min(max_pucch_grants_per_sr_csi, user_params.nof_cell_sr_resources);
+    user_params.nof_cell_csi_resources = 0;
   }
 }
 

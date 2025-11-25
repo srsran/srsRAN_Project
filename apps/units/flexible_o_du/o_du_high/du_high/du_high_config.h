@@ -355,14 +355,15 @@ struct du_high_unit_pucch_config {
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.
   unsigned nof_ue_pucch_res_harq_per_set = 8;
-  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
-  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
-  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of
-  /// resources. However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
-  unsigned nof_cell_harq_pucch_sets = 2;
-  /// Number of PUCCH Format 1 cell resources for SR.
+  /// \brief Number of separate PUCCH resource set configurations for HARQ-ACK reporting that are available in a cell.
+  /// \remark A resource set configuration defines the PUCCH resources present in Resource Set ID 0 and Resource Set ID
+  /// 1 for a given UE. UEs will be distributed possibly over different configurations. The more configurations, the
+  /// fewer UEs will have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack
+  /// of resources. However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_res_set_configs = 2;
+  /// Number of PUCCH Format 0/1 cell resources for SR.
   unsigned nof_cell_sr_resources = 8;
-  /// Number of PUCCH Format 1 cell resources for CSI.
+  /// Number of PUCCH Format 2/3/4 cell resources for CSI.
   unsigned nof_cell_csi_resources = 8;
 
   /// \brief \c SR period in milliseconds.
@@ -470,7 +471,7 @@ struct du_high_unit_pucch_config {
   {
     return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
            formats == rhs.formats && nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
-           nof_cell_harq_pucch_sets == rhs.nof_cell_harq_pucch_sets &&
+           nof_cell_res_set_configs == rhs.nof_cell_res_set_configs &&
            nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
            almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&
            f0_intraslot_freq_hopping == rhs.f0_intraslot_freq_hopping && f1_enable_occ == rhs.f1_enable_occ &&

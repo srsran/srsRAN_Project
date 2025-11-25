@@ -29,7 +29,7 @@ static du_high_env_sim_params create_few_ues_config()
   params.pucch_cfg.emplace();
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq       = 8;
   params.pucch_cfg->nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
-  params.pucch_cfg->nof_sr_resources                     = 1;
+  params.pucch_cfg->nof_cell_sr_resources                = 1;
   params.prach_frequency_start.emplace(3U);
   return params;
 }
@@ -41,9 +41,9 @@ static du_high_env_sim_params create_many_ues_config()
   params.pucch_cfg.emplace();
   params.pucch_cfg->nof_ue_pucch_f0_or_f1_res_harq       = 8;
   params.pucch_cfg->nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
-  params.pucch_cfg->nof_cell_harq_pucch_res_sets         = 2;
-  params.pucch_cfg->nof_sr_resources                     = 80;
-  params.pucch_cfg->nof_csi_resources                    = 80;
+  params.pucch_cfg->nof_cell_res_set_configs             = 2;
+  params.pucch_cfg->nof_cell_sr_resources                = 80;
+  params.pucch_cfg->nof_cell_csi_resources               = 80;
   params.sched_ue_expert_cfg.emplace();
   params.sched_ue_expert_cfg->max_pucchs_per_slot = 64;
   auto& f1_params                                 = params.pucch_cfg->f0_or_f1_params.emplace<pucch_f1_params>();

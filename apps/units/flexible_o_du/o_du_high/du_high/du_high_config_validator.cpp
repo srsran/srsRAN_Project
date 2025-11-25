@@ -482,7 +482,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
 
   // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
   // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2/3/4).
-  if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
+  if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_res_set_configs +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
     fmt::print("With the given PUCCH parameters, the number of PUCCH resources per cell exceeds the limit={}.\n",
@@ -518,7 +518,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     const unsigned nof_f0_per_block = max_nof_pucch_symbols / pucch_f0_nof_symbols;
     // Each PUCCH resource F0/F1 occupies 1 RB (per block).
     nof_f0_f1_rbs = static_cast<unsigned>(
-        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_res_set_configs +
                                      pucch_cfg.nof_cell_sr_resources) /
                   static_cast<float>(nof_f0_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
@@ -536,7 +536,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     const unsigned nof_f1_per_block = nof_occ_codes * pucch_cfg.f1_nof_cyclic_shifts;
     // Each PUCCH resource F0/F1 occupies 1 RB (per block).
     nof_f0_f1_rbs = static_cast<unsigned>(
-        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_res_set_configs +
                                      pucch_cfg.nof_cell_sr_resources) /
                   static_cast<float>(nof_f1_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
@@ -547,7 +547,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
 
   unsigned       nof_f2_f3_f4_rbs;
   const unsigned nof_res_f2_f3_f4 =
-      pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
+      pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_res_set_configs + pucch_cfg.nof_cell_csi_resources;
   unsigned f2_f3_f4_max_payload = 0U;
   switch (pucch_f2f3f4_format(pucch_cfg.formats)) {
     case pucch_format::FORMAT_2: {

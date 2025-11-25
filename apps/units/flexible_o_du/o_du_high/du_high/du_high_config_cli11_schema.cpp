@@ -1016,11 +1016,24 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
-             "--f0_or_f1_nof_cell_res_sr",
+             "--nof_cell_res_set_configs",
+             pucch_params.nof_cell_res_set_configs,
+             "Number of PUCCH Resource Set configurations that are available per cell. NOTE: the higher the number of "
+             "configurations, the lower the chances UEs have to share the same PUCCH resources for HARQ-ACK.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 10));
+  add_option(app,
+             "--nof_cell_sr_res",
              pucch_params.nof_cell_sr_resources,
              "Number of PUCCH F0/F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 100));
+  add_option(app,
+             "--nof_cell_csi_res",
+             pucch_params.nof_cell_csi_resources,
+             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 100));
   add_option(app,
              "--f0_intraslot_freq_hop",
              pucch_params.f0_intraslot_freq_hopping,
@@ -1038,19 +1051,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.f1_intraslot_freq_hopping,
              "Enable intra-slot frequency hopping for PUCCH F1")
       ->capture_default_str();
-  add_option(app,
-             "--nof_cell_harq_pucch_res_sets",
-             pucch_params.nof_cell_harq_pucch_sets,
-             "Number of separate PUCCH resource sets for HARQ-ACK that are available in the cell. NOTE: the "
-             "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 10));
-  add_option(app,
-             "--f2_or_f3_or_f4_nof_cell_res_csi",
-             pucch_params.nof_cell_csi_resources,
-             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 100));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
