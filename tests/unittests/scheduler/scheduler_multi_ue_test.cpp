@@ -178,7 +178,7 @@ public:
 };
 
 template <typename T>
-T sum(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::* member)
+T sum(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
 {
   T sum = 0;
   for (const auto& u : ues) {
@@ -188,7 +188,7 @@ T sum(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::* member)
 }
 
 template <typename T>
-double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::* member)
+double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
 {
   T      sum_val = sum(ues, member);
   double sq      = 0;
@@ -199,7 +199,7 @@ double jain_index(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::
 }
 
 template <typename T>
-std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::* member)
+std::vector<T> extract(span<const scheduler_ue_metrics> ues, T scheduler_ue_metrics::*member)
 {
   std::vector<T> res;
   for (const auto& u : ues) {
