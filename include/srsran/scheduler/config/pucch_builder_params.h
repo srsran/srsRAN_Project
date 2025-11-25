@@ -92,8 +92,8 @@ struct pucch_builder_params {
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   /// \remark Format 0 and Format 1 resources are mutually exclusive.
   /// \remark Format 2 and Format 3 and Format 4 resources are mutually exclusive.
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f0_or_f1_res_harq       = 6;
-  bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
+  bounded_integer<unsigned, 1, 8> res_set_0_size = 6;
+  bounded_integer<unsigned, 1, 8> res_set_1_size = 6;
   /// \brief Number of separate PUCCH resource set configurations for HARQ-ACK reporting that are available in a cell.
   /// \remark A resource set configuration defines the PUCCH resources present in Resource Set ID 0 and Resource Set ID
   /// 1 for a given UE. UEs will be distributed possibly over different configurations. The more configurations, the

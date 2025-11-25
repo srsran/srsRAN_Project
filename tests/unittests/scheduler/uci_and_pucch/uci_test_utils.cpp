@@ -177,8 +177,8 @@ test_bench::test_bench(const test_bench_params& params,
       pucch_builder_params pucch_params{};
       if (pucch_f0f1_format(params.formats) == pucch_format::FORMAT_0) {
         pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
-        pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
-        pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
+        pucch_params.res_set_0_size = 6;
+        pucch_params.res_set_1_size = 6;
       }
       switch (pucch_f2f3f4_format(params.formats)) {
         case pucch_format::FORMAT_2:
@@ -262,8 +262,8 @@ test_bench::test_bench(const test_bench_params& params,
     pucch_builder_params pucch_params{};
     if (pucch_f0f1_format(formats) == pucch_format::FORMAT_0) {
       pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
-      pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
-      pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
+      pucch_params.res_set_0_size = 6;
+      pucch_params.res_set_1_size = 6;
     }
     switch (pucch_f2f3f4_format(formats)) {
       case pucch_format::FORMAT_2:

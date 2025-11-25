@@ -697,17 +697,16 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if ((param.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
          (is_tdd and param.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
         user_pucch_cfg_pre_processing == du_high_unit_pucch_config{}) {
-      constexpr unsigned nof_ue_res_harq_per_set_bw_5mhz      = 7;
-      constexpr unsigned nof_cell_harq_pucch_res_sets_bw_5mhz = 1;
-      constexpr unsigned f1_nof_cell_res_sr_5mhz              = 7;
-      constexpr unsigned f2_nof_cell_res_csi_5mhz             = 7;
-      user_pucch_cfg.nof_cell_res_set_configs                 = nof_cell_harq_pucch_res_sets_bw_5mhz;
-      user_pucch_cfg.nof_ue_pucch_res_harq_per_set =
-          std::min(nof_ue_res_harq_per_set_bw_5mhz, user_pucch_cfg_pre_processing.nof_ue_pucch_res_harq_per_set);
+      constexpr unsigned res_set_size_5mhz             = 7;
+      constexpr unsigned nof_cell_res_set_configs_5mhz = 1;
+      constexpr unsigned nof_cell_sr_res_5mhz          = 7;
+      constexpr unsigned nof_cell_csi_res_5mhz         = 7;
+      user_pucch_cfg.nof_cell_res_set_configs          = nof_cell_res_set_configs_5mhz;
+      user_pucch_cfg.res_set_size = std::min(res_set_size_5mhz, user_pucch_cfg_pre_processing.res_set_size);
       user_pucch_cfg.nof_cell_sr_resources =
-          std::min(f1_nof_cell_res_sr_5mhz, user_pucch_cfg_pre_processing.nof_cell_sr_resources);
+          std::min(nof_cell_sr_res_5mhz, user_pucch_cfg_pre_processing.nof_cell_sr_resources);
       user_pucch_cfg.nof_cell_csi_resources =
-          std::min(f2_nof_cell_res_csi_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
+          std::min(nof_cell_csi_res_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
       user_pucch_cfg.f1_enable_occ = true;
     }
     du_pucch_cfg.nof_cell_res_set_configs = user_pucch_cfg.nof_cell_res_set_configs;
@@ -719,14 +718,14 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
       const unsigned extra_res_harq = pucch_f2f3f4_format(user_pucch_cfg.formats) == pucch_format::FORMAT_2 ? 2U : 0U;
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
-      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
-      f0_params.intraslot_freq_hopping                  = user_pucch_cfg.f0_intraslot_freq_hopping;
+      du_pucch_cfg.res_set_0_size   = user_pucch_cfg.res_set_size - extra_res_harq;
+      du_pucch_cfg.res_set_1_size   = user_pucch_cfg.res_set_size - extra_res_harq;
+      f0_params.intraslot_freq_hopping = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
-      auto& f1_params                                   = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      f1_params.occ_supported                           = user_pucch_cfg.f1_enable_occ;
+      auto& f1_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+      du_pucch_cfg.res_set_0_size      = user_pucch_cfg.res_set_size;
+      du_pucch_cfg.res_set_1_size      = user_pucch_cfg.res_set_size;
+      f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
       f1_params.nof_cyc_shifts         = static_cast<pucch_nof_cyclic_shifts>(user_pucch_cfg.f1_nof_cyclic_shifts);
       f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
     }

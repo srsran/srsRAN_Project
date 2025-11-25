@@ -354,7 +354,7 @@ struct du_high_unit_pucch_config {
   /// Values {3,...,8} if \c formats == pucch_formats::f0_and_f2. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.
-  unsigned nof_ue_pucch_res_harq_per_set = 8;
+  unsigned res_set_size = 8;
   /// \brief Number of separate PUCCH resource set configurations for HARQ-ACK reporting that are available in a cell.
   /// \remark A resource set configuration defines the PUCCH resources present in Resource Set ID 0 and Resource Set ID
   /// 1 for a given UE. UEs will be distributed possibly over different configurations. The more configurations, the
@@ -470,7 +470,7 @@ struct du_high_unit_pucch_config {
   bool operator==(const du_high_unit_pucch_config& rhs) const
   {
     return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
-           formats == rhs.formats && nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
+           formats == rhs.formats && res_set_size == rhs.res_set_size &&
            nof_cell_res_set_configs == rhs.nof_cell_res_set_configs &&
            nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
            almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&

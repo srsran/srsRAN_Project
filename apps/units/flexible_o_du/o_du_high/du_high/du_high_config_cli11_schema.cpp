@@ -1009,10 +1009,8 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       "PUCCH formats combination to use. Values: {f0_and_f2, f1_and_f2, f1_and_f3, f1_and_f4}. Default: f1_and_f2")
       ->default_str("f1_and_f2")
       ->check(CLI::IsMember({"f0_and_f2", "f1_and_f2", "f1_and_f3", "f1_and_f4"}, CLI::ignore_case));
-  add_option(app,
-             "--nof_ue_res_harq_per_set",
-             pucch_params.nof_ue_pucch_res_harq_per_set,
-             "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
+  add_option(
+      app, "--resource_set_size", pucch_params.res_set_size, "Number of PUCCH resources in each PUCCH resource set")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,

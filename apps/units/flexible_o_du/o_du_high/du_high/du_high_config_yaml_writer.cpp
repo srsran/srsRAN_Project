@@ -465,7 +465,7 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   }
   node["formats"]                  = to_string(config.formats);
   node["sr_period_ms"]             = config.sr_period_msec;
-  node["nof_ue_res_harq_per_set"]  = config.nof_ue_pucch_res_harq_per_set;
+  node["resource_set_size"]        = config.res_set_size;
   node["nof_cell_res_set_configs"] = config.nof_cell_res_set_configs;
   node["nof_cell_sr_res"]          = config.nof_cell_sr_resources;
   node["nof_cell_csi_res"]         = config.nof_cell_csi_resources;

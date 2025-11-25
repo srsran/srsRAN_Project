@@ -311,8 +311,8 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                           du_cell_res_ctxt.ue_idx,
                                           sr_res_offset.value().first,
                                           csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
-                                          user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
-                                          user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq,
+                                          user_defined_pucch_cfg.res_set_0_size,
+                                          user_defined_pucch_cfg.res_set_1_size,
                                           user_defined_pucch_cfg.nof_cell_res_set_configs,
                                           user_defined_pucch_cfg.nof_cell_sr_resources,
                                           user_defined_pucch_cfg.nof_cell_csi_resources);
@@ -516,8 +516,7 @@ unsigned du_pucch_resource_manager::sr_du_res_idx_to_pucch_res_idx(unsigned sr_d
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_res_set_configs +
+  return user_defined_pucch_cfg.res_set_0_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs +
          sr_du_res_idx;
 }
 
@@ -525,19 +524,17 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_sr_du_res_idx(unsigned pucc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH SR resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
-                             user_defined_pucch_cfg.nof_cell_res_set_configs;
+  return pucch_res_idx -
+         user_defined_pucch_cfg.res_set_0_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs;
 }
 
 unsigned du_pucch_resource_manager::csi_du_res_idx_to_pucch_res_idx(unsigned csi_du_res_idx) const
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_res_set_configs +
+  return user_defined_pucch_cfg.res_set_0_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs +
          user_defined_pucch_cfg.nof_cell_sr_resources +
-         user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
-             user_defined_pucch_cfg.nof_cell_res_set_configs +
+         user_defined_pucch_cfg.res_set_1_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs +
          csi_du_res_idx;
 }
 
@@ -545,11 +542,10 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
 {
   // The mapping from the UE's PUCCH-Config \ref res_id index to the DU index for PUCCH CSI resource is the inverse of
   // what is defined in \ref srs_du::ue_pucch_config_builder.
-  return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
-                              user_defined_pucch_cfg.nof_cell_res_set_configs +
-                          user_defined_pucch_cfg.nof_cell_sr_resources +
-                          user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
-                              user_defined_pucch_cfg.nof_cell_res_set_configs);
+  return pucch_res_idx -
+         (user_defined_pucch_cfg.res_set_0_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs +
+          user_defined_pucch_cfg.nof_cell_sr_resources +
+          user_defined_pucch_cfg.res_set_1_size.to_uint() * user_defined_pucch_cfg.nof_cell_res_set_configs);
 }
 
 void du_pucch_resource_manager::disable_pucch_cfg(cell_group_config& cell_grp_cfg)
