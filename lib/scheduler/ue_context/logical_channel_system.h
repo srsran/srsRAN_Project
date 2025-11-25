@@ -91,7 +91,7 @@ private:
   };
   /// QoS context relative to a single logical channel of a UE, which has QoS enabled.
   struct qos_context {
-    /// DL Bytes-per-slot average for this logical channel.
+    /// Over-the-air DL Bytes-per-slot average for this logical channel.
     moving_averager<unsigned> dl_avg_bytes_per_slot;
     /// Current slot DL sched bytes.
     unsigned dl_last_sched_bytes = 0;
@@ -102,7 +102,7 @@ private:
     unsigned ul_last_sched_bytes = 0;
     /// Sched bytes since last BSR.
     unsigned sched_bytes_accum = 0;
-    /// UL Bytes-per-slot average for this logical channel.
+    /// Over-the-air UL Bytes-per-slot average for this logical channel.
     moving_averager<unsigned> ul_avg_bytes_per_slot;
   };
   /// Context of a single logical channel of a UE.
@@ -455,7 +455,7 @@ public:
 
   /// \brief Check whether the UE has pending data in the provided RAN slice.
   /// \return Returns true if the UE is active, in non-fallback mode, it has pending bytes for the provided RAN slice
-  /// ID and the slice is configured. Returns 0, otherwise.
+  /// ID and the slice is configured. Returns false, otherwise.
   [[nodiscard]] bool has_pending_dl_bytes(ran_slice_id_t slice_id) const
   {
     auto slice_bitset_it = parent->slices.find(slice_id);
@@ -477,7 +477,7 @@ public:
 
   /// \brief Check whether the UE has pending UL data in the provided RAN slice.
   /// \return Returns true if the UE is active, in non-fallback mode, it has pending bytes for the provided RAN slice
-  /// ID and the slice is configured. Returns 0, otherwise.
+  /// ID and the slice is configured. Returns false, otherwise.
   [[nodiscard]] bool has_pending_ul_bytes(ran_slice_id_t slice_id) const
   {
     auto slice_bitset_it = parent->slices.find(slice_id);

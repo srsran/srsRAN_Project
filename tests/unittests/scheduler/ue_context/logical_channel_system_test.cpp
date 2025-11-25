@@ -779,7 +779,7 @@ TEST_F(single_ue_ul_logical_channel_system_test, bsr_has_no_effect_in_inactive_u
 
 TEST_F(single_ue_ul_logical_channel_system_test, bsr_updates_tx_pending_bytes)
 {
-  // generate BSR with several LCGs
+  // Generate BSR with several LCGs.
   auto bsr = make_sbsr(uint_to_lcg_id(0), 0);
   bsr.reported_lcgs.clear();
   for (const auto& [lcid, lcgid] : lcids) {

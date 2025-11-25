@@ -82,7 +82,7 @@ void ue::release_resources()
     }
   }
 
-  // Destroy DL logical channel manager.
+  // Destroy UE logical channel manager.
   lc_ch_mgr.reset();
 }
 

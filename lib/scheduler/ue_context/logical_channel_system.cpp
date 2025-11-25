@@ -140,14 +140,17 @@ void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
   auto& ue_ul_ctx = u.at<ue_ul_context>();
   if (ue_ctx.fallback_state) {
     // Entering fallback mode, clear all pending data in slices.
-    for (auto it = ue_ctx.pending_bytes_per_slice.begin(); it != ue_ctx.pending_bytes_per_slice.end(); ++it) {
+    for (auto it = ue_ctx.pending_bytes_per_slice.begin(), it_end = ue_ctx.pending_bytes_per_slice.end(); it != it_end;
+         ++it) {
       if (it->second > 0) {
         it->second = 0;
         parent->slices.at(it->first).pending_dl_ues.reset(ueidx);
       }
     }
     parent->ues_with_pending_ces.reset(ueidx);
-    for (auto it = ue_ul_ctx.pending_bytes_per_slice.begin(); it != ue_ul_ctx.pending_bytes_per_slice.end(); ++it) {
+    for (auto it = ue_ul_ctx.pending_bytes_per_slice.begin(), it_end = ue_ul_ctx.pending_bytes_per_slice.end();
+         it != it_end;
+         ++it) {
       if (it->second > 0) {
         it->second = 0;
         parent->slices.at(it->first).pending_ul_ues.reset(ueidx);
@@ -155,7 +158,7 @@ void ue_logical_channel_repository::set_fallback_state(bool enter_fallback)
     }
   } else {
     // Exiting fallback mode, recompute pending data in slices.
-    auto& ue_ch = u.at<ue_channel_context>();
+    const auto& ue_ch = u.at<ue_channel_context>();
     for (const auto& [lcid, ch] : ue_ch.channels) {
       parent->on_single_channel_buf_st_update(u, ch.active, ch.slice_id, ch.buf_st, 0);
     }
@@ -201,7 +204,7 @@ void logical_channel_system::remove_ue(soa::row_id ue_rid)
     configured_ues.resize(new_size);
     ues_with_pending_ces.resize(new_size);
     ues_with_pending_sr.resize(new_size);
-    for (auto it = slices.begin(); it != slices.end(); ++it) {
+    for (auto it = slices.begin(), it_end = slices.end(); it != it_end; ++it) {
       it->second.pending_dl_ues.resize(new_size);
       it->second.pending_ul_ues.resize(new_size);
     }
@@ -596,7 +599,7 @@ void logical_channel_system::on_single_channel_buf_st_update(ue_row&            
   slice_pending_bytes += new_buf_st_incl_subhdr - prev_buf_st_incl_subhdr;
 
   if ((prev_slice_pending_bytes > 0) != (slice_pending_bytes > 0)) {
-    // zero crossing detected. Update the slice UE with pending data bitmap.
+    // zero crossing detected. Update the bitmap of UEs with pending data for a given slice.
     auto& ue_cfg = u.at<ue_config_context>();
     slices.at(*slice_id).pending_dl_ues.set(ue_cfg.ue_index, slice_pending_bytes > 0);
   }

@@ -55,13 +55,13 @@ protected:
     return {};
   }
 
-  subcarrier_spacing               ul_scs;
-  scheduler_expert_config          expert_cfg = config_helpers::make_default_scheduler_expert_config();
-  logical_channel_config_pool      cfg_pool;
-  logical_channel_system           lc_ch_sys;
-  ue_logical_channel_repository    ue_lc_chs;
-  ta_manager                       ta_mgr;
-  slot_point                       current_sl;
+  subcarrier_spacing            ul_scs;
+  scheduler_expert_config       expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  logical_channel_config_pool   cfg_pool;
+  logical_channel_system        lc_ch_sys;
+  ue_logical_channel_repository ue_lc_chs;
+  ta_manager                    ta_mgr;
+  slot_point                    current_sl;
 };
 
 TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_reported_ul_n_ta_update_indication_has_low_sinr)
