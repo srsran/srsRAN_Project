@@ -184,7 +184,7 @@ bool radio_session_uhd_impl::start_rx_stream(baseband_gateway_timestamp init_tim
 
 radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                                                task_executor&                    async_executor_,
-                                               radio_notification_handler&       notifier_) :
+                                               radio_event_notifier&             notifier_) :
   actual_sampling_rate_Hz(0.0), async_executor(async_executor_), notifier(notifier_)
 {
   // Disable fast-path (U/L/O) messages.
@@ -531,7 +531,7 @@ bool radio_session_uhd_impl::set_rx_freq(unsigned stream_id, double center_freq_
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
-                                                              radio_notification_handler&       notifier)
+                                                              radio_event_notifier&             notifier)
 {
   std::unique_ptr<radio_session_uhd_impl> session =
       std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier);

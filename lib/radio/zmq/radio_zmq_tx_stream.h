@@ -27,7 +27,7 @@ class radio_zmq_tx_stream : public baseband_gateway_transmitter, public radio_zm
   static constexpr std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
 
   /// Radio notification handler interface.
-  radio_notification_handler& notification_handler;
+  radio_event_notifier& notification_handler;
   /// Indicates whether the class was initialized successfully.
   bool successful = false;
   /// Stores independent channels.
@@ -56,10 +56,10 @@ public:
     unsigned buffer_size;
   };
 
-  radio_zmq_tx_stream(void*                       zmq_context,
-                      const stream_description&   config,
-                      task_executor&              async_executor_,
-                      radio_notification_handler& notification_handler);
+  radio_zmq_tx_stream(void*                     zmq_context,
+                      const stream_description& config,
+                      task_executor&            async_executor_,
+                      radio_event_notifier&     notification_handler);
 
   bool is_successful() const { return successful; }
 

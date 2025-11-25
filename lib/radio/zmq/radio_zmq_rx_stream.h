@@ -61,7 +61,7 @@ public:
                       const stream_description&     config,
                       task_executor&                async_executor_,
                       radio_zmq_tx_align_interface& tx_align_,
-                      radio_notification_handler&   notification_handler);
+                      radio_event_notifier&         notification_handler);
 
   // See interface for documentation.
   metadata receive(baseband_gateway_buffer_writer& data) override;

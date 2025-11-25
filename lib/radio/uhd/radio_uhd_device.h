@@ -338,7 +338,7 @@ public:
   }
 
   std::unique_ptr<radio_uhd_tx_stream> create_tx_stream(task_executor&                                 async_executor,
-                                                        radio_notification_handler&                    notifier,
+                                                        radio_event_notifier&                          notifier,
                                                         const radio_uhd_tx_stream::stream_description& description)
   {
     std::unique_ptr<radio_uhd_tx_stream> stream =
@@ -351,7 +351,7 @@ public:
     return nullptr;
   }
 
-  std::unique_ptr<radio_uhd_rx_stream> create_rx_stream(radio_notification_handler&                    notifier,
+  std::unique_ptr<radio_uhd_rx_stream> create_rx_stream(radio_event_notifier&                          notifier,
                                                         const radio_uhd_rx_stream::stream_description& description)
   {
     std::unique_ptr<radio_uhd_rx_stream> stream = std::make_unique<radio_uhd_rx_stream>(usrp, description, notifier);

@@ -39,7 +39,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_
 
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
-                                         radio_notification_handler&  notifier_) :
+                                         radio_event_notifier&        notifier_) :
   id(description.id), srate_Hz(description.srate_Hz), notifier(notifier_)
 {
   srsran_assert(std::isnormal(srate_Hz) && (srate_Hz > 0.0), "Invalid sampling rate {}.", srate_Hz);
@@ -129,11 +129,11 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
     rxd_samples_total += rxd_samples;
 
     // Prepare notification event.
-    radio_notification_handler::event_description event = {.stream_id  = id,
-                                                           .channel_id = radio_notification_handler::UNKNOWN_ID,
-                                                           .source = radio_notification_handler::event_source::RECEIVE,
-                                                           .type   = radio_notification_handler::event_type::UNDEFINED,
-                                                           .timestamp = std::nullopt};
+    radio_event_notifier::event_description event = {.stream_id  = id,
+                                                     .channel_id = std::nullopt,
+                                                     .source     = radio_event_source::RECEIVE,
+                                                     .type       = radio_event_type::UNDEFINED,
+                                                     .timestamp  = std::nullopt};
 
     // Handle error.
     switch (md.error_code) {
@@ -148,20 +148,20 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
         // Ignored.
         break;
       case uhd::rx_metadata_t::ERROR_CODE_LATE_COMMAND:
-        event.type = radio_notification_handler::event_type::LATE;
+        event.type = radio_event_type::LATE;
         break;
       case uhd::rx_metadata_t::ERROR_CODE_OVERFLOW:
-        event.type = radio_notification_handler::event_type::OVERFLOW;
+        event.type = radio_event_type::OVERFLOW;
         break;
       case uhd::rx_metadata_t::ERROR_CODE_BROKEN_CHAIN:
       case uhd::rx_metadata_t::ERROR_CODE_ALIGNMENT:
       case uhd::rx_metadata_t::ERROR_CODE_BAD_PACKET:
-        event.type = radio_notification_handler::event_type::OTHER;
+        event.type = radio_event_type::OTHER;
         break;
     }
 
     // Notify if the event type was set.
-    if (event.type != radio_notification_handler::event_type::UNDEFINED) {
+    if (event.type != radio_event_type::UNDEFINED) {
       notifier.on_radio_rt_event(event);
     }
   }

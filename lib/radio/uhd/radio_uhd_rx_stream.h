@@ -15,7 +15,7 @@
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/radio/radio_configuration.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/support/synchronization/stop_event.h"
 #include <mutex>
 
@@ -36,7 +36,7 @@ class radio_uhd_rx_stream : public uhd_exception_handler, public baseband_gatewa
   /// Sampling rate in hertz.
   double srate_Hz;
   /// Radio notification interface.
-  radio_notification_handler& notifier;
+  radio_event_notifier& notifier;
   /// Owns the UHD Tx stream.
   uhd::rx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
@@ -78,7 +78,7 @@ public:
   /// \param[in] notifier_ Provides the radio event notification handler.
   radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
-                      radio_notification_handler&  notifier_);
+                      radio_event_notifier&        notifier_);
 
   /// \brief Starts the stream reception.
   /// \param[in] time_spec Indicates the start time of the stream.

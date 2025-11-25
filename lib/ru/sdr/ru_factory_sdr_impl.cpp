@@ -20,7 +20,7 @@ using namespace srsran;
 
 /// Creates a radio session with the given parameters.
 static std::unique_ptr<radio_session> create_radio_session(task_executor&                    executor,
-                                                           radio_notification_handler&       radio_handler,
+                                                           radio_event_notifier&             radio_handler,
                                                            const radio_configuration::radio& config,
                                                            const std::string&                device_driver)
 {

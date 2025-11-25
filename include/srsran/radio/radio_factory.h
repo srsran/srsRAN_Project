@@ -31,7 +31,7 @@ public:
   /// \return The ownership to a radio session if the session was successfully created.
   virtual std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                                 task_executor&                    async_task_executor,
-                                                radio_notification_handler&       notifier) = 0;
+                                                radio_event_notifier&             notifier) = 0;
 };
 
 /// \brief Dynamic library radio factory creation entry point.

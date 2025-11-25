@@ -15,10 +15,10 @@ using namespace srsran;
 
 static const std::set<int> VALID_SOCKET_TYPES = {ZMQ_REP};
 
-radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_context,
-                                           const channel_description&  config,
-                                           radio_notification_handler& notification_handler_,
-                                           task_executor&              async_executor_) :
+radio_zmq_tx_channel::radio_zmq_tx_channel(void*                      zmq_context,
+                                           const channel_description& config,
+                                           radio_event_notifier&      notification_handler_,
+                                           task_executor&             async_executor_) :
   stream_id(config.stream_id),
   channel_id(config.channel_id),
   channel_id_str(config.channel_id_str),
@@ -226,12 +226,11 @@ void radio_zmq_tx_channel::transmit_samples(span<const cf_t> data)
     // Check if the push was successful.
     if (pushed == 0) {
       // Notify buffer overflow.
-      radio_notification_handler::event_description event = {.stream_id  = stream_id,
-                                                             .channel_id = channel_id,
-                                                             .source =
-                                                                 radio_notification_handler::event_source::TRANSMIT,
-                                                             .type = radio_notification_handler::event_type::OVERFLOW,
-                                                             .timestamp = std::nullopt};
+      radio_event_notifier::event_description event = {.stream_id  = stream_id,
+                                                       .channel_id = channel_id,
+                                                       .source     = radio_event_source::TRANSMIT,
+                                                       .type       = radio_event_type::OVERFLOW,
+                                                       .timestamp  = std::nullopt};
       notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.

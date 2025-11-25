@@ -17,7 +17,7 @@ radio_zmq_rx_stream::radio_zmq_rx_stream(void*                         zmq_conte
                                          const stream_description&     config,
                                          task_executor&                async_executor_,
                                          radio_zmq_tx_align_interface& tx_align_,
-                                         radio_notification_handler&   notification_handler) :
+                                         radio_event_notifier&         notification_handler) :
   tx_align(tx_align_), cf_buffer(config.buffer_size)
 {
   // For each channel...

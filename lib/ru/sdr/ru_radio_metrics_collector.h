@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/ru/sdr/ru_sdr_metrics.h"
 #include <atomic>
 
 namespace srsran {
 
 /// Radio Unit radio notification counter.
-class ru_radio_metrics_collector : public radio_notification_handler
+class ru_radio_metrics_collector : public radio_event_notifier
 {
 public:
   // See interface for documentation.

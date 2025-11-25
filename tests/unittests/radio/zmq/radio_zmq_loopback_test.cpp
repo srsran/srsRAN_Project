@@ -37,7 +37,7 @@ class RadioZmqE2EFixture : public ::testing::TestWithParam<radio_zmq_e2e_test_pa
 protected:
   static constexpr float ASSERT_MAX_ERROR_COMPLEX = 1.414213562f;
 
-  class radio_notifier_spy : public radio_notification_handler
+  class radio_notifier_spy : public radio_event_notifier
   {
   public:
     void on_radio_rt_event(const event_description& description) override {}
@@ -147,7 +147,7 @@ protected:
   }
 };
 
-class radio_notifier_spy : public radio_notification_handler
+class radio_notifier_spy : public radio_event_notifier
 {
 public:
   void on_radio_rt_event(const event_description& description) override {}

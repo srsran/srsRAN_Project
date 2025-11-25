@@ -29,7 +29,8 @@ extern "C" {
 using namespace srsran;
 
 namespace {
-class radio_notification_handler_impl : public radio_notification_handler
+
+class radio_notification_handler_impl : public radio_event_notifier
 {
 private:
   int64_t tx_underflow_count = 0;
@@ -38,14 +39,14 @@ private:
 public:
   void on_radio_rt_event(const event_description& description) override
   {
-    if ((description.source == event_source::TRANSMIT) &&
-        ((description.type == event_type::UNDERFLOW) || (description.type == event_type::LATE))) {
+    if ((description.source == radio_event_source::TRANSMIT) &&
+        ((description.type == radio_event_type::UNDERFLOW) || (description.type == radio_event_type::LATE))) {
       fmt::println("Underflow!");
       ++tx_underflow_count;
       return;
     }
 
-    if (description.source == event_source::RECEIVE && description.type == event_type::OVERFLOW) {
+    if (description.source == radio_event_source::RECEIVE && description.type == radio_event_type::OVERFLOW) {
       ++rx_overflow_count;
       return;
     }
@@ -127,7 +128,7 @@ public:
   baseband_gateway_buffer_zeros(unsigned nof_channels_, unsigned nof_samples_) :
     nof_channels(nof_channels_), nof_samples(nof_samples_)
   {
-    std::unique_lock<std::mutex> lock(data_mutex);
+    std::scoped_lock lock(data_mutex);
     if (data.size() < nof_samples) {
       data.resize(nof_samples, ci16_t());
     }
@@ -143,14 +144,14 @@ public:
   span<const ci16_t> get_channel_buffer(unsigned) const override { return span<const ci16_t>(data).first(nof_samples); }
 };
 
+} // namespace
+
 std::mutex          baseband_gateway_buffer_zeros::data_mutex;
 std::vector<ci16_t> baseband_gateway_buffer_zeros::data(61440, ci16_t());
 
-} // namespace
-
-// Groups parameters that describe a trx_srsran session.
+/// Groups parameters that describe a trx_srsran session.
 struct trx_srsran_session_context {
-  // Parameters.
+  /// Parameters.
   radio_configuration::over_the_wire_format    otw_format;
   int                                          rf_port_count;
   std::array<int, TRX_MAX_RF_PORT>             tx_port_channel_count;
@@ -159,9 +160,9 @@ struct trx_srsran_session_context {
   std::array<std::string, RADIO_MAX_NOF_PORTS> rx_port_args;
   std::string                                  factory_str;
   srslog::basic_levels                         log_level;
-  // Radio factory.
+  /// Radio factory.
   std::unique_ptr<radio_factory> factory;
-  // Radio session.
+  /// Radio session.
   std::unique_ptr<radio_session> session;
   /// Transmit temporary buffers in 16-bit integer complex.
   std::vector<baseband_gateway_buffer_trx> tx_buffers;

@@ -16,19 +16,19 @@ void ru_radio_metrics_collector::on_radio_rt_event(const event_description& desc
 {
   // Count events.
   switch (description.type) {
-    case event_type::LATE:
+    case radio_event_type::LATE:
       late_count.fetch_add(1, std::memory_order_relaxed);
       break;
-    case event_type::UNDERFLOW:
+    case radio_event_type::UNDERFLOW:
       underflow_count.fetch_add(1, std::memory_order_relaxed);
       break;
-    case event_type::OVERFLOW:
+    case radio_event_type::OVERFLOW:
       overflow_count.fetch_add(1, std::memory_order_relaxed);
       break;
-    case event_type::UNDEFINED:
-    case event_type::START_OF_BURST:
-    case event_type::END_OF_BURST:
-    case event_type::OTHER:
+    case radio_event_type::UNDEFINED:
+    case radio_event_type::START_OF_BURST:
+    case radio_event_type::END_OF_BURST:
+    case radio_event_type::OTHER:
       // Uncounted.
       break;
   }

@@ -25,7 +25,7 @@ public:
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notification_handler&       notifier) override;
+                                        radio_event_notifier&             notifier) override;
 };
 
 } // namespace srsran

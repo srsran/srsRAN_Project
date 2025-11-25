@@ -42,7 +42,7 @@ class radio_session_uhd_impl : public radio_session, private radio_management_pl
   /// Asynchronous executor.
   task_executor& async_executor;
   /// Event notifier.
-  radio_notification_handler& notifier;
+  radio_event_notifier& notifier;
 
   /// \brief Set the synchronization time to GPS mode.
   /// \return True if no exception is caught. Otherwise false.
@@ -88,7 +88,7 @@ public:
   /// Constructs a radio session based on UHD.
   radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                          task_executor&                    async_executor,
-                         radio_notification_handler&       notifier_);
+                         radio_event_notifier&             notifier_);
 
   /// \brief Indicates that the radio session was initialized succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
@@ -143,7 +143,7 @@ public:
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notification_handler&       notifier) override;
+                                        radio_event_notifier&             notifier) override;
 };
 
 } // namespace srsran

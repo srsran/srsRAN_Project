@@ -258,7 +258,7 @@ protected:
   }
 };
 
-class radio_notifier_spy : public radio_notification_handler
+class radio_notifier_spy : public radio_event_notifier
 {
 public:
   void on_radio_rt_event(const event_description& description) override {}

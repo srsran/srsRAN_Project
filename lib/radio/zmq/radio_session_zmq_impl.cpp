@@ -14,7 +14,7 @@ using namespace srsran;
 
 radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio& config,
                                                task_executor&                    async_task_executor,
-                                               radio_notification_handler&       notifier) :
+                                               radio_event_notifier&             notifier) :
   logger(srslog::fetch_basic_logger("RF", false))
 {
   // Make sure the number of streams are equal.

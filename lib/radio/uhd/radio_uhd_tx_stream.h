@@ -17,7 +17,7 @@
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/radio/radio_configuration.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/synchronization/stop_event.h"
 #include <mutex>
@@ -37,7 +37,7 @@ class radio_uhd_tx_stream : public baseband_gateway_transmitter, public uhd_exce
   /// Task executor for asynchronous messages.
   task_executor& async_executor;
   /// Radio notification interface.
-  radio_notification_handler& notifier;
+  radio_event_notifier& notifier;
   /// Owns the UHD Tx stream.
   uhd::tx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
@@ -103,7 +103,7 @@ public:
   radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
                       task_executor&               async_executor_,
-                      radio_notification_handler&  notifier_);
+                      radio_event_notifier&        notifier_);
 
   /// Gets the optimal transmitter buffer size.
   unsigned get_buffer_size() const { return max_packet_size; }

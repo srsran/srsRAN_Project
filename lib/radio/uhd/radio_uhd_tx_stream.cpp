@@ -38,30 +38,30 @@ void radio_uhd_tx_stream::recv_async_msg()
   }
 
   // Handle event.
-  radio_notification_handler::event_description event_description = {
-      .stream_id  = stream_id,
-      .channel_id = static_cast<unsigned>(async_metadata.channel),
-      .source     = radio_notification_handler::event_source::TRANSMIT,
-      .type       = radio_notification_handler::event_type::UNDEFINED,
-      .timestamp  = std::nullopt};
+  radio_event_notifier::event_description event_description = {.stream_id = stream_id,
+                                                               .channel_id =
+                                                                   static_cast<unsigned>(async_metadata.channel),
+                                                               .source    = radio_event_source::TRANSMIT,
+                                                               .type      = radio_event_type::UNDEFINED,
+                                                               .timestamp = std::nullopt};
 
   switch (async_metadata.event_code) {
     case uhd::async_metadata_t::EVENT_CODE_BURST_ACK:
       state_fsm.async_event_end_of_burst_ack();
       break;
     case uhd::async_metadata_t::EVENT_CODE_TIME_ERROR:
-      event_description.type = radio_notification_handler::event_type::LATE;
+      event_description.type = radio_event_type::LATE;
       state_fsm.async_event_late_underflow(async_metadata.time_spec);
       break;
     case uhd::async_metadata_t::EVENT_CODE_UNDERFLOW:
     case uhd::async_metadata_t::EVENT_CODE_UNDERFLOW_IN_PACKET:
-      event_description.type = radio_notification_handler::event_type::UNDERFLOW;
+      event_description.type = radio_event_type::UNDERFLOW;
       state_fsm.async_event_late_underflow(async_metadata.time_spec);
       break;
     case uhd::async_metadata_t::EVENT_CODE_SEQ_ERROR:
     case uhd::async_metadata_t::EVENT_CODE_SEQ_ERROR_IN_BURST:
     case uhd::async_metadata_t::EVENT_CODE_USER_PAYLOAD:
-      event_description.type = radio_notification_handler::event_type::OTHER;
+      event_description.type = radio_event_type::OTHER;
       break;
 #if UHD_VERSION >= 4090000
     case uhd::async_metadata_t::EVENT_CODE_OK:
@@ -71,7 +71,7 @@ void radio_uhd_tx_stream::recv_async_msg()
   }
 
   // Notify event if it is defined.
-  if (event_description.type != radio_notification_handler::event_type::UNDEFINED) {
+  if (event_description.type != radio_event_type::UNDEFINED) {
     notifier.on_radio_rt_event(event_description);
   }
 }
@@ -120,7 +120,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                             n
 radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
                                          task_executor&               async_executor_,
-                                         radio_notification_handler&  notifier_) :
+                                         radio_event_notifier&        notifier_) :
   stream_id(description.id),
   async_executor(async_executor_),
   notifier(notifier_),
@@ -214,12 +214,11 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify start of burst.
   if (uhd_metadata.start_of_burst) {
-    radio_notification_handler::event_description event_description = {
-        .stream_id  = stream_id,
-        .channel_id = 0,
-        .source     = radio_notification_handler::event_source::TRANSMIT,
-        .type       = radio_notification_handler::event_type::START_OF_BURST,
-        .timestamp  = time_spec.to_ticks(srate_hz)};
+    radio_event_notifier::event_description event_description = {.stream_id  = stream_id,
+                                                                 .channel_id = 0,
+                                                                 .source     = radio_event_source::TRANSMIT,
+                                                                 .type       = radio_event_type::START_OF_BURST,
+                                                                 .timestamp  = time_spec.to_ticks(srate_hz)};
 
     notifier.on_radio_rt_event(event_description);
 
@@ -269,12 +268,11 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify end of burst.
   if (uhd_metadata.end_of_burst) {
-    radio_notification_handler::event_description event_description = {
-        .stream_id  = stream_id,
-        .channel_id = 0,
-        .source     = radio_notification_handler::event_source::TRANSMIT,
-        .type       = radio_notification_handler::event_type::END_OF_BURST,
-        .timestamp  = time_spec.to_ticks(srate_hz)};
+    radio_event_notifier::event_description event_description = {.stream_id  = stream_id,
+                                                                 .channel_id = 0,
+                                                                 .source     = radio_event_source::TRANSMIT,
+                                                                 .type       = radio_event_type::END_OF_BURST,
+                                                                 .timestamp  = time_spec.to_ticks(srate_hz)};
     notifier.on_radio_rt_event(event_description);
   }
 
@@ -326,12 +324,11 @@ void radio_uhd_tx_stream::stop()
   // Send end-of-burst if it is in the middle of a burst.
   if (state_fsm.on_stop()) {
     // Notify end of burst.
-    radio_notification_handler::event_description event_description = {
-        .stream_id  = stream_id,
-        .channel_id = 0,
-        .source     = radio_notification_handler::event_source::TRANSMIT,
-        .type       = radio_notification_handler::event_type::END_OF_BURST,
-        .timestamp  = std::nullopt};
+    radio_event_notifier::event_description event_description = {.stream_id  = stream_id,
+                                                                 .channel_id = 0,
+                                                                 .source     = radio_event_source::TRANSMIT,
+                                                                 .type       = radio_event_type::END_OF_BURST,
+                                                                 .timestamp  = std::nullopt};
     notifier.on_radio_rt_event(event_description);
 
     // Flatten buffers.

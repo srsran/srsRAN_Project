@@ -13,10 +13,10 @@
 
 using namespace srsran;
 
-radio_zmq_tx_stream::radio_zmq_tx_stream(void*                       zmq_context,
-                                         const stream_description&   config,
-                                         task_executor&              async_executor_,
-                                         radio_notification_handler& notification_handler_) :
+radio_zmq_tx_stream::radio_zmq_tx_stream(void*                     zmq_context,
+                                         const stream_description& config,
+                                         task_executor&            async_executor_,
+                                         radio_event_notifier&     notification_handler_) :
   notification_handler(notification_handler_), cf_buffer(config.buffer_size)
 {
   // For each channel...
@@ -83,12 +83,11 @@ void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader&        
 
   // Notify that a timestamp is late.
   if (timestamp_passed) {
-    radio_notification_handler::event_description event_description = {
-        .stream_id  = radio_notification_handler::UNKNOWN_ID,
-        .channel_id = radio_notification_handler::UNKNOWN_ID,
-        .source     = radio_notification_handler::event_source::TRANSMIT,
-        .type       = radio_notification_handler::event_type::LATE,
-        .timestamp  = std::nullopt};
+    radio_event_notifier::event_description event_description = {.stream_id  = std::nullopt,
+                                                                 .channel_id = std::nullopt,
+                                                                 .source     = radio_event_source::TRANSMIT,
+                                                                 .type       = radio_event_type::LATE,
+                                                                 .timestamp  = std::nullopt};
     notification_handler.on_radio_rt_event(event_description);
     return;
   }

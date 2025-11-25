@@ -13,7 +13,7 @@
 #include "radio_zmq_rx_channel_fsm.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
 #include "srsran/support/executors/task_executor.h"
@@ -51,7 +51,7 @@ class radio_zmq_rx_channel
   /// Transmission buffer.
   std::vector<cf_t> buffer;
   /// Notification handler.
-  radio_notification_handler& notification_handler;
+  radio_event_notifier& notification_handler;
   /// Asynchronous task executor.
   task_executor& async_executor;
 
@@ -78,10 +78,10 @@ public:
     unsigned buffer_size;
   };
 
-  radio_zmq_rx_channel(void*                       zmq_context,
-                       const channel_description&  config,
-                       radio_notification_handler& notification_handler,
-                       task_executor&              async_executor_);
+  radio_zmq_rx_channel(void*                      zmq_context,
+                       const channel_description& config,
+                       radio_event_notifier&      notification_handler,
+                       task_executor&             async_executor_);
 
   ~radio_zmq_rx_channel();
 

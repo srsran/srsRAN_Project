@@ -25,7 +25,7 @@ class radio_uhd_baseband_gateway : public baseband_gateway
 public:
   radio_uhd_baseband_gateway(radio_uhd_device&                              device,
                              task_executor&                                 async_executor,
-                             radio_notification_handler&                    notifier,
+                             radio_event_notifier&                          notifier,
                              const radio_uhd_tx_stream::stream_description& tx_stream_config,
                              const radio_uhd_rx_stream::stream_description& rx_stream_config) :
     tx_stream(device.create_tx_stream(async_executor, notifier, tx_stream_config)),

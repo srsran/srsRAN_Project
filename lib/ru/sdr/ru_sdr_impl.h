@@ -69,7 +69,7 @@ public:
   lower_phy_error_notifier& get_error_notifier() { return error_adapter; }
 
   /// Returns the radio event notifier of this RU.
-  radio_notification_handler& get_radio_event_notifier() { return radio_event_dispatcher; }
+  radio_event_notifier& get_radio_event_notifier() { return radio_event_dispatcher; }
 
   /// Sets the radio to the given one for this RU.
   void set_radio(std::unique_ptr<radio_session> radio_ptr)

@@ -16,7 +16,7 @@ using namespace srsran;
 
 std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
-                                                              radio_notification_handler&       notifier)
+                                                              radio_event_notifier&             notifier)
 {
   // Create radio session based on ZMQ.
   std::unique_ptr<radio_session_zmq_impl> session =
