@@ -26,12 +26,14 @@ static ue_manager_config generate_ue_manager_config(const n3_interface_config&  
 }
 
 static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_manager_impl_dependencies& dependencies,
-                                                                srslog::basic_logger&                  logger)
+                                                                cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if,
+                                                                srslog::basic_logger&         logger)
 {
   return {dependencies.e1ap,
           dependencies.timers,
           dependencies.f1u_gateway,
           dependencies.ngu_session_mngr,
+          cu_up_mngr_pdcp_if,
           dependencies.ngu_demux,
           dependencies.n3_teid_allocator,
           dependencies.f1u_teid_allocator,
@@ -57,7 +59,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
 {
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(n3_cfg, test_mode_cfg),
-                                        generate_ue_manager_dependencies(dependencies, logger));
+                                        generate_ue_manager_dependencies(dependencies, *this, logger));
 }
 
 async_task<void> cu_up_manager_impl::stop()

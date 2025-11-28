@@ -46,6 +46,7 @@ struct ue_context_dependencies {
   timer_factory                       ue_ctrl_timer_factory;
   f1u_cu_up_gateway&                  f1u_gw;
   ngu_session_manager&                ngu_session_mngr;
+  cu_up_manager_pdcp_interface&       cu_up_mngr_pdcp_if;
   gtpu_teid_pool&                     n3_teid_allocator;
   gtpu_teid_pool&                     f1u_teid_allocator;
   gtpu_demux_ctrl&                    gtpu_rx_demux;
@@ -81,7 +82,7 @@ public:
                          dependencies.e1ap,
                          dependencies.f1u_gw,
                          dependencies.ngu_session_mngr,
-                         *tmp,
+                         dependencies.cu_up_mngr_pdcp_if,
                          dependencies.n3_teid_allocator,
                          dependencies.f1u_teid_allocator,
                          dependencies.gtpu_rx_demux,
@@ -194,8 +195,6 @@ private:
   timer_factory ue_ctrl_timer_factory;
 
   unique_timer ue_inactivity_timer;
-
-  cu_up_manager_pdcp_interface* tmp; // TODO pass to UE context.
 
   /// Handle expired UE inactivity timer. This function is called from a timer that is run in UE executor,
   /// therefore it handovers the handling to control executor.
