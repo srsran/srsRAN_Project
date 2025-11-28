@@ -28,22 +28,23 @@ namespace srsran::srs_cu_up {
 
 /// PDU session manager dependencies.
 struct pdu_session_manager_dependencies {
-  cu_up_ue_logger&     logger;
-  unique_timer&        ue_inactivity_timer;
-  timer_factory        ue_dl_timer_factory;
-  timer_factory        ue_ul_timer_factory;
-  timer_factory        ue_ctrl_timer_factory;
-  e1ap_interface&      e1ap;
-  f1u_cu_up_gateway&   f1u_gw;
-  ngu_session_manager& ngu_session_mngr;
-  gtpu_teid_pool&      n3_teid_allocator;
-  gtpu_teid_pool&      f1u_teid_allocator;
-  gtpu_demux_ctrl&     gtpu_rx_demux;
-  task_executor&       ue_dl_exec;
-  task_executor&       ue_ul_exec;
-  task_executor&       ue_ctrl_exec;
-  task_executor&       crypto_exec;
-  dlt_pcap&            gtpu_pcap;
+  cu_up_ue_logger&              logger;
+  unique_timer&                 ue_inactivity_timer;
+  timer_factory                 ue_dl_timer_factory;
+  timer_factory                 ue_ul_timer_factory;
+  timer_factory                 ue_ctrl_timer_factory;
+  e1ap_interface&               e1ap;
+  f1u_cu_up_gateway&            f1u_gw;
+  ngu_session_manager&          ngu_session_mngr;
+  cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if;
+  gtpu_teid_pool&               n3_teid_allocator;
+  gtpu_teid_pool&               f1u_teid_allocator;
+  gtpu_demux_ctrl&              gtpu_rx_demux;
+  task_executor&                ue_dl_exec;
+  task_executor&                ue_ul_exec;
+  task_executor&                ue_ctrl_exec;
+  task_executor&                crypto_exec;
+  dlt_pcap&                     gtpu_pcap;
 };
 
 class pdu_session_manager_impl final : public pdu_session_manager_ctrl
@@ -113,8 +114,8 @@ private:
   e1ap_interface&                                          e1ap;
   f1u_cu_up_gateway&                                       f1u_gw;
   ngu_session_manager&                                     ngu_session_mngr;
-  cu_up_manager_pdcp_interface*                            cu_up_mngr_pdcp_if; // TODO: change to use ref.
-  std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions;       // key is pdu_session_id
+  cu_up_manager_pdcp_interface&                            cu_up_mngr_pdcp_if;
+  std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };
 
 } // namespace srsran::srs_cu_up

@@ -30,14 +30,15 @@ protected:
     srslog::init();
 
     // create required objects
-    security_info    = get_dummy_up_security_info();
-    gtpu_rx_demux    = std::make_unique<dummy_gtpu_demux_ctrl>();
-    gtpu_tx_notifier = std::make_unique<dummy_gtpu_network_gateway_adapter>();
-    f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-    n3_allocator     = std::make_unique<dummy_gtpu_teid_pool>();
-    f1u_allocator    = std::make_unique<dummy_gtpu_teid_pool>();
-    ngu_session_mngr = std::make_unique<dummy_ngu_session_manager>();
-    e1ap             = std::make_unique<dummy_e1ap>();
+    security_info      = get_dummy_up_security_info();
+    gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
+    gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
+    f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
+    n3_allocator       = std::make_unique<dummy_gtpu_teid_pool>();
+    f1u_allocator      = std::make_unique<dummy_gtpu_teid_pool>();
+    ngu_session_mngr   = std::make_unique<dummy_ngu_session_manager>();
+    cu_up_mngr_pdcp_if = std::make_unique<dummy_cu_up_manager_pdcp_interface>();
+    e1ap               = std::make_unique<dummy_e1ap>();
 
     // create DUT object
     ue_inactivity_timer = timers_factory.create_timer();
@@ -62,6 +63,7 @@ protected:
                                                                                                   *e1ap,
                                                                                                   *f1u_gw,
                                                                                                   *ngu_session_mngr,
+                                                                                                  *cu_up_mngr_pdcp_if,
                                                                                                   *n3_allocator,
                                                                                                   *f1u_allocator,
                                                                                                   *gtpu_rx_demux,
@@ -87,6 +89,7 @@ protected:
   dummy_inner_f1u_bearer                                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;
   std::unique_ptr<ngu_session_manager>                        ngu_session_mngr;
+  std::unique_ptr<cu_up_manager_pdcp_interface>               cu_up_mngr_pdcp_if;
   std::unique_ptr<e1ap_interface>                             e1ap;
   std::unique_ptr<dummy_gtpu_teid_pool>                       n3_allocator;
   std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;

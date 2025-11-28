@@ -76,6 +76,7 @@ public:
                          e1ap_,
                          f1u_gw_,
                          ngu_session_mngr_,
+                         *tmp,
                          n3_teid_allocator_,
                          f1u_teid_allocator_,
                          gtpu_rx_demux_,
@@ -188,6 +189,8 @@ private:
   timer_factory ue_ctrl_timer_factory;
 
   unique_timer ue_inactivity_timer;
+
+  cu_up_manager_pdcp_interface* tmp; // TODO pass to UE context.
 
   /// Handle expired UE inactivity timer. This function is called from a timer that is run in UE executor,
   /// therefore it handovers the handling to control executor.

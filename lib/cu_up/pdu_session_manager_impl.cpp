@@ -49,7 +49,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_pcap(dependencies.gtpu_pcap),
   e1ap(dependencies.e1ap),
   f1u_gw(dependencies.f1u_gw),
-  ngu_session_mngr(dependencies.ngu_session_mngr)
+  ngu_session_mngr(dependencies.ngu_session_mngr),
+  cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if)
 {
   token_bucket_config ue_ambr_config =
       generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_ctrl_timer_factory);
@@ -311,7 +312,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // Connect "PDCP-E1AP" adapter to E1AP
-  new_drb->pdcp_tx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, cu_up_mngr_pdcp_if);
+  new_drb->pdcp_tx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, &cu_up_mngr_pdcp_if);
   new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
 
   // Create  F1-U bearer

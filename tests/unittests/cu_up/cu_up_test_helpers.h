@@ -13,6 +13,7 @@
 #include "lib/cu_up/ngu_session_manager.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
+#include "srsran/cu_up/cu_up_manager.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -298,6 +299,14 @@ public:
 
 private:
   dummy_gtpu_gateway ngu_gw;
+};
+
+class dummy_cu_up_manager_pdcp_interface final : public srs_cu_up::cu_up_manager_pdcp_interface
+{
+public:
+  void handle_pdcp_protocol_failure(srs_cu_up::ue_index_t ue_index) override {}
+
+  void handle_pdcp_max_count_reached(srs_cu_up::ue_index_t ue_index) override {}
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_interface
