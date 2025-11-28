@@ -136,6 +136,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
   for (const auto& slice : slices) {
+    std::optional<unsigned> allocated_k2;
     for (const unsigned pusch_td_res_idx : slot_ring[slot_tx.count() % slot_ring.size()].valid_pusch_td_list) {
       unsigned pusch_delay = pusch_time_domain_list[pusch_td_res_idx].k2 + cell_cfg.ntn_cs_koffset;
       const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_delay];
@@ -144,6 +145,12 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
       unsigned pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       if (pusch_rb_count >= slice.inst.cfg.rbs.max()) {
         // Slice reached max RBs.
+        continue;
+      }
+
+      if (allocated_k2.has_value() and allocated_k2.value() == pusch_time_domain_list[pusch_td_res_idx].k2) {
+        // There is already a slice candidate for the same k2. Adding another candidate for the same k2 and different
+        // symbols would result in repeating the same slice candidates several times.
         continue;
       }
 
@@ -169,6 +176,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
         rb_lims = {pusch_rb_count, slice.inst.cfg.rbs.max()};
       }
       const auto prio = slice.get_prio(false, slot_tx, pusch_slot, rb_lims.stop());
+      allocated_k2.emplace(pusch_time_domain_list[pusch_td_res_idx].k2);
       ul_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, pusch_slot});
     }
   }
@@ -230,7 +238,7 @@ void inter_slice_scheduler::add_impl(ue& u)
   }
 }
 
-ue* inter_slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
+ue* inter_slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx) const
 {
   if (not ues.contains(ue_idx)) {
     // UE should be added to the repository at this stage.
@@ -410,8 +418,8 @@ inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_cont
   prio = (prio << delay_prio_bitsize) + delay_prio;
 
   // 5. Round-robin across slices with the same slice and delay priorities.
-  float               rbs_per_slot = is_dl ? inst.average_pdsch_rbs_per_slot() : inst.average_pusch_rbs_per_slot();
-  const priority_type rr_prio      = rr_bitmask - std::min((unsigned)std::round(rbs_per_slot), rr_bitmask);
+  const float         rbs_per_slot = is_dl ? inst.average_pdsch_rbs_per_slot() : inst.average_pusch_rbs_per_slot();
+  const priority_type rr_prio      = rr_bitmask - std::min(static_cast<unsigned>(std::round(rbs_per_slot)), rr_bitmask);
   prio                             = (prio << rr_bitsize) + rr_prio;
 
   // Add one bit to differentiate from skip priority.

@@ -338,7 +338,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
                                                             slot_point                    pusch_slot,
                                                             unsigned                      uci_nof_harq_bits,
                                                             const ul_harq_process_handle* h_ul,
-                                                            unsigned                      pending_bytes)
+                                                            unsigned                      pending_bytes,
+                                                            ofdm_symbol_range             allowed_symbols)
 {
   const ue_cell& ue_cc = u.get_cc();
 
@@ -347,9 +348,10 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     return std::nullopt;
   }
 
-  const ue_cell_configuration& ue_cell_cfg      = ue_cc.cfg();
-  const cell_configuration&    cell_cfg         = ue_cell_cfg.cell_cfg_common;
-  unsigned                     slot_nof_symbols = cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot);
+  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
+  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  // If the slot has SRS allocated, take the min between the symbols per slots and available symbols in that slot.
+  unsigned slot_nof_symbols = std::min(cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot), allowed_symbols.length());
 
   // TODO: Support more search spaces.
   static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
@@ -380,7 +382,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   for (unsigned pusch_td_index = 0, e = ss.pusch_time_domain_list.size(); pusch_td_index != e; ++pusch_td_index) {
     const pusch_time_domain_resource_allocation& pusch_td_res = ss.pusch_time_domain_list[pusch_td_index];
 
-    // Check that k2 matches the chosen PUSCH slot
+    // Check that k2 matches the chosen PUSCH slot.
     if (pdcch_slot + pusch_td_res.k2 + cell_cfg.ntn_cs_koffset != pusch_slot) {
       continue;
     }
@@ -395,6 +397,12 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     if (cell_cfg.tdd_cfg_common.has_value() and
         not get_active_tdd_ul_symbols(cell_cfg.tdd_cfg_common.value(), pusch_slot.slot_index(), cyclic_prefix::NORMAL)
                 .contains(pusch_td_res.symbols)) {
+      continue;
+    }
+
+    // Make sure the PUSCH time resource symbols fit within the UL symbols available in this slot; this is to avoid
+    // allocating the PUSCH over SRS resource symbols, if any.
+    if (not allowed_symbols.contains(pusch_td_res.symbols)) {
       continue;
     }
 
@@ -452,22 +460,24 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   return std::nullopt;
 }
 
-std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue& u,
-                                                                         slot_point      pdcch_slot,
-                                                                         slot_point      pusch_slot,
-                                                                         unsigned        uci_nof_harq_bits,
-                                                                         unsigned        pending_bytes)
+std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue&   u,
+                                                                         slot_point        pdcch_slot,
+                                                                         slot_point        pusch_slot,
+                                                                         unsigned          uci_nof_harq_bits,
+                                                                         unsigned          pending_bytes,
+                                                                         ofdm_symbol_range allowed_symbols)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes, allowed_symbols);
 }
 
 std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pusch_slot,
                                                                         unsigned                      uci_nof_harq_bits,
-                                                                        const ul_harq_process_handle& h_ul)
+                                                                        const ul_harq_process_handle& h_ul,
+                                                                        ofdm_symbol_range             allowed_symbols)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, 0);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, 0, allowed_symbols);
 }
 
 static vrb_interval

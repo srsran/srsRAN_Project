@@ -54,6 +54,8 @@ struct ue_newtx_ul_grant_request {
   slot_point pusch_slot;
   /// Pending newTx bytes to allocate.
   unsigned pending_bytes;
+  /// Symbols that can be used for PUSCH allocation.
+  ofdm_symbol_range allowed_symbols;
 };
 
 /// Request for a reTx UL grant allocation.
@@ -66,6 +68,8 @@ struct ue_retx_ul_grant_request {
   ul_harq_process_handle h_ul;
   /// Current UL VRB occupation.
   vrb_bitmap& used_ul_vrbs;
+  /// Symbols that can be used for PUSCH allocation.
+  ofdm_symbol_range allowed_symbols;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
@@ -121,9 +125,9 @@ public:
     ~dl_newtx_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
     /// Sets the final VRBs for the PDSCH allocation.
-    void set_pdsch_params(vrb_interval                          alloc_vrbs,
-                          std::pair<crb_interval, crb_interval> alloc_crbs,
-                          bool                                  enable_interleaving);
+    void set_pdsch_params(vrb_interval                                 alloc_vrbs,
+                          const std::pair<crb_interval, crb_interval>& alloc_crbs,
+                          bool                                         enable_interleaving);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PDSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
@@ -199,13 +203,13 @@ public:
   expected<dl_newtx_grant_builder, dl_alloc_failure_cause> allocate_dl_grant(const ue_newtx_dl_grant_request& request);
 
   /// Allocates DL grant for a UE HARQ reTx.
-  expected<vrb_interval, dl_alloc_failure_cause> allocate_dl_grant(const ue_retx_dl_grant_request& request);
+  expected<vrb_interval, dl_alloc_failure_cause> allocate_dl_grant(const ue_retx_dl_grant_request& request) const;
 
   /// Allocate PDCCH, UCI and PUSCH PDUs for a UE UL grant and return a builder to set the PUSCH parameters.
   expected<ul_newtx_grant_builder, alloc_status> allocate_ul_grant(const ue_newtx_ul_grant_request& request);
 
   /// Allocates UL grant for a UE HARQ reTx.
-  expected<vrb_interval, alloc_status> allocate_ul_grant(const ue_retx_ul_grant_request& request);
+  expected<vrb_interval, alloc_status> allocate_ul_grant(const ue_retx_ul_grant_request& request) const;
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -217,37 +221,38 @@ private:
   expected<dl_grant_info, dl_alloc_failure_cause> setup_dl_grant_builder(const slice_ue&                       user,
                                                                          const sched_helper::dl_sched_context& params,
                                                                          std::optional<dl_harq_process_handle> h_dl,
-                                                                         unsigned pending_bytes);
+                                                                         unsigned pending_bytes) const;
 
   // Setup UL grant builder.
   expected<ul_grant_info, alloc_status> setup_ul_grant_builder(const slice_ue&                       user,
                                                                const sched_helper::ul_sched_context& params,
                                                                std::optional<ul_harq_process_handle> h_ul,
-                                                               unsigned                              pending_bytes);
+                                                               unsigned pending_bytes) const;
 
   // Set final PDSCH parameters and allocate remaining DL grant resources.
   void set_pdsch_params(dl_grant_info&                        grant,
                         vrb_interval                          vrbs,
                         std::pair<crb_interval, crb_interval> crbs,
-                        bool                                  enable_interleaving);
+                        bool                                  enable_interleaving) const;
 
   // Set final PUSCH parameters and allocate remaining UL grant resources.
-  void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs);
+  void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const;
 
-  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(cell_slot_resource_allocator&         pdsch_alloc,
-                                                  const search_space_info&              ss_info,
-                                                  uint8_t                               pdsch_td_res_index,
-                                                  std::pair<crb_interval, crb_interval> crbs,
-                                                  sch_mcs_index                         mcs,
-                                                  unsigned                              nof_layers);
+  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const cell_slot_resource_allocator&          pdsch_alloc,
+                                                  const search_space_info&                     ss_info,
+                                                  uint8_t                                      pdsch_td_res_index,
+                                                  const std::pair<crb_interval, crb_interval>& crbs,
+                                                  sch_mcs_index                                mcs,
+                                                  unsigned                                     nof_layers) const;
 
-  expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
+  expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell&           ue_cc,
+                                                               const search_space_info& ss_info) const;
 
   std::optional<uci_allocation>
-  alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
+  alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index) const;
 
   // Save the PUCCH power control results for the given slot.
-  void post_process_pucch_pw_ctrl_results(slot_point slot);
+  void post_process_pucch_pw_ctrl_results(slot_point slot) const;
 
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ues;

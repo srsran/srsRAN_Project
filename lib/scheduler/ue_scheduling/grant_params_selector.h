@@ -77,18 +77,20 @@ struct ul_sched_context {
 };
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a newTx UL grant.
-std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
-                                                           slot_point      pdcch_slot,
-                                                           slot_point      pusch_slot,
-                                                           unsigned        uci_nof_harq_bits,
-                                                           unsigned        pending_bytes);
+std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue&   u,
+                                                           slot_point        pdcch_slot,
+                                                           slot_point        pusch_slot,
+                                                           unsigned          uci_nof_harq_bits,
+                                                           unsigned          pending_bytes,
+                                                           ofdm_symbol_range allowed_symbols);
 
 /// Retrieve recommended PDCCH and PUSCH parameters for a reTx UL grant.
 std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pusch_slot,
                                                           unsigned                      uci_nof_harq_bits,
-                                                          const ul_harq_process_handle& h_ul);
+                                                          const ul_harq_process_handle& h_ul,
+                                                          ofdm_symbol_range             allowed_symbols);
 
 /// Select UL VRBs to allocate for a newTx.
 vrb_interval compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,

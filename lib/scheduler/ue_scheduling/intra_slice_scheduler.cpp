@@ -147,7 +147,7 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   pending_ul_newtxs.reserve(MAX_UE_PDUS_PER_SLOT);
 
   // Pre-reserve memory for slice context.
-  const unsigned max_expected_ran_slices = 8;
+  constexpr unsigned max_expected_ran_slices = 8;
   slice_ctxt_list.reserve(max_expected_ran_slices);
 }
 
@@ -201,6 +201,7 @@ void intra_slice_scheduler::ul_sched(ul_ran_slice_candidate slice, scheduler_pol
 
   if (slice.get_slot_tx() != pusch_slot) {
     pusch_slot = slice.get_slot_tx();
+    update_min_srs_symbol();
     update_used_ul_vrbs(slice);
   }
 
@@ -243,7 +244,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
     return std::make_pair(0, 0);
   }
 
-  // Determine how many UE grants to allocate in the slot (assuming full buffer). As an heuristic, we divide the number
+  // Determine how many UE grants to allocate in the slot (assuming full buffer). As a heuristic, we divide the number
   // of candidates by 4 and set 8 as the maximum number of UEs to be scheduled per slot, assuming full buffer. This
   // heuristic is a result of a tradeoff between minimizing latency and ensuring we don't deplete the PDCCH resources.
   static constexpr unsigned MAX_UE_GRANT_PER_SLOT = 8;
@@ -351,7 +352,10 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candida
     }
 
     // Allocate PDCCH and PUSCH.
-    auto result = ue_alloc.allocate_ul_grant(ue_retx_ul_grant_request{u, pusch_slot, h, used_ul_vrbs});
+    // NOTE: the symbols passed to the grant are the symbols that are available for PUSCH and for which the used VRBs
+    // have been computed.
+    auto result = ue_alloc.allocate_ul_grant(
+        ue_retx_ul_grant_request{u, pusch_slot, h, used_ul_vrbs, ofdm_symbol_range{0, min_srs_symbol}});
     if (not result.has_value() and result.error() == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
@@ -456,7 +460,7 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   for (const auto& ue_candidate : newtx_candidates) {
     if (pucch_grant_limit_exceeded) {
       // The PUCCH is likely saturated and there is no space for new PUCCHs.
-      // As an heuristic, we only allocate DL grants to UEs which already have a PUCCH or a PUSCH in a future slot that
+      // As a heuristic, we only allocate DL grants to UEs which already have a PUCCH or a PUSCH in a future slot that
       // can likely accommodate more HARQ-ACK bits.
       if (not(ue_candidate.ue_cc->harqs.last_ack_slot().valid() and
               ue_candidate.ue_cc->harqs.last_ack_slot() > pdsch_slot) and
@@ -586,8 +590,10 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
   unsigned rb_count = 0;
   for (const auto& ue_candidate : newtx_candidates) {
     // Create UL grant builder.
-    auto result =
-        ue_alloc.allocate_ul_grant(ue_newtx_ul_grant_request{*ue_candidate.ue, pusch_slot, ue_candidate.pending_bytes});
+    // NOTE: the symbols passed to the grant are the symbols that are available for PUSCH and for which the used VRBs
+    // have been computed.
+    auto result = ue_alloc.allocate_ul_grant(ue_newtx_ul_grant_request{
+        *ue_candidate.ue, pusch_slot, ue_candidate.pending_bytes, ofdm_symbol_range{0, min_srs_symbol}});
 
     if (result.has_value()) {
       // Allocation was successful. Move grant builder to list of pending newTx grants.
@@ -656,7 +662,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
     // Update slice state.
     slice.store_grant(nof_rbs_alloc);
     rb_count += nof_rbs_alloc;
-    rbs_missing = (max_grant_size - nof_rbs_alloc);
+    rbs_missing = max_grant_size - nof_rbs_alloc;
   }
 
   // Clear grant builders.
@@ -747,7 +753,7 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
   return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
 
-unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate& slice)
+unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate& slice) const
 {
   // We cannot allocate more than the number of UEs available.
   int pdschs_to_alloc = slice.get_slice_ues().size();
@@ -784,7 +790,7 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   return std::max(pdschs_to_alloc, 0);
 }
 
-unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate& slice)
+unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate& slice) const
 {
   if (not cell_alloc.cfg.is_ul_enabled(slice.get_slot_tx())) {
     return 0;
@@ -882,10 +888,40 @@ void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& sl
 
   // (Implementation-defined) We use the common PUSCH TD resources as a reference for the computation of RBs unavailable
   // for PDSCH. This assumes that these resources are not colliding with SRS.
-  const auto&              init_ul_bwp      = cell_alloc.cfg.ul_cfg_common.init_ul_bwp;
-  const ofdm_symbol_range& symbols_to_check = init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols;
+  const auto& init_ul_bwp = cell_alloc.cfg.ul_cfg_common.init_ul_bwp;
+  srsran_assert(slice.get_slot_tx() - cell_alloc[0].slot > 0, "PUSCH slot cannot precede its corresponding PDCCH slot");
+  const unsigned    slice_candidate_k2 = slice.get_slot_tx() - cell_alloc[0].slot;
+  ofdm_symbol_range symbols_to_check   = {0, 0};
+  // Find the max symbols such that symbols.stop() <= min_srs_symbol;
+  for (auto& td_res : init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list) {
+    // We can choose only the symbols for the same k2.
+    if (td_res.k2 < slice_candidate_k2) {
+      continue;
+    }
+    if (td_res.k2 == slice_candidate_k2) {
+      if (td_res.symbols.stop() <= min_srs_symbol and td_res.symbols.stop() > symbols_to_check.stop())
+        symbols_to_check = td_res.symbols;
+    }
+    if (td_res.k2 > slice_candidate_k2) {
+      break;
+    }
+  }
+
+  if (symbols_to_check.empty()) {
+    logger.debug(
+        "No symbols available for PUSCH allocation on slot={} for slice_id={}", pusch_slot, slice.id().value());
+  }
 
   used_ul_vrbs = cell_alloc[pusch_slot]
                      .ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs, ul_crb_lims, symbols_to_check)
                      .convert_to<vrb_bitmap>();
+}
+
+void intra_slice_scheduler::update_min_srs_symbol()
+{
+  // Reset to max symbol index before looking for the min.
+  min_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  for (const auto& srs : cell_alloc[pusch_slot - pdcch_slot].result.ul.srss) {
+    min_srs_symbol = std::min(static_cast<unsigned>(srs.symbols.start()), min_srs_symbol);
+  }
 }

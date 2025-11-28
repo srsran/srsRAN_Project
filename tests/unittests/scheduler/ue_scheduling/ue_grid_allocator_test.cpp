@@ -193,7 +193,8 @@ protected:
                                        std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
-    auto        result      = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{user, pusch_slot, pending_bytes});
+    auto        result      = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{
+        user, pusch_slot, pending_bytes, ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}});
     if (not result.has_value()) {
       return result.error();
     }
