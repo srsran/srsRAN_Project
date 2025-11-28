@@ -20,7 +20,7 @@ static void print_sched_header()
   fmt::print("\n");
   fmt::print(
       "          "
-      "|--------------------DL---------------------|-------------------------UL----------------------------------\n");
+      "|--------------------DL---------------------|-------------------------------UL-----------------------------\n");
   fmt::print(" pci rnti | cqi  ri  mcs  brate   ok  nok  (%)  dl_bs | pusch  rsrp  ri  mcs  brate   ok  nok  (%)    "
              "bsr     ta  phr\n");
 }
@@ -137,7 +137,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const std::optional<s
       } else if (ue.pucch_ta_stats.get_nof_observations() > 0) {
         fmt::print(" {}", float_to_eng_string(ue.pucch_ta_stats.get_mean(), 0, true));
       } else {
-        fmt::print("   n/a");
+        fmt::print("    n/a");
       }
       if (ue.last_phr.has_value()) {
         fmt::print(" {:>4}", ue.last_phr.value());
