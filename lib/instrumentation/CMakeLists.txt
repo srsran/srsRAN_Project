@@ -18,12 +18,26 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_library(srsran_instrumentation
+set(SOURCES
         traces/critical_traces.cpp
         traces/du_traces.cpp
         traces/ru_traces.cpp
         traces/up_traces.cpp
         traces/ofh_traces.cpp)
-target_link_libraries(srsran_instrumentation srsran_support)
+
+set(LIBS srsran_support)
+
+if(ENABLE_SRSRAN_TRACY)
+	list(APPEND SOURCES ${CMAKE_SOURCE_DIR}/external/tracy/public/TracyClient.cpp)
+	list(APPEND LIBS ${TRACY_LIBRARIES})
+endif()
+
+add_library(srsran_instrumentation ${SOURCES})
+
+if(ENABLE_SRSRAN_TRACY)
+  target_include_directories(srsran_instrumentation PUBLIC ${CMAKE_SOURCE_DIR}/external/tracy/public/)
+endif()
+
+target_link_libraries(srsran_instrumentation ${LIBS})
 
 add_to_exported_libs(srsran_instrumentation)

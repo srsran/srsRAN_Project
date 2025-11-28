@@ -122,7 +122,8 @@ private:
   template <typename T>
   struct is_modular_compatible<T, std::void_t<typename T::value_type>>
     : std::conditional_t<
-          std::is_base_of_v<re_measurement<typename T::value_type>, T> &&
+          (std::is_base_of_v<re_measurement<typename T::value_type>, T> ||
+           std::is_base_of_v<re_measurement<const typename T::value_type>, T>) &&
               std::is_convertible_v<
                   std::conditional_t<std::is_const_v<T>, const typename T::value_type, typename T::value_type> (*)[],
                   measure_type (*)[]>,
@@ -289,7 +290,7 @@ public:
   {
     srsran_assert(i_symbol < dimensions.nof_symbols,
                   "Requested symbol {}, but only {} symbols are supported.",
-                  i_slice,
+                  i_symbol,
                   dimensions.nof_symbols);
     srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",

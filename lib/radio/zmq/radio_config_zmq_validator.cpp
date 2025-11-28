@@ -21,7 +21,6 @@
  */
 
 #include "radio_config_zmq_validator.h"
-#include "srsran/srslog/srslog.h"
 #include "fmt/format.h"
 #include <regex>
 

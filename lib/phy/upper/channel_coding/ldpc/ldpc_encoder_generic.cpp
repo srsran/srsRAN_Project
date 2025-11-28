@@ -177,11 +177,11 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out, unsigned offset) c
   // Advance the codeblock to the initial node.
   codeblock_view = codeblock_view.last(codeblock.size() - i_node_begin * lifting_size);
 
-  // End node.
-  unsigned i_node_end = i_node_begin + divide_ceil(out.size(), lifting_size);
-
   // Calculate the offset within the first node.
   offset = offset % lifting_size;
+
+  // End node - counts an extra node if the offset of the first node is not zero.
+  unsigned i_node_end = i_node_begin + divide_ceil(out.size() + offset, lifting_size);
 
   for (unsigned i_node = i_node_begin; i_node != i_node_end; ++i_node) {
     // Determine the number of bits to read from this node.
@@ -221,6 +221,8 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out, unsigned offset) c
     // The offset is no longer required after the first node.
     offset = 0;
   }
+
+  srsran_assert(out.empty(), "Not all the output was writen.");
 }
 
 void ldpc_encoder_generic::high_rate_bg1_i6()

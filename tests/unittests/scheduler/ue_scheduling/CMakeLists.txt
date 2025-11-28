@@ -19,12 +19,10 @@
 #
 
 add_executable(ue_scheduler_test
-        dl_logical_channel_test.cpp
         fallback_scheduler_test.cpp
         ue_cell_test.cpp
         ue_configuration_test.cpp
         ue_grid_allocator_test.cpp
-        ul_logical_channel_test.cpp
         ue_link_adaptation_controller_test.cpp
         ta_manager_test.cpp
         ue_harq_link_adaptation_test.cpp)

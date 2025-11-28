@@ -46,8 +46,6 @@ struct pdxch_processor_configuration {
   double center_freq_Hz;
   /// Number of transmit ports.
   unsigned nof_tx_ports;
-  /// Task executor for asynchronous modulation.
-  task_executor& modulation_executor;
 };
 
 /// Lower physical layer PDxCH processor - Factory interface.
@@ -58,7 +56,8 @@ public:
   virtual ~pdxch_processor_factory() = default;
 
   /// Creates a lower PHY PDxCH processor.
-  virtual std::unique_ptr<pdxch_processor> create(const pdxch_processor_configuration& config) = 0;
+  virtual std::unique_ptr<pdxch_processor> create(const pdxch_processor_configuration& config,
+                                                  task_executor&                       modulation_executor) = 0;
 };
 
 /// \brief Creates a software based PDxCH processor factory.

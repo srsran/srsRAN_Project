@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/factories.h"
 #include "srsran/phy/upper/signal_processors/pusch/dmrs_pusch_estimator.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
@@ -41,6 +41,7 @@ std::shared_ptr<dmrs_pusch_estimator_factory> create_dmrs_pusch_estimator_factor
     std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory,
     std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory,
     task_executor&                                       executor,
+    unsigned                                             nof_rx_ports,
     port_channel_estimator_fd_smoothing_strategy         fd_smoothing_strategy,
     port_channel_estimator_td_interpolation_strategy     td_interpolation_strategy,
     bool                                                 compensate_cfo);

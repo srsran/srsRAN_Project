@@ -36,6 +36,11 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
   unsigned  nof_tx_layers = config.get_nof_tx_layers();
   unsigned  nof_rx_ports  = config.rx_ports.size();
 
+  srsran_assert(nof_rx_ports <= ch_estimator.size(),
+                "Trying to estimate the channel for {} antenna ports, configured {}.",
+                nof_rx_ports,
+                ch_estimator.size());
+
   // Select the DM-RS pattern for this PUSCH transmission.
   span<layer_dmrs_pattern> coordinates = span<layer_dmrs_pattern>(temp_pattern).first(nof_tx_layers);
 
@@ -66,8 +71,25 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&              estimate
 
   pending_ports = nof_rx_ports;
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    auto estimator_callback = [this, &estimate, &grid, i_port, &notifier]() {
-      ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
+    auto estimator_callback = [this, &estimate, &grid, i_port, nof_tx_layers, &notifier]() {
+      const port_channel_estimator_results& ch_est_results =
+          ch_estimator[i_port]->compute(grid, i_port, temp_symbols, est_cfg);
+
+      for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+        for (unsigned i_symbol = est_cfg.first_symbol, last_symbol = est_cfg.first_symbol + est_cfg.nof_symbols;
+             i_symbol != last_symbol;
+             ++i_symbol) {
+          ch_est_results.get_symbol_ch_estimate(
+              estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer), i_symbol, i_layer);
+        }
+        estimate.set_rsrp(ch_est_results.get_rsrp(i_layer), i_port, i_layer);
+        estimate.set_time_alignment(ch_est_results.get_time_alignment(), i_port, i_layer);
+        estimate.set_cfo_Hz(ch_est_results.get_cfo_Hz(), i_port, i_layer);
+      }
+      estimate.set_epre(ch_est_results.get_epre(), i_port);
+      estimate.set_noise_variance(ch_est_results.get_noise_variance(), i_port);
+      estimate.set_snr(ch_est_results.get_snr(), i_port);
+
       if (pending_ports.fetch_sub(1) == 1) {
         notifier.on_estimation_complete();
       }

@@ -27,19 +27,20 @@
 
 using namespace srsran;
 
-lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor::configuration& config) :
+lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor_configuration& config,
+                                                           const lower_phy_baseband_processor_dependencies&  deps) :
   srate(config.srate),
   nof_samples_per_super_frame(config.srate.to_kHz() * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   rx_buffer_size(config.rx_buffer_size),
   slot_duration(1000 / pow2(to_numerology_value(config.scs))),
   system_time_throttling_ratio(config.system_time_throttling),
-  rx_executor(*config.rx_task_executor),
-  tx_executor(*config.tx_task_executor),
-  uplink_executor(*config.ul_task_executor),
-  receiver(*config.receiver),
-  transmitter(*config.transmitter),
-  uplink_processor(*config.ul_bb_proc),
-  downlink_processor(*config.dl_bb_proc),
+  rx_executor(deps.rx_task_executor),
+  tx_executor(deps.tx_task_executor),
+  uplink_executor(deps.ul_task_executor),
+  receiver(deps.receiver),
+  transmitter(deps.transmitter),
+  uplink_processor(deps.ul_bb_proc),
+  downlink_processor(deps.dl_bb_proc),
   rx_buffers(config.nof_rx_buffers),
   tx_time_offset(config.tx_time_offset),
   rx_to_tx_max_delay(config.rx_to_tx_max_delay),
@@ -49,17 +50,10 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   static constexpr interval<float> system_time_throttling_range(0, 1);
 
   srsran_assert(rx_buffer_size, "Invalid buffer size.");
-  srsran_assert(config.rx_task_executor, "Invalid receive task executor.");
   srsran_assert(system_time_throttling_range.contains(config.system_time_throttling),
                 "System time throttling (i.e., {}) is out of the range {}.",
                 config.system_time_throttling,
                 system_time_throttling_range);
-  srsran_assert(config.tx_task_executor, "Invalid transmit task executor.");
-  srsran_assert(config.ul_task_executor, "Invalid uplink task executor.");
-  srsran_assert(config.receiver, "Invalid baseband receiver.");
-  srsran_assert(config.transmitter, "Invalid baseband transmitter.");
-  srsran_assert(config.ul_bb_proc, "Invalid uplink processor.");
-  srsran_assert(config.dl_bb_proc, "Invalid downlink processor.");
   srsran_assert(config.nof_rx_ports != 0, "Invalid number of receive ports.");
   srsran_assert(config.nof_tx_ports != 0, "Invalid number of transmit ports.");
 

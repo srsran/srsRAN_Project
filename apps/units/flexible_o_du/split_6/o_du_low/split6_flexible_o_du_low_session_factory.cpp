@@ -234,8 +234,8 @@ get_du_low_validation_dependencies(const fapi::fapi_cell_config& config)
 }
 
 o_du_low_unit
-split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_config& config,
-                                                          o_du_low_unit_dependencies&&  odu_low_dependencies)
+split6_flexible_o_du_low_session_factory::create_o_du_low(const fapi::fapi_cell_config&     config,
+                                                          const o_du_low_unit_dependencies& odu_low_dependencies)
 {
   srs_du::cell_prach_ports_entry prach_ports = {split6_du_low::PRACH_PORT};
 
@@ -406,18 +406,21 @@ split6_flexible_o_du_low_session_factory::create_radio_unit(split6_flexible_o_du
 
   if (const auto* cfg = std::get_if<ru_sdr_unit_config>(&ru_cfg)) {
     ru_sdr_unit_config updated_srate_config = *cfg;
-    updated_srate_config.srate_MHz          = derive_srate_MHz_from_bandwith(config.carrier_cfg.dl_bandwidth);
-    // Update the samping rate.
+
+    // Update the sampling rate.
+    updated_srate_config.srate_MHz = derive_srate_MHz_from_bandwith(config.carrier_cfg.dl_bandwidth);
     sampling_rate_MHz.emplace(updated_srate_config.srate_MHz);
+
+    // Update the start time of the radio.
+    updated_srate_config.start_time = start_time_calc.calculate_start_time();
 
     auto ru_sdr_dependencies = get_ru_sdr_validation_dependencies(config);
     if (!validate_ru_sdr_config(updated_srate_config, ru_sdr_dependencies)) {
       return nullptr;
     }
 
-    return create_sdr_radio_unit(
-        updated_srate_config, ru_config, ru_dependencies, start_time_calc.calculate_start_time());
+    return create_sdr_radio_unit(updated_srate_config, ru_config, ru_dependencies);
   }
 
-  report_error("Could not detect valid Radio Unit configuration");
+  report_error("Could not detect a valid Radio Unit configuration");
 }

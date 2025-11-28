@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/phy/lower/lower_phy_request_handler.h"
-#include "srsran/phy/lower/lower_phy_rg_handler.h"
+#include "srsran/phy/lower/lower_phy_downlink_handler.h"
+#include "srsran/phy/lower/lower_phy_uplink_request_handler.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_request_handler.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
@@ -40,23 +40,25 @@ public:
   processor_handler_adaptor(pdxch_processor_request_handler& pdxch_handler,
                             prach_processor_request_handler& prach_handler,
                             puxch_processor_request_handler& puxch_handler) :
-    rg_handler(pdxch_handler), request_handler(prach_handler, puxch_handler)
+    dl_handler(pdxch_handler), ul_request_handler(prach_handler, puxch_handler)
   {
   }
 
   /// Gets resource grid handler.
-  lower_phy_rg_handler& get_rg_handler() { return rg_handler; }
+  lower_phy_downlink_handler& get_downlink_handler() { return dl_handler; }
 
   /// Gets demodulate request handler.
-  lower_phy_request_handler& get_request_handler() { return request_handler; }
+  lower_phy_uplink_request_handler& get_uplink_request_handler() { return ul_request_handler; }
 
 private:
-  /// Implements the lower physical layer resource grid handler.
-  class rg_handler_adaptor : public lower_phy_rg_handler
+  /// Implements the lower physical layer downlink handler.
+  class downlink_handler_adaptor : public lower_phy_downlink_handler
   {
   public:
     /// Connects the adaptor with the PDxCH processor handler.
-    rg_handler_adaptor(pdxch_processor_request_handler& pdxch_handler_) : pdxch_handler(pdxch_handler_) {}
+    explicit downlink_handler_adaptor(pdxch_processor_request_handler& pdxch_handler_) : pdxch_handler(pdxch_handler_)
+    {
+    }
 
     // See interface for documentation.
     void handle_resource_grid(const resource_grid_context& context, const shared_resource_grid& grid) override;
@@ -66,13 +68,13 @@ private:
     pdxch_processor_request_handler& pdxch_handler;
   };
 
-  /// Implements the lower physical layer request handler.
-  class request_handler_adaptor : public lower_phy_request_handler
+  /// Implements the lower physical layer uplink request handler.
+  class uplink_request_handler_adaptor : public lower_phy_uplink_request_handler
   {
   public:
     /// Connects the adaptor with the PRACH and PUxCH processor handlers.
-    request_handler_adaptor(prach_processor_request_handler& prach_handler_,
-                            puxch_processor_request_handler& puxch_handler_) :
+    uplink_request_handler_adaptor(prach_processor_request_handler& prach_handler_,
+                                   puxch_processor_request_handler& puxch_handler_) :
       prach_handler(prach_handler_), puxch_handler(puxch_handler_)
     {
     }
@@ -90,8 +92,8 @@ private:
     puxch_processor_request_handler& puxch_handler;
   };
 
-  rg_handler_adaptor      rg_handler;
-  request_handler_adaptor request_handler;
+  downlink_handler_adaptor       dl_handler;
+  uplink_request_handler_adaptor ul_request_handler;
 };
 
 } // namespace srsran

@@ -111,8 +111,7 @@ public:
   /// setting the internal state to \ref state_modulate_mask plus the total number of tasks. The modulator becomes
   /// available again after notifying the completion through the \ref pdxch_processor_modulator_notifier interface.
   ///
-  /// The shared to the resource grid is temporally hold in the class and released upon the completion of the
-  /// modulation.
+  /// The shared resource grid is temporally hold in the class and released upon the completion of the modulation.
   ///
   /// \return True if the request is handled successfully, otherwise false.
   bool

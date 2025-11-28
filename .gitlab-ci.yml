@@ -36,7 +36,6 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "23"
     file: .gitlab/ci-shared/tools/tagger.yml
-  - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
@@ -374,9 +373,6 @@ full-code-format:
   tags:
     - amd64
   needs:
-    - job: builder version
-      optional: false
-      artifacts: true
     - job: trigger builder
       optional: true
       artifacts: false

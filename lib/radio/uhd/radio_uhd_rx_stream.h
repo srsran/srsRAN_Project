@@ -27,7 +27,8 @@
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/radio/radio_configuration.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <mutex>
 
 namespace srsran {
@@ -35,30 +36,27 @@ namespace srsran {
 /// Implements a gateway receiver based on UHD receive stream.
 class radio_uhd_rx_stream : public uhd_exception_handler, public baseband_gateway_receiver
 {
-private:
   /// Receive timeout in seconds.
   static constexpr double RECEIVE_TIMEOUT_S = 0.2f;
   /// Set to true for receiving data in a single packet.
   static constexpr bool ONE_PACKET = false;
 
-  /// Defines the Rx stream internal states.
-  enum class states { UNINITIALIZED, SUCCESSFUL_INIT, STREAMING, STOP };
-  /// Indicates the current stream state.
-  std::atomic<states> state = {states::UNINITIALIZED};
+  /// Indicates if the initialization of the stream was successful.
+  bool is_init_successful = false;
   /// Indicates the stream identification for notifications.
   unsigned id;
   /// Sampling rate in hertz.
   double srate_Hz;
   /// Radio notification interface.
-  radio_notification_handler& notifier;
+  radio_event_notifier& notifier;
   /// Owns the UHD Tx stream.
   uhd::rx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
   unsigned max_packet_size;
   /// Indicates the number of channels.
   unsigned nof_channels;
-  /// Protects stream from concurrent receive and stop.
-  std::mutex stream_mutex;
+  /// Stop control.
+  stop_event_source stop_control;
 
   /// \brief Receives a single block of baseband samples.
   /// \param[out] nof_rxd_samples Indicate the number of samples received in the block.
@@ -92,24 +90,22 @@ public:
   /// \param[in] notifier_ Provides the radio event notification handler.
   radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
-                      radio_notification_handler&  notifier_);
+                      radio_event_notifier&        notifier_);
 
   /// \brief Starts the stream reception.
   /// \param[in] time_spec Indicates the start time of the stream.
   /// \return True if no exception is caught. Otherwise false.
   bool start(const uhd::time_spec_t& time_spec);
 
-  /// Gets the optimal transmitter buffer size.
-  unsigned get_buffer_size() const;
-
-  // See interface for documentation.
-  metadata receive(baseband_gateway_buffer_writer& data) override;
-
   /// \brief Stops the reception stream.
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
 
-  /// Wait until radio is notify_stop.
-  void wait_stop();
+  /// Gets the optimal transmitter buffer size.
+  unsigned get_buffer_size() const { return max_packet_size; }
+
+  // See interface for documentation.
+  metadata receive(baseband_gateway_buffer_writer& data) override;
 };
+
 } // namespace srsran

@@ -31,12 +31,12 @@
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
+#include "srsran/phy/lower/lower_phy_downlink_handler.h"
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
 #include "srsran/phy/lower/lower_phy_metrics_notifier.h"
-#include "srsran/phy/lower/lower_phy_request_handler.h"
-#include "srsran/phy/lower/lower_phy_rg_handler.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
+#include "srsran/phy/lower/lower_phy_uplink_request_handler.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
@@ -50,7 +50,7 @@ class lower_phy_impl : public lower_phy, private lower_phy_controller
 {
 public:
   /// Collects the injected dependencies of the lower physical layer.
-  struct configuration {
+  struct dependencies {
     /// Downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> downlink_proc;
     /// Uplink processor.
@@ -58,26 +58,29 @@ public:
     /// Baseband controller.
     std::unique_ptr<lower_phy_controller> controller;
     /// Symbol handler to notify the reception of symbols.
-    lower_phy_rx_symbol_notifier* rx_symbol_notifier;
+    lower_phy_rx_symbol_notifier& rx_symbol_notifier;
     /// The timing handler to notify the timing boundaries.
-    lower_phy_timing_notifier* timing_notifier;
+    lower_phy_timing_notifier& timing_notifier;
     /// Error handler to notify runtime errors.
-    lower_phy_error_notifier* error_notifier;
+    lower_phy_error_notifier& error_notifier;
     /// Metrics handler to notify metrics.
-    lower_phy_metrics_notifier* metrics_notifier;
+    lower_phy_metrics_notifier& metrics_notifier;
   };
 
   /// Constructs a generic lower physical layer.
-  lower_phy_impl(configuration& config);
+  explicit lower_phy_impl(dependencies deps);
 
   // See interface for documentation.
   lower_phy_controller& get_controller() override { return *this; }
 
   // See interface for documentation.
-  lower_phy_request_handler& get_request_handler() override { return handler_adaptor.get_request_handler(); }
+  lower_phy_uplink_request_handler& get_uplink_request_handler() override
+  {
+    return handler_adaptor.get_uplink_request_handler();
+  }
 
   // See interface for documentation.
-  lower_phy_rg_handler& get_rg_handler() override { return handler_adaptor.get_rg_handler(); }
+  lower_phy_downlink_handler& get_downlink_handler() override { return handler_adaptor.get_downlink_handler(); }
 
   // See interface for documentation.
   lower_phy_cfo_controller& get_tx_cfo_control() override;
@@ -90,6 +93,9 @@ public:
 
   // See interface for documentation.
   lower_phy_center_freq_controller& get_rx_center_freq_control() override;
+
+  // See interface for documentation.
+  lower_phy_tx_time_offset_controller& get_tx_time_offset_control() override;
 
   // See lower_phy_controller interface for documentation.
   void start(baseband_gateway_timestamp init_time, baseband_gateway_timestamp sfn0_ref_time) override
@@ -105,19 +111,16 @@ public:
     controller->stop();
   }
 
-  // See lower_phy_controller interface for documentation.
-  lower_phy_tx_time_offset_controller& get_tx_time_offset_control() override;
-
 private:
+  /// Processor notification adaptor.
+  processor_notifier_adaptor notification_adaptor;
   /// Downlink processor.
   std::unique_ptr<lower_phy_downlink_processor> downlink_proc;
   /// Uplink processor.
   std::unique_ptr<lower_phy_uplink_processor> uplink_proc;
   /// Processor handler adaptor.
   processor_handler_adaptor handler_adaptor;
-  /// Processor notification adaptor.
-  processor_notifier_adaptor notification_adaptor;
-  /// Baseband adaptor. It implements the lower physical layer controller.
+  /// Lower physical layer controller.
   std::unique_ptr<lower_phy_controller> controller;
 };
 

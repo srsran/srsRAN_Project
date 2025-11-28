@@ -191,7 +191,7 @@ generate_ntn_configuration_manager_config(const gnb_id_t& gnb_id, span<const du_
             out_cell.si_msg_idx          = i;
             out_cell.si_period_rf        = si_msg.si_period_rf;
             out_cell.si_window_len_slots = sib_cfg.si_window_len_slots;
-            out_cell.si_window_position  = si_msg.si_window_position;
+            out_cell.si_window_position  = si_msg.si_window_position.value();
           }
         }
       }

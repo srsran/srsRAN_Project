@@ -52,7 +52,7 @@ void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metri
 /// Radio metrics are independent of the enabled flag. Print them.
 static void print_radio_metrics(const ru_metrics& metrics)
 {
-  const auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metrics.metrics);
+  const auto* sdr_metrics = std::get_if<ru_sdr_metrics>(&metrics.metrics);
 
   // Only valid for SDR metrics.
   if (!sdr_metrics) {

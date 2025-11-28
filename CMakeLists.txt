@@ -68,28 +68,29 @@ configure_file(
 # Options
 ########################################################################
 
-option(STOP_ON_WARNING       "Interrupt application on warning"           OFF)
-option(ENABLE_WERROR         "Stop compilation on errors"                 ON)
-option(ENABLE_TSAN           "Enable clang thread sanitizer"              OFF)
-option(ENABLE_ASAN           "Enable clang address sanitizer"             OFF)
-option(ENABLE_UBSAN          "Enable clang undefined behaviour sanitizer" OFF)
-option(ENABLE_UBSAN_MIN      "Enable clang sanitizer minimal runtime"     OFF)
-option(ENABLE_RTSAN          "Enable clang real-time sanitizer"           OFF)
-option(ENABLE_GCOV           "Enable code coverage"                       OFF)
-option(ENABLE_BACKWARD       "Enable backward"                            ON)
-option(ENABLE_UHD            "Enable UHD"                                 ON)
-option(ENABLE_ZEROMQ         "Enable ZeroMQ"                              ON)
-option(ENABLE_FFTW           "Enable FFTW"                                ON)
-option(ENABLE_MKL            "Enable Intel MKL"                           ON)
-option(ENABLE_ARMPL          "Enable ARM performance library"             ON)
-option(ENABLE_DPDK           "Enable DPDK"                                OFF)
-option(ENABLE_LIBNUMA        "Enable LibNUMA"                             OFF)
-option(ENABLE_EXPORT         "Enable PIC and export libraries"            OFF)
-option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"        OFF)
-option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"       ON)
-option(BUILD_TESTING         "Compile tests"                              OFF)
-option(ENABLE_GPROF          "Enable gprof"                               OFF)
-option(FORCE_DEBUG_INFO      "Add debug information to Release build"     OFF)
+option(STOP_ON_WARNING       "Interrupt application on warning"             OFF)
+option(ENABLE_WERROR         "Stop compilation on errors"                   ON)
+option(ENABLE_TSAN           "Enable clang thread sanitizer"                OFF)
+option(ENABLE_ASAN           "Enable clang address sanitizer"               OFF)
+option(ENABLE_UBSAN          "Enable clang undefined behaviour sanitizer"   OFF)
+option(ENABLE_UBSAN_MIN      "Enable clang sanitizer minimal runtime"       OFF)
+option(ENABLE_RTSAN          "Enable clang real-time sanitizer"             OFF)
+option(ENABLE_GCOV           "Enable code coverage"                         OFF)
+option(ENABLE_BACKWARD       "Enable backward"                              ON)
+option(ENABLE_UHD            "Enable UHD"                                   ON)
+option(ENABLE_ZEROMQ         "Enable ZeroMQ"                                ON)
+option(ENABLE_FFTW           "Enable FFTW"                                  ON)
+option(ENABLE_MKL            "Enable Intel MKL"                             ON)
+option(ENABLE_ARMPL          "Enable ARM performance library"               ON)
+option(ENABLE_DPDK           "Enable DPDK"                                  OFF)
+option(ENABLE_LIBNUMA        "Enable LibNUMA"                               OFF)
+option(ENABLE_EXPORT         "Enable PIC and export libraries"              OFF)
+option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"          OFF)
+option(ENABLE_PLUGINS        "Compile plugins in the plugin folder"         ON)
+option(BUILD_TESTING         "Compile tests"                                OFF)
+option(ENABLE_GPROF          "Enable gprof"                                 OFF)
+option(FORCE_DEBUG_INFO      "Add debug information to Release build"       OFF)
+option(ENABLE_SRSRAN_TRACY   "Enable using the tracy profiler if available" OFF)
 if (BUILD_TESTING)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"                OFF)
     if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -258,6 +259,10 @@ if (ENABLE_GCOV)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif (ENABLE_GCOV)
 
+if(ENABLE_SRSRAN_TRACY)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRACY_ENABLE")
+endif()
+
 if(NOT LINKER STREQUAL "default")
     if (LINKER STREQUAL "bfd")
         add_link_options(-fuse-ld=bfd)
@@ -357,6 +362,18 @@ else ()
     macro(add_backward)
     endmacro()
 endif ()
+
+# ROHC
+find_package(ROHC)
+if(ROHC_FOUND)
+    sbom_add(
+        PACKAGE            "ROHC library"
+        DOWNLOAD_LOCATION  "https://rohc-lib.org"
+        SUPPLIER           "ROHC library project"
+        LICENSE            "LGPL-2.1-or-later"
+        VERSION            ${ROHC_VERSION}
+    )
+endif()
 
 # Crypto
 find_package(MbedTLS REQUIRED)

@@ -41,22 +41,20 @@ public:
   std::unique_ptr<lower_phy_uplink_processor> create(const uplink_processor_configuration& config) override
   {
     // Prepare PUxCH processor configuration.
-    puxch_processor_configuration puxch_proc_config;
-    puxch_proc_config.cp                = config.cp;
-    puxch_proc_config.scs               = config.scs;
-    puxch_proc_config.srate             = config.rate;
-    puxch_proc_config.bandwidth_rb      = config.bandwidth_prb;
-    puxch_proc_config.dft_window_offset = dft_window_offset;
-    puxch_proc_config.center_freq_Hz    = config.center_frequency_Hz;
-    puxch_proc_config.nof_rx_ports      = config.nof_rx_ports;
+    puxch_processor_configuration puxch_proc_config = {.cp                = config.cp,
+                                                       .scs               = config.scs,
+                                                       .srate             = config.rate,
+                                                       .bandwidth_rb      = config.bandwidth_prb,
+                                                       .dft_window_offset = dft_window_offset,
+                                                       .center_freq_Hz    = config.center_frequency_Hz,
+                                                       .nof_rx_ports      = config.nof_rx_ports};
 
     // Prepare uplink processor configuration.
-    lower_phy_uplink_processor_impl::configuration proc_config;
-    proc_config.sector_id    = config.sector_id;
-    proc_config.scs          = config.scs;
-    proc_config.cp           = config.cp;
-    proc_config.rate         = config.rate;
-    proc_config.nof_rx_ports = config.nof_rx_ports;
+    lower_phy_uplink_processor_impl::configuration proc_config = {.sector_id    = config.sector_id,
+                                                                  .scs          = config.scs,
+                                                                  .cp           = config.cp,
+                                                                  .rate         = config.rate,
+                                                                  .nof_rx_ports = config.nof_rx_ports};
 
     return std::make_unique<lower_phy_uplink_processor_impl>(
         prach_proc_factory->create(), puxch_proc_factory->create(puxch_proc_config), proc_config);

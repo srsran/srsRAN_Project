@@ -290,6 +290,45 @@ TEST_P(LDPCEncDecFixture, LDPCEncTest)
   }
 }
 
+TEST_P(LDPCEncDecFixture, LDPCEncSegmentedReadTest)
+{
+  static constexpr unsigned block_size = 256;
+
+  unsigned used_msg_bits   = 0;
+  unsigned used_cblck_bits = 0;
+  // For all test message-codeblock pairs...
+  for (unsigned message_idx = 0; message_idx != nof_messages; ++message_idx) {
+    span<const uint8_t> msg_i = span<const uint8_t>(messages).subspan(used_msg_bits, msg_length);
+    used_msg_bits += msg_length;
+    span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
+    used_cblck_bits += max_cb_length;
+
+    // Pack input message.
+    dynamic_bit_buffer message_packed(msg_length);
+    srsvec::bit_pack(message_packed, msg_i);
+
+    // check several shortened codeblocks.
+    constexpr unsigned          NOF_STEPS    = 3;
+    const std::vector<unsigned> length_steps = create_range(min_cb_length, max_cb_length, NOF_STEPS);
+    for (const unsigned length : length_steps) {
+      // Select expected encoded data.
+      span<const uint8_t> expected_encoded = cblock_i.first(length);
+
+      // Check the encoder.
+      std::vector<uint8_t>       encoded(block_size);
+      const ldpc_encoder_buffer& rm_buffer = encoder_test->encode(message_packed, cfg_enc);
+      for (unsigned offset = 0; offset != length;) {
+        unsigned n = std::min(block_size, length - offset);
+        encoded.resize(n);
+        rm_buffer.write_codeblock(encoded, offset);
+        ASSERT_EQ(span<const uint8_t>(encoded), span<const uint8_t>(expected_encoded).subspan(offset, n))
+            << fmt::format("Wrong codeblock offset={}.", offset);
+        offset += n;
+      }
+    }
+  }
+}
+
 TEST_P(LDPCEncDecFixture, LDPCDecTest)
 {
   unsigned used_msg_bits   = 0;

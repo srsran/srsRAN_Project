@@ -271,7 +271,7 @@ struct nr_band_ssb_scs_case {
 
 /// NR operating bands with corresponding SSB Subcarrier Spacing and SSB pattern case, as per Table 5.4.3.3-1 for FR1
 /// and Table 5.4.3.3-1 for FR2, TS 38.104, Rel. 17, version 17.8.0.
-static constexpr unsigned                                           nof_nr_ssb_bands           = 72;
+static constexpr unsigned                                           nof_nr_ssb_bands           = 74;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_scs_case_table = {{
     // clang-format off
     {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -333,7 +333,9 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_
     {nr_band::n102, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n104, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n255, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n255, subcarrier_spacing::kHz30, ssb_pattern_case::B},
     {nr_band::n256, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n256, subcarrier_spacing::kHz30, ssb_pattern_case::B},
     {nr_band::n257,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
     {nr_band::n257,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     {nr_band::n258,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
@@ -1063,56 +1065,42 @@ frequency_range srsran::band_helper::get_freq_range(nr_band band)
                                                                                    : frequency_range::FR2;
 }
 
-double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
-{
-  static constexpr unsigned NRE = 12;
-
-  // For FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
-  // TODO: add offset_to_carrier.
-  return center_freq - static_cast<double>(nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
-}
-
-uint32_t srsran::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn_f_ref)
-{
-  return freq_to_nr_arfcn(get_abs_freq_point_a_from_center_freq(nof_prb, nr_arfcn_to_freq(arfcn_f_ref)));
-}
-
-double srsran::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
-{
-  static constexpr unsigned NRE = 12;
-  // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
-  // TODO: add offset_to_carrier
-  const double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
-  return abs_freq_point_a_freq +
-         static_cast<double>(nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
-}
-
-double srsran::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
+double srsran::band_helper::get_abs_freq_point_a_from_f_ref(double             f_ref,
+                                                            uint32_t           nof_rbs,
+                                                            subcarrier_spacing scs,
+                                                            uint32_t           offset_to_carrier)
 {
   // NOTE (i): It is unclear whether the SCS should always be 15kHz for FR1 (\ref get_abs_freq_point_a_from_center_freq
   // and see note).
   // NOTE (ii): TS 38.104, Section 5.4.2.2, reports <em>[...] The mapping must apply to at least one numerology
   // supported by the BS.<\em>. Therefore, the correct SCS to be used in this procedure still needs to determined.
 
+  // Number of subcarriers in a RE.
+  static constexpr unsigned NRE = 12;
   // Half of the number of subcarriers in a RE.
   static constexpr unsigned NRE_half = 6;
 
   // The procedure, which is explained in TS 38.104, Section 5.4.2.2, gives the position of f_ref in terms of subcarrier
   // and CRB index, depending on the size of N_RB. Below we compute the value in unit of subcarriers, meaning we don't
   // need to separate the cases of even and odd N_RB.
-  const unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
+  const unsigned delta_point_a_f_ref = nof_rbs * NRE_half + offset_to_carrier * NRE;
   return f_ref - static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);
 }
 
-double
-srsran::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs)
+double srsran::band_helper::get_f_ref_from_abs_freq_point_a(double             abs_freq_point_a,
+                                                            uint32_t           nof_rbs,
+                                                            subcarrier_spacing scs,
+                                                            uint32_t           offset_to_carrier)
 {
   // See notes in \ref get_abs_freq_point_a_from_f_ref.
 
+  // Number of subcarriers in a RE.
+  static constexpr unsigned NRE = 12;
   // Half of the number of subcarriers in a RE.
   static constexpr unsigned NRE_half = 6;
+
   // The procedure used in this function is the inverse of what explained in TS 38.104, Section 5.4.2.2.
-  const unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
+  const unsigned delta_point_a_f_ref = nof_rbs * NRE_half + offset_to_carrier * NRE;
   return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);
 }
 

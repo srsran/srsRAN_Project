@@ -45,8 +45,9 @@ protected:
   static constexpr size_t pool_capacity = 1024;
   Pool                    pool{pool_capacity};
 };
-using test_value_types = ::testing::Types<bounded_unique_object_pool<int, EnableMetrics>,
-                                          bounded_object_pool<int, noop_operation, EnableMetrics>>;
+using test_value_types = ::testing::Types<bounded_unique_object_pool<int, noop_operation, EnableMetrics>,
+                                          bounded_object_pool<int, noop_operation, EnableMetrics>,
+                                          bounded_rc_object_pool<int, noop_operation, EnableMetrics>>;
 TYPED_TEST_SUITE(common_bounded_object_pool_test, test_value_types);
 
 TYPED_TEST(common_bounded_object_pool_test, pool_initiated_with_provided_capacity)
@@ -140,7 +141,8 @@ TYPED_TEST(common_bounded_object_pool_test, stress_pool)
 
   double         latency_secs = avg_latency.count() / 1.0e9;
   constexpr bool is_ptr_pool =
-      std::is_same_v<TypeParam, bounded_unique_object_pool<typename TypeParam::value_type, EnableMetrics>>;
+      std::is_same_v<TypeParam,
+                     bounded_unique_object_pool<typename TypeParam::value_type, noop_operation, EnableMetrics>>;
   fmt::print("Result for \"{}\":\n", is_ptr_pool ? "bounded_object_ptr_pool" : "bounded_object_pool");
   fmt::print("Time elapsed: {:.2} s\n", latency_secs);
   fmt::print("Rate: {:.2} calls/sec\n", nof_operations / latency_secs);
@@ -178,4 +180,73 @@ TYPED_TEST(bounded_object_pool_non_pwr2_test, non_power2_capacity_is_respected)
   objs.pop_back();
   obj = this->pool.get();
   ASSERT_NE(obj, nullptr);
+}
+
+TEST(bounded_rc_object_pool_test, object_reclaimed_on_zero_rc)
+{
+  bounded_rc_object_pool<int> pool{16};
+
+  bounded_rc_object_pool<int>::ptr ptr;
+  ASSERT_FALSE(ptr);
+
+  ASSERT_EQ(pool.size_approx(), pool.capacity());
+  ptr = pool.get(); // rc == 1
+  ASSERT_NE(ptr, nullptr);
+  ASSERT_TRUE(ptr.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  auto ptr2 = ptr.clone(); // rc == 2
+  ASSERT_NE(ptr2, nullptr);
+  ASSERT_EQ(ptr, ptr2);
+  ASSERT_FALSE(ptr.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  ptr.reset(); // rc == 1
+  ASSERT_EQ(ptr, nullptr);
+  ASSERT_NE(ptr2, nullptr);
+  ASSERT_TRUE(ptr2.unique());
+  ASSERT_EQ(pool.size_approx(), pool.capacity() - 1);
+
+  ptr2.reset(); // rc == 0
+  ASSERT_EQ(ptr2, nullptr);
+  ASSERT_EQ(pool.size_approx(), pool.capacity());
+}
+
+struct clear_func {
+  void operator()(int& val) { val = -3; }
+};
+
+template <typename Pool>
+class bounded_object_pool_clear_test : public ::testing::Test
+{
+protected:
+  using pool_type                       = Pool;
+  static constexpr size_t pool_capacity = 1024;
+  Pool                    pool{clear_func{}, pool_capacity, -2};
+};
+using clear_test_value_types = ::testing::Types<bounded_object_pool<int, clear_func>,
+                                                bounded_unique_object_pool<int, clear_func>,
+                                                bounded_rc_object_pool<int, clear_func>>;
+TYPED_TEST_SUITE(bounded_object_pool_clear_test, clear_test_value_types);
+
+TYPED_TEST(bounded_object_pool_clear_test, on_clear_invoked_on_reclaim)
+{
+  ASSERT_GT(this->pool.capacity(), 0);
+  std::vector<typename decltype(this->pool)::ptr> objs;
+  for (unsigned i = 0; i != this->pool.capacity(); ++i) {
+    objs.push_back(this->pool.get());
+    ASSERT_NE(objs.back(), nullptr);
+    ASSERT_EQ(*objs.back(), -2);
+    *objs.back() = 5;
+  }
+
+  // Reclaim all objects.
+  objs.clear();
+
+  // Get all objects again and check that on_clear was invoked.
+  for (unsigned i = 0; i != this->pool.capacity(); ++i) {
+    auto obj = this->pool.get();
+    ASSERT_NE(obj, nullptr);
+    ASSERT_EQ(*obj, -3);
+  }
 }

@@ -21,23 +21,17 @@
  */
 
 #include "dlt_pcap_impl.h"
+#include "pcap_dlts.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/support/executors/sync_task_executor.h"
 
 using namespace srsran;
-
-// DLT PCAP values for different layers.
-static constexpr uint16_t PCAP_NGAP_DLT = 152;
-static constexpr uint16_t PCAP_E1AP_DLT = 153;
-static constexpr uint16_t PCAP_F1AP_DLT = 154;
-static constexpr uint16_t PCAP_E2AP_DLT = 155;
-static constexpr uint16_t PCAP_GTPU_DLT = 156;
 
 dlt_pcap_impl::dlt_pcap_impl(uint32_t           dlt,
                              const std::string& layer_name_,
                              const std::string& filename,
+                             const std::string& dissector_,
                              task_executor&     backend_exec_) :
-  logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, backend_exec_)
+  logger(srslog::fetch_basic_logger("ALL")), writer(dlt, layer_name_, filename, dissector_, backend_exec_)
 {
 }
 
@@ -78,11 +72,14 @@ void dlt_pcap_impl::push_pdu(byte_buffer pdu)
   writer.write_pdu(std::move(pdu));
 }
 
-static std::unique_ptr<dlt_pcap>
-create_dlt_pcap(unsigned dlt, const std::string& layer_name, const std::string& filename, task_executor& backend_exec)
+static std::unique_ptr<dlt_pcap> create_dlt_pcap(unsigned           dlt,
+                                                 const std::string& layer_name,
+                                                 const std::string& filename,
+                                                 const char*        dissector,
+                                                 task_executor&     backend_exec)
 {
   srsran_assert(not filename.empty(), "File name is empty");
-  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, backend_exec);
+  return std::make_unique<dlt_pcap_impl>(dlt, layer_name, filename, dissector, backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_null_dlt_pcap()
@@ -92,25 +89,25 @@ std::unique_ptr<dlt_pcap> srsran::create_null_dlt_pcap()
 
 std::unique_ptr<dlt_pcap> srsran::create_ngap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_NGAP_DLT, "NGAP", filename, backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "NGAP", filename, "ngap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_f1ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_F1AP_DLT, "F1AP", filename, backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "F1AP", filename, "f1ap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_e1ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_E1AP_DLT, "E1AP", filename, backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "E1AP", filename, "e1ap", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_gtpu_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_GTPU_DLT, "GTPU", filename, backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "GTPU", filename, "gtp", backend_exec);
 }
 
 std::unique_ptr<dlt_pcap> srsran::create_e2ap_pcap(const std::string& filename, task_executor& backend_exec)
 {
-  return create_dlt_pcap(PCAP_E2AP_DLT, "E2AP", filename, backend_exec);
+  return create_dlt_pcap(PCAP_EXPORT_PDU_DLT, "E2AP", filename, "e2ap", backend_exec);
 }

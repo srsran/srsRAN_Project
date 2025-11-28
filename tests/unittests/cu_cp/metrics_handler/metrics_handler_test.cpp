@@ -147,9 +147,9 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   std::string rrc_exp_str =
       "[ gnb_du_id=0 mean_nof_rrc_connections=2 max_nof_rrc_connections=4 "
       "attempted_rrc_connection_establishments=[ emergency=0 high_prio_access=0 mt_access=1 mo_sig=0 mo_data=0 "
-      "mo_voice_call=0 mo_video_call=0 mo_sms=0 mps_prio_access=0 mcs_prio_access=0 ] "
+      "mo_voice_call=0 mo_video_call=0 mo_sms=0 mps_prio_access=0 mcs_prio_access=0 unknown=0 ] "
       "successful_rrc_connection_establishments=[ emergency=0 high_prio_access=0 mt_access=1 mo_sig=0 mo_data=0 "
-      "mo_voice_call=0 mo_video_call=0 mo_sms=0 mps_prio_access=0 mcs_prio_access=0 ] "
+      "mo_voice_call=0 mo_video_call=0 mo_sms=0 mps_prio_access=0 mcs_prio_access=0 unknown=0 ] "
       "attempted_rrc_connection_reestablishments=1 successful_rrc_connection_reestablishments_with_ue_context=2 "
       "successful_rrc_connection_reestablishments_without_ue_context=3 ], nof_handover_executions_requested=2 "
       "nof_successful_handover_executions=1";

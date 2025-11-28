@@ -23,6 +23,7 @@ add_executable(common_scheduler_test
         sib1_scheduler_test.cpp
         si_scheduler_test.cpp
         prach_scheduler_test.cpp
+        prach_scheduler_vectortest.cpp
         ra_scheduler_test.cpp
         paging_scheduler_test.cpp)
 target_link_libraries(common_scheduler_test

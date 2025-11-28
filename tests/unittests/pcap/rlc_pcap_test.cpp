@@ -180,4 +180,6 @@ TEST_F(pcap_rlc_test, write_rlc_am_pdu)
   srsran::pcap_rlc_pdu_context context = {du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb1, tx_cfg};
 
   pcap_writer->push_pdu(context, pdu_list.front());
+
+  worker.wait_pending_tasks();
 }

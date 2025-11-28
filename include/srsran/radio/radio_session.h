@@ -25,8 +25,8 @@
 #include "srsran/gateways/baseband/baseband_gateway.h"
 #include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 #include "srsran/radio/radio_configuration.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/radio/radio_management_plane.h"
-#include "srsran/radio/radio_notification_handler.h"
 
 namespace srsran {
 

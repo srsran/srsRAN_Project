@@ -49,7 +49,7 @@ from .steps.stub import _stop_stub, GNB_STARTUP_TIMEOUT, handle_start_error, sto
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _FLAKY_ERROR_LIST = [
-    "Timeout reached while reserving and/or waiting for pods to be ready",
+    "Timeout reached while reserving",
     "Error creating the pod",
     "Viavi API call timed out",
     "time-out in waiting for Cell Frame Boundary detection",

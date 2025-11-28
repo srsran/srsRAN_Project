@@ -59,8 +59,13 @@ pcap_pdu_data::pcap_pdu_data(uint16_t            src,
 backend_pcap_writer::backend_pcap_writer(uint32_t           dlt,
                                          const std::string& layer_name_,
                                          const std::string& filename_,
+                                         const std::string& dissector_,
                                          task_executor&     backend_exec_) :
-  layer_name(layer_name_), filename(filename_), backend_exec(backend_exec_), logger(srslog::fetch_basic_logger("ALL"))
+  layer_name(layer_name_),
+  filename(filename_),
+  dissector(dissector_),
+  backend_exec(backend_exec_),
+  logger(srslog::fetch_basic_logger("ALL"))
 {
   writer.open(dlt, filename);
 }
@@ -130,6 +135,7 @@ void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
   if (pdu.payload().empty()) {
     return;
   }
+
   if (not is_write_enabled()) {
     logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
@@ -148,7 +154,10 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 
   // write packet header
   unsigned length = pdu.length();
-  writer.write_pdu_header(length);
+  writer.write_pdu_header(length, dissector);
+
+  // write exported_pdu header
+  writer.write_exported_pdu_header(dissector);
 
   // write PDU payload
   writer.write_pdu(pdu);
@@ -162,7 +171,10 @@ void backend_pcap_writer::write_context_pdu_impl(const pcap_pdu_data& pdu)
   }
 
   // write packet header
-  writer.write_pdu_header(pdu.header().length() + pdu.payload().length());
+  writer.write_pdu_header(pdu.header().length() + pdu.payload().length(), dissector);
+
+  // write exported_pdu header
+  writer.write_exported_pdu_header(dissector);
 
   // write PDU header
   writer.write_pdu(pdu.header());

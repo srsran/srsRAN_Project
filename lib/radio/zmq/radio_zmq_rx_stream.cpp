@@ -29,29 +29,29 @@ radio_zmq_rx_stream::radio_zmq_rx_stream(void*                         zmq_conte
                                          const stream_description&     config,
                                          task_executor&                async_executor_,
                                          radio_zmq_tx_align_interface& tx_align_,
-                                         radio_notification_handler&   notification_handler) :
+                                         radio_event_notifier&         notification_handler) :
   tx_align(tx_align_), cf_buffer(config.buffer_size)
 {
   // For each channel...
-  for (unsigned channel_id = 0; channel_id != config.address.size(); ++channel_id) {
+  for (unsigned channel_id = 0, channel_id_end = config.address.size(); channel_id != channel_id_end; ++channel_id) {
     // Prepare configuration.
-    radio_zmq_rx_channel::channel_description channel_description;
-    channel_description.socket_type       = config.socket_type;
-    channel_description.address           = config.address[channel_id];
-    channel_description.stream_id         = config.stream_id;
-    channel_description.channel_id        = channel_id;
-    channel_description.channel_id_str    = config.stream_id_str + ":" + std::to_string(channel_id);
-    channel_description.log_level         = config.log_level;
-    channel_description.trx_timeout_ms    = config.trx_timeout_ms;
-    channel_description.linger_timeout_ms = config.linger_timeout_ms;
-    channel_description.buffer_size       = config.buffer_size;
+    radio_zmq_rx_channel::channel_description channel_description = {.socket_type    = config.socket_type,
+                                                                     .address        = config.address[channel_id],
+                                                                     .stream_id      = config.stream_id,
+                                                                     .channel_id     = channel_id,
+                                                                     .channel_id_str = config.stream_id_str + ":" +
+                                                                                       std::to_string(channel_id),
+                                                                     .log_level         = config.log_level,
+                                                                     .trx_timeout_ms    = config.trx_timeout_ms,
+                                                                     .linger_timeout_ms = config.linger_timeout_ms,
+                                                                     .buffer_size       = config.buffer_size};
 
     // Create channel.
-    channels.emplace_back(std::make_unique<radio_zmq_rx_channel>(
+    auto& channel = channels.emplace_back(std::make_unique<radio_zmq_rx_channel>(
         zmq_context, channel_description, notification_handler, async_executor_));
 
     // Check if the channel construction was successful.
-    if (!channels.back()->is_successful()) {
+    if (!channel->is_successful()) {
       return;
     }
   }
@@ -74,13 +74,6 @@ void radio_zmq_rx_stream::start(baseband_gateway_timestamp init_time)
   }
 }
 
-void radio_zmq_rx_stream::wait_stop()
-{
-  for (auto& channel : channels) {
-    channel->wait_stop();
-  }
-}
-
 baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gateway_buffer_writer& data)
 {
   // Make sure the number of data channels is coherent with the number of the stream channels.
@@ -90,8 +83,7 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
                             channels.size());
 
   // Prepare return metadata.
-  baseband_gateway_receiver::metadata ret;
-  ret.ts = get_sample_count();
+  baseband_gateway_receiver::metadata ret = {.ts = get_sample_count()};
 
   // Calculate transmit timestamp that has already expired.
   uint64_t passed_timestamp = ret.ts + data.get_nof_samples();
@@ -100,7 +92,7 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
   tx_align.align(passed_timestamp, RECEIVE_TS_ALIGN_TIMEOUT);
 
   // Receive samples for each channel.
-  for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
+  for (unsigned channel_id = 0, channel_id_end = channels.size(); channel_id != channel_id_end; ++channel_id) {
     span<cf_t> view = span<cf_t>(cf_buffer).first(data.get_channel_buffer(channel_id).size());
     channels[channel_id]->receive(view);
     srsvec::convert(data.get_channel_buffer(channel_id), view, scaling_factor_cf_to_ci16);

@@ -68,7 +68,8 @@ public:
       type = types::UNKNOWN;
     }
   }
-  std::string to_string()
+
+  const char* to_string() const
   {
     switch (type) {
       case types::B2xx:
@@ -88,11 +89,14 @@ public:
         return "uhd_unknown";
     }
   }
+
   bool operator==(const radio_uhd_device_type& other) const { return type == other.type; }
   bool operator==(const types& other) const { return type == other; }
-  operator const types&() { return type; }
+
+  operator types() const { return type; }
 
 private:
   types type = types::UNKNOWN;
 };
+
 } // namespace srsran

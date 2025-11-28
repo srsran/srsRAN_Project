@@ -26,11 +26,24 @@
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
 #include <fstream>
+#include <netinet/in.h>
 #include <string>
 
 #define PCAP_CONTEXT_HEADER_MAX 256
 
 namespace srsran {
+
+// End-of-options
+const uint32_t EXP_PDU_TAG_END_OF_OPT    = 0;
+const uint32_t EXP_PDU_LENGTH_END_OF_OPT = 4;
+
+// The value part should be an ASCII non NULL terminated string
+// of the registered dissector used by Wireshark e.g "sip"
+// Will be used to call the next dissector.
+// NOTE: this is NOT a protocol name; a given protocol may have multiple
+// dissectors, if, for example, the protocol headers depend on the
+// protocol being used to transport the protocol in question.
+const uint16_t EXP_PDU_TAG_DISSECTOR_NAME = ntohs(12);
 
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
@@ -69,7 +82,8 @@ public:
   bool open(uint32_t dlt, const std::string& filename);
   void flush();
   void close();
-  void write_pdu_header(uint32_t length);
+  void write_pdu_header(uint32_t length, const std::string& dissector);
+  void write_exported_pdu_header(const std::string& dissector);
   void write_pdu(srsran::const_span<uint8_t> pdu);
   void write_pdu(const byte_buffer& pdu);
 
@@ -78,6 +92,7 @@ private:
   std::ofstream         pcap_fstream;
   std::string           filename;
   uint32_t              dlt = 0;
+  std::array<char, 4>   padding{};
 };
 
 } // namespace srsran

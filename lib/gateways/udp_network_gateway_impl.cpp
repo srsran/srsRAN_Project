@@ -51,10 +51,11 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
       [this](span<udp_tx_pdu_t> pdus) { handle_pdu_impl(pdus); },
       config.tx_max_mmsg)
 {
-  logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={} ext_bind_addr={}",
+  logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={} ext_bind_addr={} reuse_addr={}",
               config.rx_max_mmsg,
               config.pool_occupancy_threshold,
-              config.ext_bind_addr);
+              config.ext_bind_addr,
+              config.reuse_addr);
 }
 
 bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
@@ -176,6 +177,14 @@ bool udp_network_gateway_impl::create_and_bind()
     ::getnameinfo(
         result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     logger.debug("Binding to {} port {}", ip_addr, port_nr);
+
+    // If the re-use sockaddr option is set, set it here so that the subsequent bind doesn't fail.
+    if (config.reuse_addr) {
+      if (not set_reuse_addr()) {
+        logger.error("Couldn't set reuseaddr for socket");
+        return false;
+      }
+    }
 
     if (::bind(sock_fd.value(), result->ai_addr, result->ai_addrlen) == -1) {
       // binding failed, try next address
@@ -414,13 +423,6 @@ bool udp_network_gateway_impl::set_sockopts()
     if (not set_receive_timeout(config.rx_timeout_sec)) {
       logger.error("Couldn't set receive timeout for socket");
 
-      return false;
-    }
-  }
-
-  if (config.reuse_addr) {
-    if (not set_reuse_addr()) {
-      logger.error("Couldn't set reuseaddr for socket");
       return false;
     }
   }

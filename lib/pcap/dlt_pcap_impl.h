@@ -34,6 +34,7 @@ public:
   dlt_pcap_impl(unsigned           dlt_,
                 const std::string& layer_name_,
                 const std::string& filename,
+                const std::string& dissector,
                 task_executor&     backend_exec_);
 
   ~dlt_pcap_impl() override;

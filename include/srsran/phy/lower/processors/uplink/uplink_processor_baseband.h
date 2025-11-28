@@ -28,7 +28,7 @@
 
 namespace srsran {
 
-class baseband_gateway_buffer;
+class baseband_gateway_buffer_reader;
 
 /// \brief Lower physical layer uplink processor - Baseband interface.
 ///

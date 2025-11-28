@@ -27,13 +27,13 @@
 
 using namespace srsran;
 
-/// Fills the given low PHY configuration from the given gnb configuration.
-static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_config::cell_config& config,
-                                                       const ru_sdr_unit_config&                   ru_cfg,
-                                                       unsigned max_processing_delay_slot,
-                                                       unsigned sector_id)
+/// Generates a lower PHY configuration from the given RU and cell configurations.
+static lower_phy_configuration generate_lower_phy_config(const flexible_o_du_ru_config::cell_config& config,
+                                                         const ru_sdr_unit_config&                   ru_cfg,
+                                                         unsigned max_processing_delay_slot,
+                                                         unsigned sector_id)
 {
-  /// Static configuration that the gnb supports.
+  // Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
   const unsigned bandwidth_sc =
@@ -41,27 +41,33 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
 
   lower_phy_configuration out_cfg;
 
+  out_cfg.sector_id                  = sector_id;
   out_cfg.scs                        = config.scs;
   out_cfg.cp                         = cp;
   out_cfg.bandwidth_rb               = band_helper::get_n_rbs_from_bw(config.bw, config.scs, config.freq_range);
   out_cfg.dl_freq_hz                 = band_helper::nr_arfcn_to_freq(config.dl_arfcn);
   out_cfg.ul_freq_hz                 = band_helper::nr_arfcn_to_freq(config.ul_arfcn);
-  out_cfg.nof_rx_ports               = config.nof_rx_antennas;
   out_cfg.nof_tx_ports               = config.nof_tx_antennas;
-  out_cfg.sector_id                  = sector_id;
+  out_cfg.nof_rx_ports               = config.nof_rx_antennas;
   out_cfg.dft_window_offset          = 0.5F;
   out_cfg.max_processing_delay_slots = max_processing_delay_slot;
+  out_cfg.srate                      = sampling_rate::from_MHz(ru_cfg.srate_MHz);
+  out_cfg.ta_offset                  = band_helper::get_ta_offset(config.freq_range);
 
-  out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
-
-  out_cfg.ta_offset = band_helper::get_ta_offset(config.freq_range);
   if (ru_cfg.time_alignment_calibration.has_value()) {
     // Selects the user specific value.
-    out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
+    out_cfg.time_alignment_calibration = *ru_cfg.time_alignment_calibration;
   } else {
     // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
     out_cfg.time_alignment_calibration = 0;
   }
+
+  // Get lower PHY system time throttling.
+  out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
+
+  // Set max concurrent PRACH requests to the max processing delay (in slots) plus 2 extra slots: one for sample
+  // collection and one for potential processing delay.
+  out_cfg.max_nof_prach_concurrent_requests = max_processing_delay_slot + 2;
 
   // Select RX buffer size policy.
   if (ru_cfg.device_driver == "zmq") {
@@ -74,13 +80,6 @@ static lower_phy_configuration generate_low_phy_config(const flexible_o_du_ru_co
   } else {
     out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
   }
-
-  // Get lower PHY system time throttling.
-  out_cfg.system_time_throttling = ru_cfg.expert_cfg.lphy_dl_throttling;
-
-  // Set max concurrent PRACH requests to the max processing delay (in slots) plus 2 extra slots: one for sample
-  // collection and one for potential processing delay.
-  out_cfg.max_nof_prach_concurrent_requests = max_processing_delay_slot + 2;
 
   // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
   out_cfg.amplitude_config.input_gain_dB =
@@ -126,16 +125,16 @@ static std::vector<std::string> extract_zmq_ports(const std::string& driver_args
 {
   std::vector<std::string> ports;
 
-  const std::vector<std::string>& splitted_args = split_rf_driver_args(driver_args);
+  std::vector<std::string> splitted_args = split_rf_driver_args(driver_args);
   for (const auto& arg : splitted_args) {
-    auto I = arg.find(port_id);
+    auto it = arg.find(port_id);
 
-    if (I == std::string::npos) {
+    if (it == std::string::npos) {
       continue;
     }
 
-    I = arg.find("=");
-    ports.push_back(arg.substr(++I));
+    it = arg.find("=");
+    ports.push_back(arg.substr(++it));
   }
 
   return ports;
@@ -159,8 +158,8 @@ static void generate_radio_config(radio_configuration::radio&                   
   out_cfg.tx_mode          = radio_configuration::to_transmission_mode(ru_cfg.expert_cfg.transmission_mode);
   out_cfg.power_ramping_us = ru_cfg.expert_cfg.power_ramping_time_us;
 
-  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
-  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
+  std::vector<std::string> zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
+  std::vector<std::string> zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
 
   // For each sector...
   for (unsigned sector_id = 0, e = cells.size(); sector_id != e; ++sector_id) {
@@ -237,11 +236,11 @@ static void generate_radio_config(radio_configuration::radio&                   
   }
 }
 
-ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&                        ru_cfg,
-                                                        span<const flexible_o_du_ru_config::cell_config> cells,
-                                                        unsigned max_processing_delay_slots)
+ru_sdr_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config&                        ru_cfg,
+                                                    span<const flexible_o_du_ru_config::cell_config> cells,
+                                                    unsigned max_processing_delay_slots)
 {
-  ru_generic_configuration out_cfg;
+  ru_sdr_configuration out_cfg;
   out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.device_driver       = ru_cfg.device_driver;
   out_cfg.start_time          = ru_cfg.start_time;
@@ -249,7 +248,8 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
 
   unsigned sector_id = 0;
   for (const auto& cell : cells) {
-    out_cfg.lower_phy_config.push_back(generate_low_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
+    out_cfg.lower_phy_config.push_back(
+        generate_lower_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
   }
 
   return out_cfg;

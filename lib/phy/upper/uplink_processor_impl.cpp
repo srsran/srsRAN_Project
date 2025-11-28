@@ -69,12 +69,12 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
   srs(std::move(srs_)),
   grid(std::move(grid_)),
   task_executors(task_executors_),
-  dummy(*this),
   rm_buffer_pool(rm_buffer_pool_),
   rx_payload_pool(max_nof_prb, max_nof_layers),
   logger(srslog::fetch_basic_logger("PHY", true)),
   notifier(notifier_),
-  ul_tap(std::move(ul_tap_))
+  ul_tap(std::move(ul_tap_)),
+  alternative_processor(*this, grid->get_reader(), ul_tap.get())
 {
   srsran_assert(prach, "A valid PRACH detector must be provided");
   srsran_assert(pusch_proc, "A valid PUSCH processor must be provided");
@@ -85,8 +85,8 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
 uplink_slot_processor& uplink_processor_impl::get_slot_processor(slot_point slot)
 {
   // If the slot configured in the state machine does not match the given slot, give the dummy instance.
-  if (!state_machine.is_slot_valid(slot)) {
-    return dummy;
+  if (!state_machine.has_receive_request(slot)) {
+    return alternative_processor;
   }
 
   return *this;
@@ -120,6 +120,9 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   rx_payload_pool.reset();
   pdu_repository.clear_queues();
 
+  // Sets the dummy slot processor context.
+  alternative_processor.activate_slot(slot);
+
   // Create a valid unique PDU slot repository.
   return unique_uplink_pdu_slot_repository(pdu_repository);
 }
@@ -152,6 +155,10 @@ void uplink_processor_impl::handle_rx_symbol(unsigned end_symbol_index, bool is_
 
   // If the OFDM symbol is not valid, discard all PDUs for the rest of the slot.
   if (!is_valid) {
+    // After discarding all requests, other valid OFDM symbols will be reported as they do not contain any associated
+    // requests. Because of this, we deactivate the alternative slot processor.
+    alternative_processor.deactivate_slot();
+
     // Iterate all symbols that have not been processed yet. As the processor might be executing asynchronous all
     // discarded PDUs must call state_machine.on_create_pdu_task and state_machine.on_finish_processing_pdu for managing
     // the state machine correctly.
@@ -535,6 +542,10 @@ void uplink_processor_impl::discard_slot()
   }
 
   logger.warning(current_slot.sfn(), current_slot.slot_index(), "Discarded uplink slot. Ignoring processing.");
+
+  // After discarding all requests, other valid OFDM symbols will be reported as they do not contain any associated
+  // requests. Because of this, we deactivate the alternative slot processor.
+  alternative_processor.deactivate_slot();
 
   // Iterate all symbols that have not been processed yet.
   for (unsigned i_symbol = nof_processed_symbols; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {

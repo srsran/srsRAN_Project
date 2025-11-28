@@ -21,15 +21,16 @@
  */
 
 #include "radio_zmq_tx_channel.h"
+#include "srsran/support/synchronization/sync_event.h"
 
 using namespace srsran;
 
-const std::set<int> radio_zmq_tx_channel::VALID_SOCKET_TYPES = {ZMQ_REP};
+static const std::set<int> VALID_SOCKET_TYPES = {ZMQ_REP};
 
-radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_context,
-                                           const channel_description&  config,
-                                           radio_notification_handler& notification_handler_,
-                                           task_executor&              async_executor_) :
+radio_zmq_tx_channel::radio_zmq_tx_channel(void*                      zmq_context,
+                                           const channel_description& config,
+                                           radio_event_notifier&      notification_handler_,
+                                           task_executor&             async_executor_) :
   stream_id(config.stream_id),
   channel_id(config.channel_id),
   channel_id_str(config.channel_id_str),
@@ -50,9 +51,9 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
   }
 
   // Create socket.
-  sock = zmq_socket(zmq_context, config.socket_type);
+  sock = ::zmq_socket(zmq_context, config.socket_type);
   if (sock == nullptr) {
-    logger.error("Failed to open transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
+    logger.error("Failed to open transmitter socket ({}). {}.", config.address, ::zmq_strerror(::zmq_errno()));
     return;
   }
 
@@ -63,27 +64,27 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
   while (!bind_success && bind_trial_count != BIND_MAX_TRIALS) {
     // Sleep if it is not the first trial.
     if (bind_trial_count != 0) {
-      zmq_sleep(BIND_FAILURE_SLEEP_SECONDS);
+      ::zmq_sleep(BIND_FAILURE_SLEEP_SECONDS);
     }
 
     // Try to bind.
-    bind_success = (zmq_bind(sock, config.address.c_str()) == 0);
+    bind_success = (::zmq_bind(sock, config.address.c_str()) == 0);
     if (!bind_success) {
       // Unhandled error.
-      if (zmq_errno() != EADDRINUSE) {
+      if (::zmq_errno() != EADDRINUSE) {
         break;
       }
 
       // Address already in use error.
       logger.warning("Failed to bind transmitter socket ({}). {}. Trying in 1 seconds.",
                      config.address,
-                     zmq_strerror(zmq_errno()));
+                     ::zmq_strerror(::zmq_errno()));
       bind_trial_count++;
     }
   }
 
   if (!bind_success) {
-    logger.error("Failed to bind transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
+    logger.error("Failed to bind transmitter socket ({}). {}.", config.address, ::zmq_strerror(::zmq_errno()));
     return;
   }
 
@@ -92,21 +93,21 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
     int timeout = config.trx_timeout_ms;
 
     // Set receive timeout.
-    if (zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set receive timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
+    if (::zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set receive timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
       return;
     }
 
     // Set send timeout.
-    if (zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set send timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
+    if (::zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set send timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
       return;
     }
 
     // Set linger timeout.
     timeout = config.linger_timeout_ms;
-    if (zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set linger timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
+    if (::zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set linger timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
       return;
     }
   }
@@ -119,7 +120,7 @@ radio_zmq_tx_channel::~radio_zmq_tx_channel()
 {
   // Close socket if opened.
   if (sock != nullptr) {
-    zmq_close(sock);
+    ::zmq_close(sock);
     sock = nullptr;
   }
 }
@@ -130,7 +131,7 @@ void radio_zmq_tx_channel::receive_request()
   if (socket_type == ZMQ_REP) {
     // Receive request.
     uint8_t dummy = 0;
-    int     n     = zmq_recv(sock, &dummy, sizeof(dummy), ZMQ_DONTWAIT);
+    int     n     = ::zmq_recv(sock, &dummy, sizeof(dummy), ZMQ_DONTWAIT);
 
     // Request received.
     if (n > 0) {
@@ -142,12 +143,12 @@ void radio_zmq_tx_channel::receive_request()
     // Error.
     if (n < 0) {
       // Error happened.
-      int err = zmq_errno();
+      int err = ::zmq_errno();
       if (err == EFSM || err == EAGAIN) {
         // Ignore timeout and FSM error.
       } else {
         // This error cannot be ignored.
-        logger.error("Socket failed to receive request. {}.", zmq_strerror(zmq_errno()));
+        logger.error("Socket failed to receive request. {}.", ::zmq_strerror(::zmq_errno()));
         state_fsm.on_error();
         return;
       }
@@ -175,11 +176,11 @@ void radio_zmq_tx_channel::send_response()
 
   // Otherwise, send samples over socket.
   int nbytes = count * sizeof(cf_t);
-  int n      = zmq_send(sock, (void*)buffer.data(), nbytes, 0);
+  int n      = ::zmq_send(sock, (void*)buffer.data(), nbytes, 0);
 
   // Check if an error occurred.
   if (n < 0) {
-    logger.error("Exception to transmit data. {}.", zmq_strerror(zmq_errno()));
+    logger.error("Exception to transmit data. {}.", ::zmq_strerror(::zmq_errno()));
     state_fsm.on_error();
     return;
   }
@@ -199,6 +200,11 @@ void radio_zmq_tx_channel::send_response()
 
 void radio_zmq_tx_channel::run_async()
 {
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
   // Receive request if there is no pending request. Otherwise, send response.
   if (!state_fsm.has_pending_request()) {
     receive_request();
@@ -213,7 +219,7 @@ void radio_zmq_tx_channel::run_async()
 
   // Feedback task if not stopped.
   if (state_fsm.is_running()) {
-    if (not async_executor.defer([this]() { run_async(); })) {
+    if (not async_executor.defer([this, tk = std::move(token)]() { run_async(); })) {
       logger.error("Unable to initiate async task");
     }
   } else {
@@ -232,11 +238,11 @@ void radio_zmq_tx_channel::transmit_samples(span<const cf_t> data)
     // Check if the push was successful.
     if (pushed == 0) {
       // Notify buffer overflow.
-      radio_notification_handler::event_description event;
-      event.stream_id  = stream_id;
-      event.channel_id = channel_id;
-      event.source     = radio_notification_handler::event_source::TRANSMIT;
-      event.type       = radio_notification_handler::event_type::OVERFLOW;
+      radio_event_notifier::event_description event = {.stream_id  = stream_id,
+                                                       .channel_id = channel_id,
+                                                       .source     = radio_event_source::TRANSMIT,
+                                                       .type       = radio_event_type::OVERFLOW,
+                                                       .timestamp  = std::nullopt};
       notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.
@@ -253,6 +259,11 @@ void radio_zmq_tx_channel::transmit_samples(span<const cf_t> data)
 
 bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds timeout)
 {
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return false;
+  }
+
   unsigned count = 0;
 
   // Early return if alignment is unnecessary.
@@ -293,10 +304,15 @@ bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds t
 
 void radio_zmq_tx_channel::transmit(span<const cf_t> data)
 {
+  auto token = stop_control.get_token();
+  if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
+    return;
+  }
+
   logger.debug("Requested to transmit {} samples.", data.size());
 
   // Protect concurrent alignment and transmit.
-  std::unique_lock<std::mutex> lock(transmit_alignment_mutex);
+  std::scoped_lock lock(transmit_alignment_mutex);
 
   // Actual baseband transmission.
   transmit_samples(data);
@@ -310,23 +326,28 @@ void radio_zmq_tx_channel::transmit(span<const cf_t> data)
 
 void radio_zmq_tx_channel::start(uint64_t init_time)
 {
+  stop_control.reset();
+
   sample_count = init_time;
 
   // Start processing.
   state_fsm.on_start();
-  if (not async_executor.defer([this]() { run_async(); })) {
+  sync_event start_event;
+  if (not async_executor.defer(
+          [this, stop_token = stop_control.get_token(), start_token = start_event.get_token()]() mutable {
+            // Eagerly signal that we started.
+            start_token.reset();
+            run_async();
+          })) {
     logger.error("Unable to initiate radio zmq tx async task");
   }
+  start_event.wait();
 }
 
 void radio_zmq_tx_channel::stop()
 {
   logger.debug("Stopping...");
   state_fsm.stop();
-}
-
-void radio_zmq_tx_channel::wait_stop()
-{
-  state_fsm.wait_stop();
+  stop_control.stop();
   logger.debug("Stopped successfully.");
 }

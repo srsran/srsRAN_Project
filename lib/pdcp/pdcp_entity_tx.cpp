@@ -22,7 +22,9 @@
 
 #include "pdcp_entity_tx.h"
 #include "../security/security_engine_impl.h"
+#include "srsran/instrumentation/traces/tracy_profiler.h"
 #include "srsran/instrumentation/traces/up_traces.h"
+#include "srsran/rohc/rohc_support.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
 #include "srsran/support/srsran_assert.h"
@@ -66,17 +68,38 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   }
 
   // Validate configuration
-  if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
-    report_error("PDCP SRB with invalid sn_size. {}", cfg);
-  }
-  if (is_srb() && is_um()) {
-    report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
-  }
-  if (is_srb() && cfg.discard_timer != pdcp_discard_timer::infinity) {
-    logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
-  }
-  if (is_drb() && !cfg.discard_timer.has_value()) {
-    logger.log_error("Invalid DRB config, discard_timer is not configured");
+  if (is_srb()) {
+    if (cfg.sn_size != pdcp_sn_size::size12bits) {
+      report_error("PDCP SRB with invalid sn_size. {}", cfg);
+    }
+    if (is_um()) {
+      report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
+    }
+    if (cfg.discard_timer != pdcp_discard_timer::infinity) {
+      logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
+    }
+    if (cfg.header_compression.has_value()) {
+      report_error("ROHC not allowed for SRBs. {}", cfg);
+    }
+  } else {
+    if (!cfg.discard_timer.has_value()) {
+      logger.log_error("Invalid DRB config, discard_timer is not configured");
+    }
+    if (cfg.header_compression.has_value()) {
+      const auto& header_compression = *cfg.header_compression;
+      if (header_compression.rohc_type == rohc::rohc_type_t::uplink_only_rohc) {
+        for (auto profile : rohc::all_rohc_profiles) {
+          if (profile != rohc::rohc_profile::profile0x0006 && header_compression.profiles.is_profile_enabled(profile)) {
+            logger.log_error(
+                "Invalid ROHC profile for {}. profiles={}", header_compression.rohc_type, header_compression.profiles);
+            break;
+          }
+        }
+      }
+      if (!rohc::rohc_supported()) {
+        report_error("ROHC is not not supported. {}", cfg);
+      }
+    }
   }
 
   logger.log_info("PDCP configured. {}", cfg);
@@ -190,7 +213,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   trace_point                           tx_tp           = up_tracer.now();
   std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
-  if (is_drb()) {
+  if (!is_srb()) {
     auto drop_reason = check_early_drop(buf);
     if (drop_reason != early_drop_reason::no_drop) {
       if (warn_on_drop_count == 0) {
@@ -520,6 +543,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
 void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info)
 
 {
+  SRSRAN_ZONE_SCOPED_NC("pdcp_tx::apply_security", tracy::Color::LightSeaGreen);
   auto     pre      = std::chrono::high_resolution_clock::now();
   uint32_t tx_count = buf_info.count;
 
@@ -634,7 +658,7 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
                                         security::ciphering_enabled ciphering_enabled_)
 {
   srsran_assert((is_srb() && sec_cfg.domain == security::sec_domain::rrc) ||
-                    (is_drb() && sec_cfg.domain == security::sec_domain::up),
+                    (!is_srb() && sec_cfg.domain == security::sec_domain::up),
                 "Invalid sec_domain={} for {} in {}",
                 sec_cfg.domain,
                 rb_type,
@@ -647,7 +671,7 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
   // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...)
   // may still be allowed to establish emergency session by sending the emergency registration request message. (...)
   if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
-      (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
+      (!is_srb() || sec_cfg.cipher_algo != security::ciphering_algorithm::nea0)) {
     logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
                      is_srb(),
                      sec_cfg.integ_algo,
@@ -713,7 +737,7 @@ void pdcp_entity_tx::send_status_report()
 
 void pdcp_entity_tx::data_recovery()
 {
-  srsran_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
+  srsran_assert(!is_srb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
   logger.log_info("Data recovery requested.");
 
   /*
@@ -994,12 +1018,12 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
   }
 
   // Set D/C if required
-  if (is_drb()) {
-    // D/C bit field (1).
-    *hdr_writer = 0x80;
-  } else {
+  if (is_srb()) {
     // No D/C bit field.
     *hdr_writer = 0x00;
+  } else {
+    // D/C bit field (1).
+    *hdr_writer = 0x80;
   }
 
   // Add SN

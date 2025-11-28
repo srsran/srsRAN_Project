@@ -26,6 +26,7 @@
 #include "../srs/srs_scheduler.h"
 #include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
+#include "../ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/support/memory_pool/bounded_object_pool.h"
 #include <memory>
 
@@ -290,7 +291,7 @@ void ue_cell_event_manager::handle_ue_creation(ue_config_update_event ev)
     du_ue_index_t   ueidx       = u->ue_index;
     rnti_t          rnti        = u->crnti;
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
-    ue_db.add_ue(std::move(u));
+    ue_db.add_ue(std::move(u), ev.next_config().logical_channels());
 
     const auto& added_ue = ue_db[ueidx];
     for (unsigned i = 0, e = added_ue.nof_cells(); i != e; ++i) {

@@ -32,7 +32,6 @@ namespace {
 
 class prach_processor_factory_sw : public prach_processor_factory
 {
-private:
   std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory;
   task_executor&                                  async_task_executor;
   sampling_rate                                   srate;
@@ -40,12 +39,12 @@ private:
   unsigned                                        max_nof_concurrent_requests;
 
 public:
-  prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory>& ofdm_prach_factory_,
-                             task_executor&                                   async_task_executor_,
-                             sampling_rate                                    srate_,
-                             unsigned                                         max_nof_ports_,
-                             unsigned                                         max_nof_concurrent_requests_) :
-    ofdm_prach_factory(ofdm_prach_factory_),
+  prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory_,
+                             task_executor&                                  async_task_executor_,
+                             sampling_rate                                   srate_,
+                             unsigned                                        max_nof_ports_,
+                             unsigned                                        max_nof_concurrent_requests_) :
+    ofdm_prach_factory(std::move(ofdm_prach_factory_)),
     async_task_executor(async_task_executor_),
     srate(srate_),
     max_nof_ports(max_nof_ports_),
@@ -78,5 +77,5 @@ srsran::create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator
                                           unsigned                                        max_nof_concurrent_requests)
 {
   return std::make_shared<prach_processor_factory_sw>(
-      ofdm_prach_factory, async_task_executor, srate, max_nof_ports, max_nof_concurrent_requests);
+      std::move(ofdm_prach_factory), async_task_executor, srate, max_nof_ports, max_nof_concurrent_requests);
 }

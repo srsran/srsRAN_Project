@@ -34,24 +34,21 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs,
-               cmd.starts_in_fallback,
-               cmd.cfg.logical_channels()),
-  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
   ta_mgr(expert_cfg.ta_control,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().tag_id(),
-         &dl_lc_ch_mgr),
+         &lc_ch_mgr),
   drx(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
       cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
       cmd.cfg.drx_cfg(),
-      ul_lc_ch_mgr,
+      lc_ch_mgr,
       cmd.ul_ccch_slot_rx,
       logger)
 {
   // Apply configuration.
   set_config(cmd.cfg, cmd.ul_ccch_slot_rx);
 
+  // Set the UE carriers as fallback or normal operation.
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
       cell->set_fallback_state(cmd.starts_in_fallback, false, false);
@@ -59,24 +56,26 @@ ue::ue(const ue_creation_command& cmd) :
   }
 }
 
+void ue::setup(ue_logical_channel_repository dl_lch_repo)
+{
+  // Setups UE DL logical channel manager.
+  lc_ch_mgr = std::move(dl_lch_repo);
+  lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+}
+
 void ue::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
-  dl_lc_ch_mgr.slot_indication();
-  ul_lc_ch_mgr.slot_indication();
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }
 
 void ue::deactivate()
 {
-  // Disable DL SRBs and DRBs.
+  // Disable SRBs and DRBs.
   // Note: We assume that when this function is called any pending RRC container (e.g. containing RRC Release) has
   // already been Tx+ACKed or an upper layer timeout has triggered.
-  dl_lc_ch_mgr.deactivate();
-
-  // Disable UL SRBs and DRBs.
-  ul_lc_ch_mgr.deactivate();
+  lc_ch_mgr.deactivate();
 
   // Cancel HARQ retransmissions in all UE cells.
   for (auto& cell : ue_du_cells) {
@@ -88,18 +87,22 @@ void ue::deactivate()
 
 void ue::release_resources()
 {
+  // Reset all HARQ processes in all UE cells.
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
       cell->harqs.reset();
     }
   }
+
+  // Destroy UE logical channel manager.
+  lc_ch_mgr.reset();
 }
 
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reestablished_)
 {
   // UE enters fallback mode when a Reconfiguration takes place.
   get_pcell().set_fallback_state(true, true, reestablished_);
-  dl_lc_ch_mgr.set_fallback_state(true);
+  lc_ch_mgr.set_fallback_state(true);
 
   // Update UE config.
   set_config(cmd.cfg);
@@ -108,7 +111,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd, bool reest
 void ue::handle_config_applied()
 {
   get_pcell().set_fallback_state(false, false, false);
-  dl_lc_ch_mgr.set_fallback_state(false);
+  lc_ch_mgr.set_fallback_state(false);
 }
 
 void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> msg3_slot_rx)
@@ -117,8 +120,9 @@ void ue::set_config(const ue_configuration& new_cfg, std::optional<slot_point> m
   ue_ded_cfg = &new_cfg;
 
   // Configure Logical Channels.
-  dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
-  ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+  if (lc_ch_mgr.valid()) {
+    lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
+  }
 
   // DRX config.
   if (ue_ded_cfg->drx_cfg().has_value()) {
@@ -199,7 +203,7 @@ void ue::handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point 
     }
   }
 
-  dl_lc_ch_mgr.handle_dl_buffer_status_indication(lcid, pending_bytes, hol_toa);
+  lc_ch_mgr.handle_dl_buffer_status_indication(lcid, pending_bytes, hol_toa);
 }
 
 unsigned ue::pending_ul_newtx_bytes() const
@@ -207,7 +211,7 @@ unsigned ue::pending_ul_newtx_bytes() const
   static constexpr unsigned SR_GRANT_BYTES = 512;
 
   // Sum the last BSRs.
-  unsigned pending_bytes = ul_lc_ch_mgr.pending_bytes();
+  unsigned pending_bytes = lc_ch_mgr.ul_pending_bytes();
 
   // Subtract the bytes already allocated in UL HARQs.
   for (const ue_cell* ue_cc : ue_cells) {
@@ -219,5 +223,5 @@ unsigned ue::pending_ul_newtx_bytes() const
   }
 
   // If there are no pending bytes, check if a SR is pending.
-  return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
+  return pending_bytes > 0 ? pending_bytes : (lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }

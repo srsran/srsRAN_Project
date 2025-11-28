@@ -29,7 +29,7 @@
 
 namespace srsran {
 
-/// \brief Implement baseband gateway interface for UHD.
+/// \brief Implement baseband gateway interface for ZMQ.
 ///
 /// It contains a transmit stream and a receive stream.
 class radio_zmq_baseband_gateway : public baseband_gateway
@@ -37,7 +37,7 @@ class radio_zmq_baseband_gateway : public baseband_gateway
 public:
   radio_zmq_baseband_gateway(void*                                          zmq_context,
                              task_executor&                                 async_executor_,
-                             radio_notification_handler&                    notification_handler,
+                             radio_event_notifier&                          notification_handler,
                              const radio_zmq_tx_stream::stream_description& tx_stream_config,
                              const radio_zmq_rx_stream::stream_description& rx_stream_config) :
     tx_stream(zmq_context, tx_stream_config, async_executor_, notification_handler),

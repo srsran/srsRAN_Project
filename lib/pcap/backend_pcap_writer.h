@@ -70,6 +70,7 @@ class backend_pcap_writer
 {
   std::string           layer_name;
   std::string           filename;
+  const std::string     dissector;
   task_executor&        backend_exec;
   srslog::basic_logger& logger;
   pcap_file_writer      writer;
@@ -79,6 +80,7 @@ public:
   backend_pcap_writer(unsigned           dlt_,
                       const std::string& layer_name_,
                       const std::string& filename,
+                      const std::string& dissector_,
                       task_executor&     backend_exec_);
 
   ~backend_pcap_writer();

@@ -37,15 +37,15 @@ public:
     srsran_assert(pdxch_proc_factory, "Invalid PDxCH processor factory.");
   }
 
-  std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config) override
+  std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config,
+                                                       task_executor& modulation_executor) override
   {
-    pdxch_processor_configuration pdxch_proc_config = {.cp                  = config.cp,
-                                                       .scs                 = config.scs,
-                                                       .srate               = config.rate,
-                                                       .bandwidth_rb        = config.bandwidth_prb,
-                                                       .center_freq_Hz      = config.center_frequency_Hz,
-                                                       .nof_tx_ports        = config.nof_tx_ports,
-                                                       .modulation_executor = config.modulation_executor};
+    pdxch_processor_configuration pdxch_proc_config = {.cp             = config.cp,
+                                                       .scs            = config.scs,
+                                                       .srate          = config.rate,
+                                                       .bandwidth_rb   = config.bandwidth_prb,
+                                                       .center_freq_Hz = config.center_frequency_Hz,
+                                                       .nof_tx_ports   = config.nof_tx_ports};
 
     downlink_processor_baseband_configuration baseband_config = {.sector_id    = config.sector_id,
                                                                  .scs          = config.scs,
@@ -55,7 +55,8 @@ public:
                                                                  .nof_slot_tti_in_advance =
                                                                      config.nof_slot_tti_in_advance};
 
-    return std::make_unique<downlink_processor_impl>(pdxch_proc_factory->create(pdxch_proc_config), baseband_config);
+    return std::make_unique<downlink_processor_impl>(pdxch_proc_factory->create(pdxch_proc_config, modulation_executor),
+                                                     baseband_config);
   }
 
 private:

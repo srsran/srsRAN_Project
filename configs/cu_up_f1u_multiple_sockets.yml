@@ -10,6 +10,7 @@ cu_up:
         udp:
           max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
           pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+          reuse_addr: false   # Allows multiple sockets to bind to the same source port address.
 
       -
         # Socket used for a specific slice/5QI. This socket will be used if both the S-NSSAI
@@ -23,6 +24,7 @@ cu_up:
         udp:
           max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
           pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+          reuse_addr: false   # Allows multiple sockets to bind to the same source port address.
       - 
         # Socket used for a specific slice/5QI. This socket will be used if both the S-NSSAI
         # and the 5QI match. Slice differentiator is optional.
@@ -35,3 +37,4 @@ cu_up:
         udp:
           max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
           pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+          reuse_addr: false   # Allows multiple sockets to bind to the same source port address.

@@ -225,9 +225,9 @@ private:
   sampling_rate rate;
   /// Subcarrier spacing.
   subcarrier_spacing scs;
-  /// Number of samples per subframe;
+  /// Number of samples per subframe.
   unsigned nof_samples_per_subframe;
-  /// Number of slots per subframe;
+  /// Number of slots per subframe.
   unsigned nof_slots_per_subframe;
   /// Number of symbols per slot.
   unsigned nof_symbols_per_slot;

@@ -271,9 +271,10 @@ protected:
                                                low_papr_sequence_gen_factory,
                                                port_chan_estimator_factory,
                                                ch_est_executor,
+                                               pusch_constants::MAX_NOF_RX_PORTS,
                                                port_channel_estimator_fd_smoothing_strategy::filter,
                                                port_channel_estimator_td_interpolation_strategy::average,
-                                               true);
+                                               /*compensate_cfo=*/true);
     ASSERT_NE(dmrs_pusch_chan_estimator_factory, nullptr);
 
     // Create channel equalizer factory.

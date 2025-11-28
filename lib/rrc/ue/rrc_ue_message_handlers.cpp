@@ -27,6 +27,7 @@
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_helpers.h"
 #include "rrc_ue_impl.h"
+#include "ue/rrc_asn1_converters.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
@@ -74,7 +75,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 {
   // Notify metrics about attempted RRC connection establishment.
   metrics_notifier.on_attempted_rrc_connection_establishment(
-      static_cast<establishment_cause_t>(request_msg.rrc_setup_request.establishment_cause.value));
+      asn1_to_establishment_cause(request_msg.rrc_setup_request.establishment_cause.value));
 
   // Perform various checks to make sure we can serve the RRC Setup Request.
   if (not cu_cp_notifier.on_ue_setup_request()) {
@@ -107,7 +108,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
       on_ue_release_required(ngap_cause_radio_network_t::unspecified);
       return;
   }
-  context.connection_cause = static_cast<establishment_cause_t>(request_ies.establishment_cause.value);
+  context.connection_cause = asn1_to_establishment_cause(request_ies.establishment_cause.value);
 
   // Launch RRC setup procedure.
   cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(context,
@@ -123,6 +124,28 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
+  // Notify metrics about attempted RRC connection reestablishment.
+  metrics_notifier.on_attempted_rrc_connection_reestablishment();
+
+  // If the DU to CU container is missing, assume the DU can't serve the UE, so the CU-CP should reject the UE, see
+  // TS 38.473 section 8.4.1.2.
+  if (du_to_cu_container.empty()) {
+    // Notify the CU-CP about the reestablishment. This will return the old RRC UE context if it exists and will also
+    // cancel an possibly ongoing handover transaction for the old UE.
+    rrc_ue_reestablishment_context_response old_ue_reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
+        msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
+
+    // Release the old UE.
+    logger.log_debug("Requesting UE context release for old_ue={}", old_ue_reest_context.ue_index);
+    cu_cp_notifier.on_rrc_reestablishment_failure(
+        {.ue_index = old_ue_reest_context.ue_index, .cause = ngap_cause_radio_network_t::unspecified});
+
+    // Reject and release the new UE.
+    logger.log_debug("Sending rrcReject. Cause: DU is not able to serve the UE");
+    on_ue_release_required(ngap_cause_radio_network_t::unspecified);
+    return;
+  }
+
   // Launch RRC re-establishment procedure.
   cu_cp_ue_notifier.schedule_async_task(
       launch_async<rrc_reestablishment_procedure>(msg,

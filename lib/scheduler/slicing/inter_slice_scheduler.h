@@ -28,6 +28,8 @@
 
 namespace srsran {
 
+struct cell_resource_allocator;
+
 /// Inter-slice Scheduler.
 class inter_slice_scheduler
 {
@@ -68,8 +70,9 @@ private:
     ran_slice_sched_context(ran_slice_id_t                    id,
                             const cell_configuration&         cell_cfg,
                             const slice_rrm_policy_config&    cfg,
-                            std::unique_ptr<scheduler_policy> policy_) :
-      inst(id, cell_cfg, cfg), policy(std::move(policy_))
+                            std::unique_ptr<scheduler_policy> policy_,
+                            ue_repository&                    ues_) :
+      inst(id, cell_cfg, cfg, ues_), policy(std::move(policy_))
     {
     }
 

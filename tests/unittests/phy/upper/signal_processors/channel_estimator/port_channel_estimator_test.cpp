@@ -27,6 +27,7 @@
 /// vectors.
 
 #include "port_channel_estimator_test_data.h"
+#include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/factories.h"
 #include "srsran/phy/upper/signal_processors/channel_estimator/port_channel_estimator_parameters.h"
 #include <gtest/gtest.h>
@@ -73,10 +74,6 @@ protected:
       ASSERT_NE(ta_estimator_factory, nullptr) << "Cannot create TA estimator factory.";
 
       ch_est_factory = create_port_channel_estimator_factory_sw(std::move(ta_estimator_factory));
-      // The concurrent version of the port channel estimator is just a collection of channel estimators which are
-      // called according to their availability. Using the concurrent estimator in the test ensures that
-      // port_channel_estimator can be called from the pool, without broadening too much the scope of the test.
-      ch_est_factory = create_port_channel_estimator_pool_factory(std::move(ch_est_factory), 2);
       ASSERT_NE(ch_est_factory, nullptr);
     }
   }
@@ -166,7 +163,7 @@ TEST_P(ChannelEstFixture, test)
 
   channel_estimate::channel_estimate_dimensions dims;
   dims.nof_prb       = test_params.grid_size_prbs;
-  dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
+  dims.nof_symbols   = test_params.cfg.first_symbol + test_params.cfg.nof_symbols;
   dims.nof_rx_ports  = 1;
   dims.nof_tx_layers = nof_layers;
   channel_estimate estimates(dims);
@@ -184,27 +181,41 @@ TEST_P(ChannelEstFixture, test)
 
   resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(grid_entries);
-  ch_estimator->compute(estimates, grid, 0, pilots_arranged, cfg);
+  const port_channel_estimator_results& ch_est_results = ch_estimator->compute(grid, 0, pilots_arranged, cfg);
+
+  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+    for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
+         i_symbol != last_symbol;
+         ++i_symbol) {
+      ch_est_results.get_symbol_ch_estimate(estimates.get_symbol_ch_estimate(i_symbol, 0, i_layer), i_symbol, i_layer);
+    }
+  }
+
+  ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
+
+  ASSERT_NEAR(ch_est_results.get_epre(), test_params.epre, 5e-4);
+  ASSERT_NEAR(ch_est_results.get_noise_variance(), test_params.noise_var_est, 5e-4);
+  ASSERT_NEAR(
+      convert_power_to_dB(ch_est_results.get_snr()), test_params.snr_est, 0.002 * std::abs(test_params.snr_est));
 
   // Calculate the tolerance for the measured TA. It assumes a DFT size of 4096 and a maximum error of ±1 sample.
   double tolerance_ta_us = 1e6 * phy_time_unit::from_timing_advance(1, test_params.cfg.scs).to_seconds();
-  ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
-  ASSERT_NEAR(estimates.get_epre(0), test_params.epre, 5e-4);
-  ASSERT_NEAR(estimates.get_noise_variance(0), test_params.noise_var_est, 5e-4);
-  ASSERT_NEAR(estimates.get_snr_dB(0), test_params.snr_est, 0.002 * std::abs(test_params.snr_est));
+  ASSERT_NEAR(ch_est_results.get_time_alignment().to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
 
-  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-    ASSERT_NEAR(estimates.get_rsrp(0, i_layer), test_params.rsrp, 5e-4);
-    ASSERT_NEAR(estimates.get_time_alignment(0, i_layer).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
-    if (test_params.cfo_est_Hz.has_value()) {
-      ASSERT_TRUE(estimates.get_cfo_Hz(0, i_layer).has_value()) << "CFO estimation was expected, none obtained.";
-      ASSERT_NEAR(estimates.get_cfo_Hz(0, i_layer).value(),
-                  test_params.cfo_est_Hz.value(),
-                  0.001 * std::abs(test_params.cfo_est_Hz.value()));
-    } else {
-      ASSERT_FALSE(estimates.get_cfo_Hz(0, i_layer).has_value()) << "No CFO estimation was expected.";
-    }
+  std::optional<float> cfo = ch_est_results.get_cfo_Hz();
+  if (test_params.cfo_est_Hz.has_value()) {
+    ASSERT_TRUE(cfo.has_value()) << "CFO estimation was expected, none obtained.";
+    ASSERT_NEAR(*cfo, *test_params.cfo_est_Hz, 0.001 * std::abs(*test_params.cfo_est_Hz));
+  } else {
+    ASSERT_FALSE(cfo.has_value()) << "No CFO estimation was expected.";
   }
+
+  float rsrp_avg = 0;
+  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+    rsrp_avg += ch_est_results.get_rsrp(i_layer);
+  }
+  rsrp_avg /= nof_layers;
+  ASSERT_NEAR(rsrp_avg, test_params.rsrp, 5e-4);
 }
 
 INSTANTIATE_TEST_SUITE_P(ChannelEstSuite, ChannelEstFixture, ::testing::ValuesIn(port_channel_estimator_test_data));

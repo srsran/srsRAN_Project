@@ -23,7 +23,8 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "ue.h"
+#include "../ue_context/logical_channel_system.h"
+#include "../ue_context/ue.h"
 #include "srsran/adt/flat_map.h"
 #include "srsran/adt/ring_buffer.h"
 
@@ -116,13 +117,15 @@ public:
   const ue* find_by_rnti(rnti_t rnti) const;
 
   /// \brief Add new UE in the UE repository.
-  void add_ue(std::unique_ptr<ue> u);
+  void add_ue(std::unique_ptr<ue> u, logical_channel_config_list_ptr lc_cfgs);
 
   /// \brief Reconfigure existing UE.
   void reconfigure_ue(const ue_reconf_command& cmd, bool reestablished_);
 
   /// \brief Initiate removal of existing UE from the repository.
   void schedule_ue_rem(ue_config_delete_event ev);
+
+  bounded_bitset<MAX_NOF_DU_UES> get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const;
 
   ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
   const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
@@ -148,6 +151,9 @@ private:
   void rem_ue(const ue& u);
 
   srslog::basic_logger& logger;
+
+  /// Management of all UE logical channels.
+  logical_channel_system lc_ch_sys;
 
   // Repository of UEs.
   ue_list ues;

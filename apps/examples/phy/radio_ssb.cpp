@@ -456,17 +456,18 @@ static radio_configuration::radio create_radio_configuration()
   return radio_config;
 }
 
-static lower_phy_configuration create_lower_phy_configuration(task_executor*                rx_task_executor,
-                                                              task_executor*                tx_task_executor,
-                                                              task_executor*                ul_task_executor,
-                                                              task_executor*                dl_task_executor,
-                                                              task_executor*                prach_task_executor,
-                                                              lower_phy_error_notifier*     error_notifier,
-                                                              lower_phy_metrics_notifier*   metrics_notifier,
-                                                              lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                              lower_phy_timing_notifier*    timing_notifier,
-                                                              baseband_gateway&             bb_gateway,
-                                                              srslog::basic_logger*         logger)
+static std::pair<lower_phy_configuration, lower_phy_dependencies>
+create_lower_phy_configuration(task_executor*                rx_task_executor,
+                               task_executor*                tx_task_executor,
+                               task_executor*                ul_task_executor,
+                               task_executor*                dl_task_executor,
+                               task_executor*                prach_task_executor,
+                               lower_phy_error_notifier*     error_notifier,
+                               lower_phy_metrics_notifier*   metrics_notifier,
+                               lower_phy_rx_symbol_notifier* rx_symbol_notifier,
+                               lower_phy_timing_notifier*    timing_notifier,
+                               baseband_gateway&             bb_gateway,
+                               srslog::basic_logger*         logger)
 {
   lower_phy_configuration phy_config;
   phy_config.srate                             = srate;
@@ -483,16 +484,6 @@ static lower_phy_configuration create_lower_phy_configuration(task_executor*    
   phy_config.nof_tx_ports                      = nof_ports;
   phy_config.nof_rx_ports                      = nof_ports;
   phy_config.dft_window_offset                 = 0.5F;
-  phy_config.bb_gateway                        = &bb_gateway;
-  phy_config.rx_symbol_notifier                = rx_symbol_notifier;
-  phy_config.timing_notifier                   = timing_notifier;
-  phy_config.error_notifier                    = error_notifier;
-  phy_config.metric_notifier                   = metrics_notifier;
-  phy_config.rx_task_executor                  = rx_task_executor;
-  phy_config.tx_task_executor                  = tx_task_executor;
-  phy_config.ul_task_executor                  = ul_task_executor;
-  phy_config.dl_task_executor                  = dl_task_executor;
-  phy_config.prach_async_executor              = prach_task_executor;
   phy_config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
 
   // Amplitude controller configuration.
@@ -504,10 +495,20 @@ static lower_phy_configuration create_lower_phy_configuration(task_executor*    
   // back-off to account for signal PAPR.
   phy_config.amplitude_config.input_gain_dB = -convert_power_to_dB(bw_rb * NRE) - baseband_backoff_dB;
 
-  // Logger for amplitude control metrics.
-  phy_config.logger = logger;
+  lower_phy_dependencies deps = {// Logger for amplitude control metrics.
+                                 .logger               = *logger,
+                                 .bb_gateway           = bb_gateway,
+                                 .rx_symbol_notifier   = *rx_symbol_notifier,
+                                 .timing_notifier      = *timing_notifier,
+                                 .error_notifier       = *error_notifier,
+                                 .metric_notifier      = *metrics_notifier,
+                                 .rx_task_executor     = *rx_task_executor,
+                                 .tx_task_executor     = *tx_task_executor,
+                                 .dl_task_executor     = *dl_task_executor,
+                                 .ul_task_executor     = *ul_task_executor,
+                                 .prach_async_executor = *prach_task_executor};
 
-  return phy_config;
+  return std::make_pair(phy_config, deps);
 }
 
 int main(int argc, char** argv)
@@ -543,13 +544,13 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor>                                prach_task_executor;
   if (thread_profile_name == "single") {
     workers.emplace("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports));
-    workers.emplace("low_phy", std::make_unique<task_worker>("low_phy", default_queue_size));
+    workers.emplace("lower_phy", std::make_unique<task_worker>("lower_phy", default_queue_size));
 
     async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
-    tx_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
-    ul_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
-    dl_task_executor    = make_task_executor_ptr(*workers["low_phy"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["lower_phy"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["lower_phy"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["lower_phy"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["lower_phy"]);
   } else if (thread_profile_name == "dual") {
     os_thread_realtime_priority low_dl_priority = os_thread_realtime_priority::max();
     os_thread_realtime_priority low_ul_priority = os_thread_realtime_priority::max() - 1;
@@ -559,16 +560,18 @@ int main(int argc, char** argv)
     low_dl_affinity.set(1);
 
     workers.emplace("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports));
-    workers.emplace("low_phy_ul",
-                    std::make_unique<task_worker>("low_phy_ul", default_queue_size, low_ul_priority, low_ul_affinity));
-    workers.emplace("low_phy_dl",
-                    std::make_unique<task_worker>("low_phy_dl", default_queue_size, low_dl_priority, low_dl_affinity));
+    workers.emplace(
+        "lower_phy_ul",
+        std::make_unique<task_worker>("lower_phy_ul", default_queue_size, low_ul_priority, low_ul_affinity));
+    workers.emplace(
+        "lower_phy_dl",
+        std::make_unique<task_worker>("lower_phy_dl", default_queue_size, low_dl_priority, low_dl_affinity));
 
     async_task_executor = make_task_executor_ptr(*workers["async_thread"]);
-    rx_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
-    tx_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
-    ul_task_executor    = make_task_executor_ptr(*workers["low_phy_ul"]);
-    dl_task_executor    = make_task_executor_ptr(*workers["low_phy_dl"]);
+    rx_task_executor    = make_task_executor_ptr(*workers["lower_phy_ul"]);
+    tx_task_executor    = make_task_executor_ptr(*workers["lower_phy_dl"]);
+    ul_task_executor    = make_task_executor_ptr(*workers["lower_phy_ul"]);
+    dl_task_executor    = make_task_executor_ptr(*workers["lower_phy_dl"]);
   } else if (thread_profile_name == "quad") {
     os_thread_realtime_priority low_rx_priority = os_thread_realtime_priority::max() - 2;
     os_thread_realtime_priority low_tx_priority = os_thread_realtime_priority::max();
@@ -599,8 +602,8 @@ int main(int argc, char** argv)
   } else {
     report_error("Invalid thread profile '{}'.\n", thread_profile_name);
   }
-  workers.emplace("low_phy_prach", std::make_unique<task_worker>("low_phy_prach", 4));
-  prach_task_executor = make_task_executor_ptr(*workers["low_phy_prach"]);
+  workers.emplace("lower_phy_prach", std::make_unique<task_worker>("lower_phy_prach", 4));
+  prach_task_executor = make_task_executor_ptr(*workers["lower_phy_prach"]);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
@@ -635,18 +638,18 @@ int main(int argc, char** argv)
   std::unique_ptr<lower_phy> lower_phy_instance = nullptr;
   {
     // Prepare lower physical layer configuration.
-    lower_phy_configuration phy_config = create_lower_phy_configuration(rx_task_executor.get(),
-                                                                        tx_task_executor.get(),
-                                                                        ul_task_executor.get(),
-                                                                        dl_task_executor.get(),
-                                                                        prach_task_executor.get(),
-                                                                        &error_adapter,
-                                                                        &metrics_adapter,
-                                                                        &rx_symbol_adapter,
-                                                                        &timing_adapter,
-                                                                        radio->get_baseband_gateway(0),
-                                                                        &logger);
-    lower_phy_instance                 = create_lower_phy(phy_config);
+    auto phy_config    = create_lower_phy_configuration(rx_task_executor.get(),
+                                                     tx_task_executor.get(),
+                                                     ul_task_executor.get(),
+                                                     dl_task_executor.get(),
+                                                     prach_task_executor.get(),
+                                                     &error_adapter,
+                                                     &metrics_adapter,
+                                                     &rx_symbol_adapter,
+                                                     &timing_adapter,
+                                                     radio->get_baseband_gateway(0),
+                                                     &logger);
+    lower_phy_instance = create_lower_phy(phy_config.first, phy_config.second);
     srsran_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }
 
@@ -709,8 +712,8 @@ int main(int argc, char** argv)
   // Connect adapters.
   rx_symbol_adapter.connect(&rx_symbol_handler);
   timing_adapter.connect(upper_phy.get());
-  rg_gateway_adapter.connect(&lower_phy_instance->get_rg_handler());
-  phy_rx_symbol_req_adapter.connect(&lower_phy_instance->get_request_handler());
+  rg_gateway_adapter.connect(&lower_phy_instance->get_downlink_handler());
+  phy_rx_symbol_req_adapter.connect(&lower_phy_instance->get_uplink_request_handler());
 
   // Calculate starting time.
   double                     delay_s      = 0.1;

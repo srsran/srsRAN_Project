@@ -32,6 +32,8 @@
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ngap/ngap_message.h"
+#include "srsran/ran/gnb_cu_up_id.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -249,6 +251,22 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool timeout_rrc_setup_and_await_f1ap_ue_context_release_command()
+  {
+    // Fail RRC Setup (UE doesn't respond) and wait for F1AP UE Context Release Command.
+    if (tick_until(
+            rrc_test_timer_values.t300 + this->get_cu_cp_cfg().rrc.rrc_procedure_guard_time_ms,
+            [&]() { return false; },
+            false)) {
+      return false;
+    }
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive UE Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "Invalid UE Context Release Command");
+    return true;
+  }
+
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
@@ -263,6 +281,35 @@ public:
   f1ap_message f1ap_pdu;
   e1ap_message e1ap_pdu;
 };
+
+TEST_F(cu_cp_ue_context_release_test, when_ue_rrc_setup_fails_then_ue_is_released)
+{
+  // Inject Initial UL RRC Message Transfer containing RRC Setup Request.
+  srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
+  srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
+
+  // Inject Initial UL RRC message
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
+  get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
+
+  // Wait for DL RRC message transfer (containing RRC Setup)
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu));
+
+  gnb_cu_ue_f1ap_id_t cu_ue_id =
+      int_to_gnb_cu_ue_f1ap_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id);
+
+  // Fail RRC Setup (UE doesn't respond) and await F1AP UE Context Release Command.
+  ASSERT_TRUE(timeout_rrc_setup_and_await_f1ap_ue_context_release_command());
+
+  // Inject F1AP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(cu_ue_id, du_ue_id));
+
+  // STATUS: UE should be removed at this stage.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+}
 
 TEST_F(cu_cp_ue_context_release_test,
        when_ue_context_release_command_but_no_pdu_session_setup_received_then_release_succeeds)

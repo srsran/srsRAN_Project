@@ -22,10 +22,15 @@
 
 #pragma once
 
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/prach/prach_constants.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/conversion.h"
-#include "srsran/support/error_handling.h"
 #include "srsran/support/executors/task_worker.h"
 #include <fstream>
 
@@ -113,7 +118,15 @@ public:
 
     // Queue write request.
     if (print_prach && !worker.push_task([this, context, &buffer]() {
-          unsigned nof_replicas = buffer.get_max_nof_symbols();
+          // Retrieve preamble information.
+          prach_preamble_information prach_info;
+          if (is_long_preamble(context.format)) {
+            prach_info = get_prach_preamble_long_info(context.format);
+          } else {
+            prach_info = get_prach_preamble_short_info(
+                context.format, to_ra_subcarrier_spacing(context.pusch_scs), /*last_occasion=*/false);
+          }
+          unsigned nof_replicas = prach_info.nof_symbols;
           unsigned prach_start  = 0;
           unsigned prach_stop   = buffer.get_max_nof_ports();
           for (unsigned i_port = prach_start; i_port != prach_stop; ++i_port) {

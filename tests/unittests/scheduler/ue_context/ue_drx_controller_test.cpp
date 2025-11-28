@@ -22,9 +22,8 @@
 
 #include "../test_utils/sched_random_utils.h"
 #include "lib/scheduler/config/logical_channel_config_pool.h"
+#include "lib/scheduler/ue_context/logical_channel_system.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
-#include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -36,7 +35,7 @@ class base_ue_drx_controller_test
 {
 protected:
   base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) :
-    drx_cfg(drx_cfg_), ul_lc_ch_mng(scs, cfg_pool.create({}))
+    drx_cfg(drx_cfg_), ue_lc_chs(lc_ch_sys.create_ue(to_du_ue_index(0), scs, false, cfg_pool.create({})))
   {
   }
 
@@ -51,10 +50,11 @@ protected:
   const std::chrono::milliseconds conres_timer = msec{64};
   std::optional<drx_config>       drx_cfg;
   logical_channel_config_pool     cfg_pool;
-  ul_logical_channel_manager      ul_lc_ch_mng;
+  logical_channel_system          lc_ch_sys;
+  ue_logical_channel_repository   ue_lc_chs;
   slot_point                      ul_ccch_slot{to_numerology_value(scs), 0};
   srslog::basic_logger&           logger = srslog::fetch_basic_logger("SCHED");
-  ue_drx_controller               drx{scs, conres_timer, drx_cfg, ul_lc_ch_mng, ul_ccch_slot, logger};
+  ue_drx_controller               drx{scs, conres_timer, drx_cfg, ue_lc_chs, ul_ccch_slot, logger};
 
   const unsigned period_slots = drx_cfg.has_value() ? drx_cfg->long_cycle.count() * get_nof_slots_per_subframe(scs) : 0;
   const unsigned offset_slot =
@@ -134,7 +134,7 @@ TEST_F(ue_drx_controller_test, when_pdcch_sent_then_on_duration_extended_by_inac
 
 TEST_F(ue_drx_controller_test, when_sr_is_pending_then_drx_is_in_active_time)
 {
-  ul_lc_ch_mng.handle_sr_indication();
+  ue_lc_chs.handle_sr_indication();
 
   for (unsigned i = 0; i != period_slots; ++i) {
     tick();
@@ -142,7 +142,7 @@ TEST_F(ue_drx_controller_test, when_sr_is_pending_then_drx_is_in_active_time)
     ASSERT_TRUE(drx.is_pdcch_enabled());
   }
 
-  ul_lc_ch_mng.reset_sr_indication();
+  ue_lc_chs.reset_sr_indication();
 
   for (unsigned i = 0; i != period_slots; ++i) {
     tick();

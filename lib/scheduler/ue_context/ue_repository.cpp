@@ -148,6 +148,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
   }
 
   // Update state of existing UEs.
+  lc_ch_sys.slot_indication();
   for (auto& u : ues) {
     u->slot_indication(sl_tx);
   }
@@ -165,12 +166,14 @@ void ue_repository::rem_cell(du_cell_index_t cell_index)
   cell_ues.erase(cell_index);
 }
 
-void ue_repository::add_ue(std::unique_ptr<ue> u)
+void ue_repository::add_ue(std::unique_ptr<ue> u, logical_channel_config_list_ptr lc_cfgs)
 {
   // Add UE in repository.
-  const du_ue_index_t ue_index = u->ue_index;
-  const rnti_t        rnti     = u->crnti;
-  bool                ret      = ues.insert(ue_index, std::move(u));
+  const du_ue_index_t      ue_index = u->ue_index;
+  const rnti_t             rnti     = u->crnti;
+  const subcarrier_spacing scs      = u->get_pcell().active_bwp().dl_common->value().generic_params.scs;
+  u->setup(lc_ch_sys.create_ue(ue_index, scs, u->get_pcell().is_in_fallback_mode(), lc_cfgs));
+  bool ret = ues.insert(ue_index, std::move(u));
   srsran_assert(ret, "UE with duplicate index being added to the repository");
 
   // Update RNTI -> UE index lookup.
@@ -228,6 +231,14 @@ void ue_repository::schedule_ue_rem(ue_config_delete_event ev)
   }
 }
 
+bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_ues_with_pending_newtx_data(ran_slice_id_t slice_id, bool is_dl) const
+{
+  if (is_dl) {
+    return lc_ch_sys.get_ues_with_dl_pending_data(slice_id);
+  }
+  return lc_ch_sys.get_ues_with_ul_pending_data(slice_id);
+}
+
 ue* ue_repository::find_by_rnti(rnti_t rnti)
 {
   auto it = rnti_to_ue_index_lookup.find(rnti);
@@ -268,10 +279,12 @@ void ue_repository::rem_ue(const ue& u)
                  crnti);
   }
 
-  // Take the UE from the repository and schedule its destruction outside the critical section.
+  // Take the UE from the repository and release its resources.
   auto ue_ptr = std::move(ues[ue_idx]);
   ues.erase(ue_idx);
   ue_ptr->release_resources();
+
+  // schedule UE object destruction outside the real-time thread.
   if (not ues_to_destroy.try_push(std::move(ue_ptr))) {
     logger.warning("Failed to offload UE destruction. Performance may be affected");
   }

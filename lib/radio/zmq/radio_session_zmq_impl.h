@@ -34,7 +34,6 @@ namespace srsran {
 /// Describes a ZeroMQ radio based session.
 class radio_session_zmq_impl : public radio_session, public radio_management_plane
 {
-private:
   /// Default sockets send and receive timeout in milliseconds.
   static constexpr unsigned DEFAULT_TRX_TIMEOUT_MS = 10;
   /// Default linger timeout in milliseconds.
@@ -59,7 +58,7 @@ public:
   /// \note Use is_successful() to check that the instance was successfully initialized.
   radio_session_zmq_impl(const radio_configuration::radio& config,
                          task_executor&                    async_task_executor,
-                         radio_notification_handler&       notification_handler);
+                         radio_event_notifier&             notification_handler);
 
   /// Default destructor.
   ~radio_session_zmq_impl() override;

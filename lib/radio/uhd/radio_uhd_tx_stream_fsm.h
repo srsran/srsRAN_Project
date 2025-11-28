@@ -41,7 +41,6 @@ namespace srsran {
 /// Radio UHD transmit stream finite state machine.
 class radio_uhd_tx_stream_fsm
 {
-private:
   /// Wait for end-of-burst acknowledgement timeout in seconds.
   static constexpr double WAIT_EOB_ACK_TIMEOUT_S = 0.01;
 
@@ -56,28 +55,20 @@ private:
     /// Indicates an end-of-burst must be transmitted and abort any transmission.
     END_OF_BURST,
     /// Indicates wait for end-of-burst acknowledgement.
-    WAIT_END_OF_BURST,
-    /// Signals a stop to the asynchronous thread.
-    WAIT_STOP,
-    /// Indicates the asynchronous thread is notify_stop.
-    STOPPED
+    WAIT_END_OF_BURST
   };
 
   /// Indicates the current state.
   states state;
-
   /// Protects the class concurrent access.
   mutable std::mutex mutex;
-  /// Condition variable to wait for certain states.
-  std::condition_variable cvar;
-
-  uhd::time_spec_t wait_eob_timeout = uhd::time_spec_t();
+  uhd::time_spec_t   wait_eob_timeout = uhd::time_spec_t();
 
 public:
   /// \brief Notifies that the transmit stream has been initialized successfully.
   void init_successful()
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::scoped_lock lock(mutex);
     state = states::START_BURST;
   }
 
@@ -86,7 +77,7 @@ public:
   /// \param[in] time_spec Indicates the time the underflow event occurred.
   void async_event_late_underflow(const uhd::time_spec_t& time_spec)
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::scoped_lock lock(mutex);
     if (state == states::IN_BURST) {
       state            = states::END_OF_BURST;
       wait_eob_timeout = time_spec;
@@ -98,7 +89,7 @@ public:
   /// \remark Transitions state to start burst if it is waiting for the end-of-burst.
   void async_event_end_of_burst_ack()
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::scoped_lock lock(mutex);
     if (state == states::WAIT_END_OF_BURST) {
       state = states::START_BURST;
     }
@@ -110,9 +101,9 @@ public:
   /// \param[in]  is_empty     Empty buffer flag.
   /// \param[in]  tail_padding Tail padding flag, indicating the last transmission in the burst.
   /// \return True if the block shall be transmitted. False if the block shall be ignored.
-  bool on_transmit(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec, bool is_empty, bool tail_padding)
+  bool on_transmit(uhd::tx_metadata_t& metadata, const uhd::time_spec_t& time_spec, bool is_empty, bool tail_padding)
   {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::scoped_lock lock(mutex);
     switch (state) {
       case states::WAIT_END_OF_BURST:
         // Do nothing if the wait for end-of-burst timeout has not expired.
@@ -156,8 +147,6 @@ public:
         }
         break;
       case states::UNINITIALIZED:
-      case states::WAIT_STOP:
-      case states::STOPPED:
         // Ignore transmission.
         return false;
     }
@@ -166,36 +155,8 @@ public:
     return true;
   }
 
-  void stop(uhd::tx_metadata_t& metadata)
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (state == states::IN_BURST) {
-      metadata.end_of_burst = true;
-    }
-    state = states::WAIT_STOP;
-  }
-
-  bool is_stopping() const
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    return state == states::WAIT_STOP;
-  }
-
-  void wait_stop()
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    while (state != states::STOPPED) {
-      cvar.wait(lock);
-    }
-  }
-
-  /// Notifies the asynchronous task has notify_stop.
-  void async_task_stopped()
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    state = states::STOPPED;
-    cvar.notify_all();
-  }
+  /// Returns true if an end of burst is required on the event of stopping the UHD radio.
+  bool on_stop() const { return (state == states::IN_BURST); }
 };
 
 } // namespace srsran

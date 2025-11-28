@@ -25,7 +25,8 @@
 
 using namespace srsran;
 
-std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config)
+std::unique_ptr<lower_phy> srsran::create_lower_phy(const lower_phy_configuration& config,
+                                                    const lower_phy_dependencies&  deps)
 {
   // Deduce frequency range from the subcarrier spacing.
   frequency_range fr = frequency_range::FR1;
@@ -68,12 +69,11 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
 
   // Create PRACH processor factory.
   std::shared_ptr<prach_processor_factory> prach_proc_factory = create_prach_processor_factory_sw(
-      prach_demodulator_factory, *config.prach_async_executor, config.srate, config.nof_rx_ports, 1);
+      prach_demodulator_factory, deps.prach_async_executor, config.srate, config.nof_rx_ports, 1);
   report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
 
   // Create PUxCH processor factory.
-  std::shared_ptr<puxch_processor_factory> puxch_proc_factory =
-      create_puxch_processor_factory_sw(10, demodulator_factory);
+  std::shared_ptr<puxch_processor_factory> puxch_proc_factory = create_puxch_processor_factory_sw(demodulator_factory);
   report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
 
   // Create Downlink processor factory.
@@ -91,5 +91,5 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
       create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
   report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
-  return lphy_factory->create(config);
+  return lphy_factory->create(config, deps);
 }

@@ -46,7 +46,6 @@ public:
   struct configuration {
     cyclic_prefix cp;
     unsigned      nof_rx_ports;
-    unsigned      request_queue_size;
     unsigned      dft_size;
   };
 

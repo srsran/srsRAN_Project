@@ -96,3 +96,7 @@ add_test(batched_dispatch_queue_test batched_dispatch_queue_test)
 add_executable(flat_map_test flat_map_test.cpp)
 target_link_libraries(flat_map_test srslog srsran_support gtest gtest_main)
 add_test(flat_map_test flat_map_test)
+
+add_executable(soa_table_test soa_table_test.cpp)
+target_link_libraries(soa_table_test srslog srsran_support gtest gtest_main)
+add_test(soa_table_test soa_table_test)

@@ -21,16 +21,16 @@
  */
 
 #include "ue_drx_controller.h"
-#include "ul_logical_channel_manager.h"
+#include "../ue_context/logical_channel_system.h"
 
 using namespace srsran;
 
-ue_drx_controller::ue_drx_controller(subcarrier_spacing                scs_common_,
-                                     std::chrono::milliseconds         conres_timer_,
-                                     const std::optional<drx_config>&  drx_cfg_,
-                                     const ul_logical_channel_manager& ul_lc_mng_,
-                                     std::optional<slot_point>         ul_ccch_slot_rx_,
-                                     srslog::basic_logger&             logger_) :
+ue_drx_controller::ue_drx_controller(subcarrier_spacing                   scs_common_,
+                                     std::chrono::milliseconds            conres_timer_,
+                                     const std::optional<drx_config>&     drx_cfg_,
+                                     const ue_logical_channel_repository& ul_lc_mng_,
+                                     std::optional<slot_point>            ul_ccch_slot_rx_,
+                                     srslog::basic_logger&                logger_) :
   scs_common(scs_common_),
   conres_timer(conres_timer_),
   ul_lc_mng(ul_lc_mng_),

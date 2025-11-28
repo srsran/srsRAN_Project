@@ -45,18 +45,17 @@ public:
   template <typename S, typename... Args>
   void on_error(const S& format_str, Args&&... args)
   {
-    fmt::memory_buffer str_buf;
-    fmt::format_to(std::back_inserter(str_buf), format_str, std::forward<Args>(args)...);
-    error_message = to_string(str_buf);
+    error_message = fmt::format(format_str, std::forward<Args>(args)...);
   }
 
   template <typename F>
   bool safe_execution(F task)
   {
+    static_assert(std::is_convertible<F, std::function<void()>>::value, "The function signature must be void()");
+
     // Clears the error message.
     error_message.clear();
 
-    static_assert(std::is_convertible<F, std::function<void()>>::value, "The function signature must be void()");
     // Try to execute task and catch exception.
     try {
       task();

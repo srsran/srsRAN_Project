@@ -655,11 +655,13 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
-  // NOTE: for 5MHz BW, the default PUCCH config will be overwritten to force it to pass this check; skip this check
-  // here.
-  const bool def_cfg_for_5_mhz_bw =
-      config.channel_bw_mhz < bs_channel_bandwidth::MHz10 and pucch_cfg == du_high_unit_pucch_config{};
-  if (not def_cfg_for_5_mhz_bw) {
+  // NOTE: for 5MHz BW or for TDD and 10MHz BW, the default PUCCH config will be overwritten to force it to pass this
+  // check; skip this check here.
+  const bool def_cfg_for_narrow_bw =
+      (config.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
+       (config.tdd_ul_dl_cfg.has_value() and config.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
+      pucch_cfg == du_high_unit_pucch_config{};
+  if (not def_cfg_for_narrow_bw) {
     constexpr float max_allowed_prbs_usage = 0.5F;
     if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
       fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
@@ -1066,6 +1068,9 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
       if (sib_it < r17_min_sib_type and si_msg.si_window_position.has_value()) {
         fmt::print("The SIB{} cannot be configured with SI-window position.\n", sib_it);
         return false;
+      } else if (sib_it >= r17_min_sib_type and !si_msg.si_window_position.has_value()) {
+        fmt::print("The SIB{} must be configured with SI-window position.\n", sib_it);
+        return false;
       }
       sibs_included.push_back(sib_it);
     }
@@ -1091,12 +1096,12 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 
   // Check whether SI window position when provided in SI scheduling information is in ascending order. See TS 38.331,
   // \c si-WindowPosition.
-  for (unsigned i = 0, j = 0; i < si_window_positions.size() && j < si_window_positions.size(); ++i, ++j) {
-    if (si_window_positions[i] > si_window_positions[j]) {
+  for (unsigned i = 0; i + 1 < si_window_positions.size(); ++i) {
+    if (si_window_positions[i] > si_window_positions[i + 1]) {
       fmt::print("The SI window position in the subsequent entry in SI scheduling information must have higher value "
                  "than in the previous entry ({}>{})",
                  si_window_positions[i],
-                 si_window_positions[j]);
+                 si_window_positions[i + 1]);
       return false;
     }
   }

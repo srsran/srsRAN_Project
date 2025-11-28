@@ -32,7 +32,7 @@ constexpr unsigned MIN_MAC_SDU_SUBHEADER_SIZE        = 2;
 constexpr unsigned MAX_MAC_SDU_SUBHEADER_SIZE        = 3;
 
 /// \brief Derive MAC SDU subheader size in bytes as per TS38.321, Section 6.1.
-inline unsigned get_mac_sdu_subheader_size(unsigned payload)
+constexpr unsigned get_mac_sdu_subheader_size(unsigned payload)
 {
   return payload == 0                                ? 0
          : payload >= MAC_SDU_SUBHEADER_LENGTH_THRES ? MAX_MAC_SDU_SUBHEADER_SIZE
@@ -40,13 +40,13 @@ inline unsigned get_mac_sdu_subheader_size(unsigned payload)
 }
 
 /// \brief Derive MAC SDU total size in bytes (includes subheader).
-inline unsigned get_mac_sdu_required_bytes(unsigned payload)
+constexpr unsigned get_mac_sdu_required_bytes(unsigned payload)
 {
   return payload + get_mac_sdu_subheader_size(payload);
 }
 
 /// \brief Derive MAC SDU payload size in bytes (without subheader) from the MAC SDU+subheader size.
-inline unsigned get_mac_sdu_payload_size(unsigned mac_sdu_size)
+constexpr unsigned get_mac_sdu_payload_size(unsigned mac_sdu_size)
 {
   // Note: len(sdu)+len(subheader)==258 is impossible. If mac_sdu_size==258, we err on the side of lower payload and
   // return 255.

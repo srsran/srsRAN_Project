@@ -197,54 +197,46 @@ bool is_unlicensed_band(nr_band band);
 /// \return    the FR indicator, i.e., FR1 or FR2.
 frequency_range get_freq_range(nr_band band);
 
-/// @brief Compute the absolute pointA for a NR carrier from its bandwidth and the center frequency.
+/// \brief Calculate the absolute frequency of <em>Point A</em>, which is defined in TS 38.211 Section 4.4.4.4.2.
 ///
-/// \remark The concept of <em>Center frequency<\em> is defined for LTE, while there is explicit mention to it for NR
+/// This function is intended for deriving the parameter <em>Point A<\em> from a reference frequency \f$F_{REF}\f$
+/// defined in TS 38.104, Section 5.4.2.1. It uses the parameters contained in the Information Element \e
+/// SCS-SpecificCarrier in TS 38.331 Section 6.3.2, namely the \e subcarrierSpacing and \e offsetToCarrier.
 ///
-/// @param nof_prb Carrier bandwidth in number of RB.
-/// @param center_freq double Frequency in Hz.
-/// @return Absolute Point A frequency in Hz.
-double get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq);
+/// \param[in] f_ref             <em>RF reference frequency</em> \f$F_{REF}\f$, in hertz,
+///                              as defined in TS 38.104, Section 5.4.2.1.
+/// \param[in] nof_prb           Transmission bandwidth configuration \f$N_{RB}\f$, in number of resource blocks,
+///                              as specified in TS 38.104 Tables 5.3.2-1 and 5.3.2-2.
+/// \param[in] scs               Subcarrier spacing of the carrier. Corresponds to the \e subcarrierSpacing parameter
+///                              contained in the Information Element \e SCS-SpecificCarrier.
+/// \param[in] offset_to_carrier Parameter \e offsetToCarrier, in number of resource blocks, contained in the
+///                              Information Element \e SCS-SpecificCarrier. Defines offset in frequency domain between
+///                              <em>Point A<\em> and the lowest usable subcarrier on this carrier
+///                              (using the subcarrierSpacing defined for this carrier)
+/// \return The parameter \e absoluteFrequencyPointA in hertz.
+double
+get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_prb, subcarrier_spacing scs, uint32_t offset_to_carrier = 0);
 
-/// \brief Compute the absolute frequency point A (as ARFCN) given the \c F_REF (as ARFCN).
+/// \brief Calculate the NR carrier <em>RF reference frequency<\em>, as defined in TS 38.104, Section 5.4.2.1.
 ///
-/// \param[in] band nr frequency band.
-/// \param[in] nof_prb Number of PRBs.
-/// \param[in] arfcn_f_ref Given ARFCN of \c F_REF, as defined in TS 38.104, Section 5.4.2.1.
-/// \return Absolute frequency point A in ARFCN notation.
-uint32_t get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn_f_ref);
-
-/// \brief Compute the center frequency for a NR carrier from its bandwidth and the absolute pointA.
-/// The center frequency should point to the RB with index = ceil(Nrb / 2), where Nrb is the number of RBs of the cell.
+/// This function is intended for deriving \f$F_{REF}\f$, in hertz, from <em>Absolute frequency point A<\em>
+/// defined in TS 38.211, Section 4.4.4.2. It uses the parameters contained in the Information Element \e
+/// SCS-SpecificCarrier in TS 38.331 Section 6.3.2.
 ///
-/// \param[in] nof_prb Carrier bandwidth in number of RB.
-/// \param[in] freq_point_a_arfcn Absolute Frequency Point A as ARFCN.
-/// \return Frequency in Hz.
-double get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn);
-
-/// \brief Compute the Absolute frequency pointA for an NR carrier from the nof RBs, SCS and the RF reference frequency.
-///
-/// The RF reference frequency is defined in TS 38.104, Section 5.4.2.1.
-/// <em>Point A<\em> is defined in TS 38.211, Section 4.4.4.2.
-///
-/// \param[in] f_ref RF reference frequency, in Hz, as per TS 38.104, Section 5.4.2.1.
-/// \param[in] nof_prb corresponds to Transmission bandwidth configuration \f$N_{RB}\f$, as per TS 38.104,
-/// Table 5.3.2-1. Only values in Table 5.3.2-1 should be provided.
-/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-/// \return \e absoluteFrequencyPointA as per TS38.211 Section 4.4.4.2, expressed in Hz.
-double get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs);
-
-/// \brief Compute the RF reference frequency for a NR carrier from the nof RBs, SCS and the Absolute frequency pointA.
-///
-/// <em>Absolute frequency pointA<\em> is defined in TS 38.211, Section 4.4.4.2.
-/// The RF reference frequency is defined in TS 38.104, Section 5.4.2.1.
-///
-/// \param[in] abs_freq_point_a \e absoluteFrequencyPointA as per TS38.211 Section 4.4.4.2, expressed in Hz.
-/// \param[in] nof_prb corresponds to Transmission bandwidth configuration \f$N_{RB}\f$, as per TS 38.104,
-/// Table 5.3.2-1. Only values in Table 5.3.2-1 should be provided.
-/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-/// \return RF reference frequency, in Hz, as per TS 38.104, Section 5.4.2.1.
-double get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs);
+/// \param[in] abs_freq_point_a  Absolute frequency of <em>Point A</em>, expressed in hertz.
+/// \param[in] nof_prb           Transmission bandwidth configuration \f$N_{RB}\f$, in number of resource blocks,
+///                              as specified in TS 38.104 Tables 5.3.2-1 and 5.3.2-2.
+/// \param[in] scs               Subcarrier spacing of the carrier. Corresponds to the \e subcarrierSpacing parameter
+///                              contained in the Information Element \e SCS-SpecificCarrier.
+/// \param[in] offset_to_carrier Parameter \e offsetToCarrier, in number of resource blocks, contained in the
+///                              Information Element \e SCS-SpecificCarrier. Defines offset in frequency domain between
+///                              <em>Point A<\em> and the lowest usable subcarrier on this carrier
+///                              (using the subcarrierSpacing defined for this carrier)
+/// \return RF reference frequency, in hertz, as per TS 38.104, Section 5.4.2.1.
+double get_f_ref_from_abs_freq_point_a(double             abs_freq_point_a,
+                                       uint32_t           nof_prb,
+                                       subcarrier_spacing scs,
+                                       uint32_t           offset_to_carrier = 0);
 
 /// \brief Returns the values \f$N_{RB}\f$ from Table 5.3.2-1, TS 38.104.
 ///

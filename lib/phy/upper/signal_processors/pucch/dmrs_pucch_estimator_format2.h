@@ -43,7 +43,7 @@ public:
   }
 
   /// Estimates the channel of a PUCCH Format 2 transmission. See \ref dmrs_pucch_estimator for more details.
-  void estimate(channel_estimate&                                  ce_,
+  void estimate(channel_estimate&                                  estimate,
                 const resource_grid_reader&                        grid,
                 const dmrs_pucch_estimator::format2_configuration& config);
 
@@ -79,9 +79,11 @@ private:
   /// \brief Generates the PUCCH DM-RS allocation pattern.
   ///
   /// Implements the PUCCH DM-RS mapping, as described in TS38.211 Section 6.4.1.3.2.2.
-  /// \param[in] config Configuration parameters.
+  /// \param[in] config        Configuration parameters.
+  /// \param[in] nof_prb_grid  Number of resource blocks in the grid.
   /// \return The DM-RS allocation pattern.
-  static layer_dmrs_pattern generate_dmrs_pattern(const dmrs_pucch_estimator::format2_configuration& config);
+  static layer_dmrs_pattern generate_dmrs_pattern(const dmrs_pucch_estimator::format2_configuration& config,
+                                                  unsigned                                           nof_prb_grid);
 };
 
 } // namespace srsran

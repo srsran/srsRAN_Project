@@ -34,7 +34,7 @@ class radio_factory : public radio_base
 {
 public:
   /// Returns the reference to the radio configuration validator for the given factory.
-  virtual const radio_configuration::validator& get_configuration_validator() = 0;
+  virtual const radio_configuration::validator& get_configuration_validator() const = 0;
 
   /// \brief Creates a new radio session with the given configuration parameters.
   /// \param[in] config                Provides the configuration parameters.
@@ -43,7 +43,7 @@ public:
   /// \return The ownership to a radio session if the session was successfully created.
   virtual std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                                 task_executor&                    async_task_executor,
-                                                radio_notification_handler&       notifier) = 0;
+                                                radio_event_notifier&             notifier) = 0;
 };
 
 /// \brief Dynamic library radio factory creation entry point.

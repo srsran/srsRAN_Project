@@ -74,7 +74,8 @@ protected:
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
   {
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
-    ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, cell_harqs}));
+    ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_cfg, req.starts_in_fallback, cell_harqs}),
+               ue_cfg->logical_channels());
     slice_sched.add_ue(req.ue_index);
     return ue_cfg;
   }

@@ -99,6 +99,8 @@ static void fill_cu_up_log_section(YAML::Node node, const cu_up_unit_logger_conf
   node["gtpu_level"]   = srslog::basic_level_to_string(config.gtpu_level);
   node["f1u_level"]    = srslog::basic_level_to_string(config.f1u_level);
   node["cu_level"]     = srslog::basic_level_to_string(config.cu_level);
+  node["sec_level"]    = srslog::basic_level_to_string(config.sec_level);
+  node["rohc_level"]   = srslog::basic_level_to_string(config.rohc_level);
   node["hex_max_size"] = config.hex_max_size;
 }
 

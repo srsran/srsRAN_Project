@@ -133,6 +133,10 @@ void rx_window_checker::rx_window_checker_statistics::collect_metrics(received_m
       earliest_packet_in_symbols.exchange(EARLIEST_INITIAL_VALUE, std::memory_order_relaxed);
   metrics.latest_rx_msg_in_symbols = latest_packet_in_symbols.exchange(0, std::memory_order_relaxed);
 
+  // Correct the earliest metrics in case no packets were received.
+  metrics.earliest_rx_msg_in_symbols =
+      (metrics.earliest_rx_msg_in_symbols == EARLIEST_INITIAL_VALUE) ? 0 : metrics.earliest_rx_msg_in_symbols;
+
   // Update last print.
   last_late_value_printed    = current_nof_late;
   last_early_value_printed   = current_nof_early;

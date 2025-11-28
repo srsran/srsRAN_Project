@@ -1227,6 +1227,30 @@ inline bounded_bitset<N, LowestInfoBitIsMSB> fliplr(const bounded_bitset<N, Lowe
   return ret;
 }
 
+/// Iterate over bits set to 1 in the bitset, from begin() until \c predicate returns true.
+/// \return The position of the first bit for which \c predicate returns true, or -1 if no such bit exists.
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag, typename FindPred>
+int find_first(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& bitset, FindPred&& predicate)
+{
+  auto last = bitset.find_highest(0, bitset.size(), true);
+  if (last < 0) {
+    return -1;
+  }
+  size_t end = static_cast<size_t>(last) + 1;
+
+  for (size_t start = 0; start != end; ++start) {
+    auto pos = bitset.find_lowest(start, end, true);
+    if (pos < 0) {
+      break;
+    }
+    start = static_cast<size_t>(pos);
+    if (predicate(start)) {
+      return pos;
+    }
+  }
+  return -1;
+}
+
 /// \brief Divides a bitset of size "S" into "M" smaller bitsets, where each bitset has length "L=S/M". A bitwise-or
 /// operation is performed across bitsets. At the end, a slice with an offset "O" and length "K" is taken from the
 /// bitset of length "L" that resulted from the bitwise-or operation.

@@ -28,7 +28,7 @@ using namespace srs_cu_cp;
 
 ue_amf_context_release_request_routine::ue_amf_context_release_request_routine(
     const cu_cp_ue_context_release_request& request_,
-    ngap_control_message_handler&           ng_release_handler_,
+    ngap_control_message_handler*           ng_release_handler_,
     cu_cp_ue_context_release_handler&       cu_cp_ue_ctxt_release_handler_,
     srslog::basic_logger&                   logger_) :
   request(request_),
@@ -42,12 +42,17 @@ void ue_amf_context_release_request_routine::operator()(coro_context<async_task<
 {
   CORO_BEGIN(ctx);
 
-  // Notify NGAP to request a release from the AMF
-  CORO_AWAIT_VALUE(amf_ue_release_requested, ng_release_handler.handle_ue_context_release_request(request));
+  if (ng_release_handler) {
+    // Notify NGAP to request a release from the AMF.
+    CORO_AWAIT_VALUE(amf_ue_release_requested, ng_release_handler->handle_ue_context_release_request(request));
+  }
 
-  if (not amf_ue_release_requested) {
-    logger.debug("ue={}: UE does not have an NG UE context. Skipping NG UE Context Release Request", request.ue_index);
-    // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP
+  if (not ng_release_handler or not amf_ue_release_requested) {
+    logger.debug("ue={}: Skipping NG UE Context Release Request. Cause: {}",
+                 request.ue_index,
+                 ng_release_handler ? "UE does not have an NG UE context" : "NGAP for UE not found");
+
+    // If NGAP release request was not sent to AMF, release UE from DU processor, RRC and F1AP.
     CORO_AWAIT(cu_cp_ue_ctxt_release_handler.handle_ue_context_release_command({request.ue_index, request.cause}));
   }
 

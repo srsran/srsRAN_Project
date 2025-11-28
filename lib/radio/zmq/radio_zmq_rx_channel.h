@@ -25,10 +25,11 @@
 #include "radio_zmq_rx_channel_fsm.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <atomic>
 #include <set>
 #include <zmq.h>
@@ -38,19 +39,19 @@ namespace srsran {
 /// Radio receive channel over ZeroMQ socket.
 class radio_zmq_rx_channel
 {
-private:
-  /// Lists the supported socket types.
-  static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  const std::chrono::microseconds circ_buffer_try_push_sleep{1};
+  static constexpr std::chrono::microseconds circ_buffer_try_push_sleep{1};
   /// Wait time after a buffer try pop failed.
-  const std::chrono::microseconds circ_buffer_try_pop_sleep{1};
+  static constexpr std::chrono::microseconds circ_buffer_try_pop_sleep{1};
+
   /// Indicates the stream identifier. Used for notifying events.
   unsigned stream_id;
   /// Channel identifier. Used for notifying events.
   unsigned channel_id;
   /// Indicates the current state of the stream.
   radio_zmq_rx_channel_fsm state_fsm;
+  /// Stop control.
+  stop_event_source stop_control;
   /// ZMQ socket.
   void* sock = nullptr;
   /// ZMQ socket type.
@@ -62,7 +63,7 @@ private:
   /// Transmission buffer.
   std::vector<cf_t> buffer;
   /// Notification handler.
-  radio_notification_handler& notification_handler;
+  radio_event_notifier& notification_handler;
   /// Asynchronous task executor.
   task_executor& async_executor;
 
@@ -89,28 +90,27 @@ public:
     unsigned buffer_size;
   };
 
-  radio_zmq_rx_channel(void*                       zmq_context,
-                       const channel_description&  config,
-                       radio_notification_handler& notification_handler,
-                       task_executor&              async_executor_);
+  radio_zmq_rx_channel(void*                      zmq_context,
+                       const channel_description& config,
+                       radio_event_notifier&      notification_handler,
+                       task_executor&             async_executor_);
 
   ~radio_zmq_rx_channel();
 
   bool is_successful() const { return state_fsm.is_running(); }
 
+  void start();
+
+  void stop();
+
+  void receive(span<cf_t> buffer);
+
+private:
   void send_request();
 
   void receive_response();
 
   void run_async();
-
-  void receive(span<cf_t> buffer);
-
-  void start();
-
-  void stop();
-
-  void wait_stop();
 };
 
 } // namespace srsran

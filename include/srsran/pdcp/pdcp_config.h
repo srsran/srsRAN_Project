@@ -24,6 +24,7 @@
 
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
+#include "srsran/rohc/rohc_config.h"
 #include "srsran/support/timers.h"
 #include "fmt/std.h"
 #include <cstdint>
@@ -183,10 +184,11 @@ struct pdcp_custom_config {
 /// \brief Configurable parameters for PDCP that are common for both TX and RX.
 /// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config_common {
-  pdcp_rb_type            rb_type;
-  pdcp_rlc_mode           rlc_mode;
-  pdcp_sn_size            sn_size;
-  pdcp_security_direction direction;
+  pdcp_rb_type                     rb_type;
+  pdcp_rlc_mode                    rlc_mode;
+  pdcp_sn_size                     sn_size;
+  pdcp_security_direction          direction;
+  std::optional<rohc::rohc_config> header_compression;
 };
 
 struct pdcp_tx_config : pdcp_config_common {
@@ -206,10 +208,11 @@ struct pdcp_rx_config : pdcp_config_common {
 /// Parameters and valid values for them are taken from the RRC-NR PDCP-Config Information Element.
 /// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config {
-  pdcp_rb_type  rb_type;
-  pdcp_rlc_mode rlc_mode;
-  bool          integrity_protection_required;
-  bool          ciphering_required;
+  pdcp_rb_type                     rb_type;
+  pdcp_rlc_mode                    rlc_mode;
+  std::optional<rohc::rohc_config> header_compression;
+  bool                             integrity_protection_required;
+  bool                             ciphering_required;
   struct {
     pdcp_sn_size                      sn_size;
     pdcp_security_direction           direction;
@@ -231,6 +234,7 @@ struct pdcp_config {
     cfg.rlc_mode               = rlc_mode;
     cfg.sn_size                = tx.sn_size;
     cfg.direction              = tx.direction;
+    cfg.header_compression     = header_compression;
     cfg.discard_timer          = tx.discard_timer;
     cfg.status_report_required = tx.status_report_required;
     cfg.custom                 = custom.tx;
@@ -243,6 +247,7 @@ struct pdcp_config {
     cfg.rlc_mode              = rlc_mode;
     cfg.sn_size               = rx.sn_size;
     cfg.direction             = rx.direction;
+    cfg.header_compression    = header_compression;
     cfg.out_of_order_delivery = rx.out_of_order_delivery;
     cfg.t_reordering          = rx.t_reordering;
     cfg.custom                = custom.rx;
@@ -258,6 +263,7 @@ inline pdcp_config pdcp_make_default_srb_config()
   // Common TX/RX parameters.
   config.rb_type                       = pdcp_rb_type::srb;
   config.rlc_mode                      = pdcp_rlc_mode::am;
+  config.header_compression            = std::nullopt;
   config.integrity_protection_required = true;
   config.ciphering_required            = true;
 
@@ -410,13 +416,18 @@ struct formatter<srsran::pdcp_tx_config> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_tx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(),
-                     "rb_type={} rlc_mode={} sn_size={} discard_timer={} {}",
-                     cfg.rb_type,
-                     cfg.rlc_mode,
-                     cfg.sn_size,
-                     cfg.discard_timer,
-                     cfg.custom);
+    auto out = ctx.out();
+    out      = format_to(out,
+                    "rb_type={} rlc_mode={} sn_size={} discard_timer={}",
+                    cfg.rb_type,
+                    cfg.rlc_mode,
+                    cfg.sn_size,
+                    cfg.discard_timer);
+    if (cfg.header_compression.has_value()) {
+      out = format_to(out, " {}", *cfg.header_compression);
+    }
+    out = format_to(out, " {}", cfg.custom);
+    return out;
   }
 };
 
@@ -431,13 +442,18 @@ struct formatter<srsran::pdcp_rx_config> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_rx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(),
-                     "rb_type={} rlc_mode={} sn_size={} t_reordering={} {}",
-                     cfg.rb_type,
-                     cfg.rlc_mode,
-                     cfg.sn_size,
-                     cfg.t_reordering,
-                     cfg.custom);
+    auto out = ctx.out();
+    out      = format_to(ctx.out(),
+                    "rb_type={} rlc_mode={} sn_size={} t_reordering={}",
+                    cfg.rb_type,
+                    cfg.rlc_mode,
+                    cfg.sn_size,
+                    cfg.t_reordering);
+    if (cfg.header_compression.has_value()) {
+      out = format_to(out, " {}", *cfg.header_compression);
+    }
+    out = format_to(out, " {}", cfg.custom);
+    return out;
   }
 };
 
@@ -453,10 +469,11 @@ struct formatter<srsran::pdcp_config> {
   auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
-                     "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
+                     "rb_type={} rlc_mode={} {} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
                      "RX=[sn_size={} t_reordering={} out_of_order={}] custom_tx=[{}] custom_rx=[{}]",
                      cfg.rb_type,
                      cfg.rlc_mode,
+                     cfg.header_compression,
                      cfg.integrity_protection_required,
                      cfg.ciphering_required,
                      cfg.tx.sn_size,

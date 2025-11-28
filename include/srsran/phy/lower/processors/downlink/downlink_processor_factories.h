@@ -47,8 +47,6 @@ struct downlink_processor_configuration {
   unsigned nof_tx_ports;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
-  /// Task executor for asynchronous modulation.
-  task_executor& modulation_executor;
 };
 
 /// Lower physical layer downlink processor - Factory interface.
@@ -59,7 +57,8 @@ public:
   virtual ~lower_phy_downlink_processor_factory() = default;
 
   /// Creates a lower PHY downlink processor.
-  virtual std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config) = 0;
+  virtual std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config,
+                                                               task_executor& modulation_executor) = 0;
 };
 
 /// Creates a software based downlink processor factory.

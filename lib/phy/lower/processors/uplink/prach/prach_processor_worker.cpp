@@ -79,7 +79,7 @@ void prach_processor_worker::run_state_collecting(const baseband_gateway_buffer_
 void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_reader& samples)
 {
   // Select number of samples to append.
-  unsigned count = std::min(window_length - nof_samples, static_cast<unsigned>(samples.get_nof_samples()));
+  unsigned count = std::min(window_length - nof_samples, samples.get_nof_samples());
 
   unsigned nof_ports = prach_context.ports.size();
   for (uint8_t i_channel = 0; i_channel != nof_ports; ++i_channel) {
@@ -114,15 +114,14 @@ void prach_processor_worker::accumulate_samples(const baseband_gateway_buffer_re
 
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
           // Prepare PRACH demodulator configuration.
-          ofdm_prach_demodulator::configuration config;
-          config.slot             = prach_context.slot;
-          config.format           = prach_context.format;
-          config.nof_td_occasions = prach_context.nof_td_occasions;
-          config.nof_fd_occasions = prach_context.nof_fd_occasions;
-          config.start_symbol     = prach_context.start_symbol;
-          config.rb_offset        = prach_context.rb_offset;
-          config.nof_prb_ul_grid  = prach_context.nof_prb_ul_grid;
-          config.port             = i_port;
+          ofdm_prach_demodulator::configuration config = {.slot             = prach_context.slot,
+                                                          .format           = prach_context.format,
+                                                          .nof_td_occasions = prach_context.nof_td_occasions,
+                                                          .nof_fd_occasions = prach_context.nof_fd_occasions,
+                                                          .start_symbol     = prach_context.start_symbol,
+                                                          .rb_offset        = prach_context.rb_offset,
+                                                          .nof_prb_ul_grid  = prach_context.nof_prb_ul_grid,
+                                                          .port             = i_port};
 
           // Make a view of the first samples in the buffer.
           baseband_gateway_buffer_reader_view buffered_samples(temp_baseband.get_reader(), 0, nof_samples);

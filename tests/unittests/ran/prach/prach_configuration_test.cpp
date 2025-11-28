@@ -54,7 +54,7 @@ TEST_P(PrachConfiguration, PrachConfigTest)
 
   if ((ref_format == prach_format_type::A1_B1) || (ref_format == prach_format_type::A2_B2) ||
       (ref_format == prach_format_type::A3_B3) || (ref_format == prach_format_type::B1) ||
-      (ref_format == prach_format_type::C0) || (ref_format == prach_format_type::C2)) {
+      (ref_format == prach_format_type::C2)) {
     ASSERT_EQ(generated_conf.format, prach_format_type::invalid) << "This PRACH configuration should be unsupported.";
     return;
   }

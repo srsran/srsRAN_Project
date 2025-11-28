@@ -29,8 +29,8 @@
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_low/du_low_executor_mapper.h"
 #include "srsran/ru/dummy/ru_dummy_executor_mapper.h"
-#include "srsran/ru/generic/ru_generic_executor_mapper.h"
 #include "srsran/ru/ofh/ru_ofh_executor_mapper.h"
+#include "srsran/ru/sdr/ru_sdr_executor_mapper.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -90,7 +90,7 @@ struct worker_manager {
     return *dummy_exec_mapper;
   }
 
-  ru_generic_executor_mapper& get_sdr_ru_executor_mapper()
+  ru_sdr_executor_mapper& get_sdr_ru_executor_mapper()
   {
     srsran_assert(sdr_exec_mapper, "SDR RU execution mapper is not available.");
     return *sdr_exec_mapper;
@@ -140,7 +140,7 @@ private:
   std::unique_ptr<ru_dummy_executor_mapper> dummy_exec_mapper;
 
   /// SDR RU executor mapper.
-  std::unique_ptr<ru_generic_executor_mapper> sdr_exec_mapper;
+  std::unique_ptr<ru_sdr_executor_mapper> sdr_exec_mapper;
 
   /// Open Fronthaul RU executor mapper.
   std::unique_ptr<ru_ofh_executor_mapper> ofh_exec_mapper;

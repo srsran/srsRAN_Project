@@ -59,12 +59,12 @@ public:
     cyclic_prefix      cp;
     sampling_rate      srate;
     unsigned           nof_tx_ports;
-    task_executor&     executor;
   };
 
   /// Constructs a physical downlink channel baseband processor.
   pdxch_processor_impl(std::unique_ptr<ofdm_symbol_modulator> modulator,
                        std::unique_ptr<amplitude_controller>  amplitude_control,
+                       task_executor&                         executor,
                        const configuration&                   config) :
     logger(srslog::fetch_basic_logger("PHY")),
     bb_buffers(buffer_request_pool::request_array_size + max_slot_modulation_concurrency + 1,
@@ -75,12 +75,12 @@ public:
     modulators(max_slot_modulation_concurrency)
   {
     // Generate baseband modulators.
-    std::generate(modulators.begin(), modulators.end(), [this, &config]() {
+    std::generate(modulators.begin(), modulators.end(), [this, &config, &executor]() {
       return std::make_unique<pdxch_baseband_modulator>(config.scs,
                                                         config.cp,
                                                         config.srate,
                                                         config.nof_tx_ports,
-                                                        config.executor,
+                                                        executor,
                                                         *common_ofdm_modulator,
                                                         *common_amplitude_control,
                                                         *this);

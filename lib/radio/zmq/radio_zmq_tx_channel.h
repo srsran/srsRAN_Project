@@ -25,10 +25,11 @@
 #include "radio_zmq_tx_channel_fsm.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
-#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_event_notifier.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/synchronization/stop_event.h"
 #include <atomic>
 #include <set>
 #include <zmq.h>
@@ -38,11 +39,8 @@ namespace srsran {
 /// Radio transmit channel over ZeroMQ socket.
 class radio_zmq_tx_channel
 {
-private:
-  /// Lists the supported socket types.
-  static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  const std::chrono::microseconds circ_buffer_try_push_sleep{1};
+  static constexpr std::chrono::microseconds circ_buffer_try_push_sleep{1};
   /// Maximum number of trials for binding.
   static constexpr unsigned BIND_MAX_TRIALS = 10;
   /// Sleep time after a bind failure in seconds.
@@ -67,7 +65,7 @@ private:
   /// Transmission buffer.
   std::vector<cf_t> buffer;
   /// Notification handler.
-  radio_notification_handler& notification_handler;
+  radio_event_notifier& notification_handler;
   /// Asynchronous task executor.
   task_executor& async_executor;
   /// Indicates the number of transmitted samples. Protected for concurrent read-write.
@@ -75,11 +73,9 @@ private:
   /// Protects concurrent transmit alignment operations from the receiver thread.
   std::mutex              transmit_alignment_mutex;
   std::condition_variable transmit_alignment_cvar;
-
+  /// Stop control.
+  stop_event_source stop_control;
   std::atomic<bool> is_tx_enabled = {false};
-
-  /// Transmits a single sample.
-  void transmit_samples(span<const cf_t> data);
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx channel.
@@ -104,30 +100,31 @@ public:
     unsigned buffer_size;
   };
 
-  radio_zmq_tx_channel(void*                       zmq_context,
-                       const channel_description&  config,
-                       radio_notification_handler& notification_handler,
-                       task_executor&              async_executor_);
+  radio_zmq_tx_channel(void*                      zmq_context,
+                       const channel_description& config,
+                       radio_event_notifier&      notification_handler,
+                       task_executor&             async_executor_);
 
   ~radio_zmq_tx_channel();
 
   bool is_successful() const { return state_fsm.is_initiated(); }
 
+  void start(uint64_t init_time);
+
+  void stop();
+
+  bool align(uint64_t timestamp, std::chrono::milliseconds timeout);
+
+  void transmit(span<const cf_t> buffer);
+
+private:
   void receive_request();
 
   void send_response();
 
   void run_async();
 
-  bool align(uint64_t timestamp, std::chrono::milliseconds timeout);
-
-  void transmit(span<const cf_t> buffer);
-
-  void start(uint64_t init_time);
-
-  void stop();
-
-  void wait_stop();
+  void transmit_samples(span<const cf_t> data);
 };
 
 } // namespace srsran

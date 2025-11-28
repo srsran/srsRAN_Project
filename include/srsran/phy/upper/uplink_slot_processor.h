@@ -54,6 +54,13 @@ public:
   /// \brief Notify the reception of an OFDM symbol.
   ///
   /// \param[in] end_symbol_index Last received symbol in the slot.
+  /// \param[in] is_valid         Indicates if the given OFDM symbol index has been received successfully.
+  ///
+  /// \remark An OFDM symbol might be invalid if a processing error occurred in the radio unit (e.g., losing an IQ
+  ///         packet for a certain OFDM symbol).
+  ///
+  /// \remark The uplink slot processor discards all the receive requests that are allocated on the given slot and
+  ///         afterward.
   virtual void handle_rx_symbol(unsigned end_symbol_index, bool is_valid) = 0;
 
   /// \brief Processes the PRACH using the given configuration and context.

@@ -53,7 +53,7 @@ public:
   }
 
   /// Default destructor - deletes the session first then the dynamic library handler.
-  ~radio_dynamic_wrapper()
+  ~radio_dynamic_wrapper() override
   {
     session.reset();
     handler.reset();
@@ -84,14 +84,14 @@ public:
   }
 
   /// Default destructor - deletes the factory first then the dynamic library handler.
-  ~radio_factory_dynamic_wrapper()
+  ~radio_factory_dynamic_wrapper() override
   {
     factory.reset();
     handle.reset();
   }
 
   // See interface for documentation.
-  const radio_configuration::validator& get_configuration_validator() override
+  const radio_configuration::validator& get_configuration_validator() const override
   {
     return factory->get_configuration_validator();
   }
@@ -99,7 +99,7 @@ public:
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notification_handler&       notifier) override
+                                        radio_event_notifier&             notifier) override
   {
     // Create base radio using the loaded factory.
     std::unique_ptr<radio_session> radio = factory->create(config, async_task_executor, notifier);

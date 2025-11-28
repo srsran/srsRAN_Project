@@ -38,7 +38,8 @@ public:
   virtual ~lower_phy_factory() = default;
 
   /// Creates a lower physical layer.
-  virtual std::unique_ptr<lower_phy> create(lower_phy_configuration& config) = 0;
+  virtual std::unique_ptr<lower_phy> create(const lower_phy_configuration& config,
+                                            const lower_phy_dependencies&  dependencies) = 0;
 };
 
 /// Creates a software based lower physical layer factory.

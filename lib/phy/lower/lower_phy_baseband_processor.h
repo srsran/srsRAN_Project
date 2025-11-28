@@ -35,6 +35,55 @@
 
 namespace srsran {
 
+/// Collects the parameters necessary to initialize the baseband adaptor.
+struct lower_phy_baseband_processor_configuration {
+  /// Sampling rate.
+  sampling_rate srate;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
+  /// Number of transmit ports.
+  unsigned nof_tx_ports;
+  /// Number of receive ports.
+  unsigned nof_rx_ports;
+  /// Receive to transmit delay in samples.
+  baseband_gateway_timestamp tx_time_offset;
+  /// Maximum number of samples between the last received sample and the next sample to transmit time instants.
+  baseband_gateway_timestamp rx_to_tx_max_delay;
+  /// Receive buffers size.
+  unsigned rx_buffer_size;
+  /// Number of receive buffers of size \c rx_buffer_size.
+  unsigned nof_rx_buffers;
+  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling.
+  float system_time_throttling;
+  /// Number of slots to execute before a complete stop after requesting to stop.
+  unsigned stop_nof_slots;
+};
+
+/// Collects the necessary dependencies to initialize the baseband adaptor.
+struct lower_phy_baseband_processor_dependencies {
+  /// \brief Receive task executor.
+  ///
+  /// Receives baseband samples from the \ref baseband_gateway_receiver, reserves baseband buffers and pushes
+  /// tasks to the other executors.
+  task_executor& rx_task_executor;
+  /// \brief Transmit task executor.
+  ///
+  /// Transmits baseband samples and releases the downlink baseband processing buffer to the pool.
+  task_executor& tx_task_executor;
+  /// \brief Uplink task executor.
+  ///
+  /// Notifies uplink-related time boundaries, runs the baseband demodulation and notifies availability of data.
+  task_executor& ul_task_executor;
+  /// Baseband receiver gateway.
+  baseband_gateway_receiver& receiver;
+  /// Baseband transmitter gateway.
+  baseband_gateway_transmitter& transmitter;
+  /// Uplink baseband processor.
+  uplink_processor_baseband& ul_bb_proc;
+  /// Downlink processor baseband.
+  downlink_processor_baseband& dl_bb_proc;
+};
+
 /// \brief Implements the lower physical layer baseband processing core.
 ///
 /// This class interfaces and manages the baseband data flow between the baseband gateways and the processors. This
@@ -42,53 +91,9 @@ namespace srsran {
 class lower_phy_baseband_processor : public lower_phy_controller
 {
 public:
-  /// Collects the parameters necessary to initialize the baseband adaptor, as well as injected dependencies.
-  struct configuration {
-    /// Sampling rate.
-    sampling_rate srate;
-    /// Subcarrier spacing.
-    subcarrier_spacing scs;
-    /// \brief Receive task executor.
-    ///
-    /// Receives baseband samples from the \ref baseband_gateway_receiver, reserves baseband buffers and pushes
-    /// tasks to the other executors.
-    task_executor* rx_task_executor;
-    /// \brief Transmit task executor.
-    ///
-    /// Transmits baseband samples and releases the downlink baseband processing buffer to the pool.
-    task_executor* tx_task_executor;
-    /// \brief Uplink task executor.
-    ///
-    /// Notifies uplink-related time boundaries, runs the baseband demodulation and notifies availability of data.
-    task_executor* ul_task_executor;
-    /// Baseband receiver gateway.
-    baseband_gateway_receiver* receiver;
-    /// Baseband transmitter gateway.
-    baseband_gateway_transmitter* transmitter;
-    /// Uplink baseband processor.
-    uplink_processor_baseband* ul_bb_proc;
-    /// Downlink processor baseband.
-    downlink_processor_baseband* dl_bb_proc;
-    /// Number of transmit ports.
-    unsigned nof_tx_ports;
-    /// Number of receive ports.
-    unsigned nof_rx_ports;
-    /// Receive to transmit delay in samples.
-    baseband_gateway_timestamp tx_time_offset;
-    /// Maximum number of samples between the last received sample and the next sample to transmit time instants.
-    baseband_gateway_timestamp rx_to_tx_max_delay;
-    /// Receive buffers size.
-    unsigned rx_buffer_size;
-    /// Number of receive buffers of size \c rx_buffer_size.
-    unsigned nof_rx_buffers;
-    /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling.
-    float system_time_throttling;
-    /// Number of slots to execute before a complete stop after requesting to stop.
-    unsigned stop_nof_slots;
-  };
-
   /// Constructs a baseband adaptor.
-  explicit lower_phy_baseband_processor(const configuration& config);
+  lower_phy_baseband_processor(const lower_phy_baseband_processor_configuration& config,
+                               const lower_phy_baseband_processor_dependencies&  deps);
 
   // See interface for documentation.
   void start(baseband_gateway_timestamp init_time, baseband_gateway_timestamp sfn0_ref_time) override;
@@ -102,7 +107,7 @@ private:
   {
   public:
     /// Initialize the internal FSM with the number of processing slots required to close the lower PHY.
-    internal_fsm(unsigned stop_count) : state_stopped(state_wait_stop + stop_count) {}
+    explicit internal_fsm(unsigned stop_count) : state_stopped(state_wait_stop + stop_count) {}
 
     /// Default destructor - It reports a fatal error if the state is \c running or \c wait_stop.
     ~internal_fsm()

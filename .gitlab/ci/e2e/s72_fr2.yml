@@ -1,0 +1,75 @@
+#
+# Copyright 2013-2025 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: amarisoft-ue
+  type: ue
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
+  labels:
+    - kubernetes.io/hostname=srskit-rack1
+  nof_ports: 16
+  requirements:
+    cpu:
+      requests: 10
+      limits: 10
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "8G"
+      limits: "8G"
+  resources:
+    - type: license
+      model: amarisoft-ue.*
+    - type: ru
+      model: fr2-ue-ru
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  labels:
+    - kubernetes.io/hostname=dell-xr12
+  requirements:
+    cpu:
+      requests: 8
+      limits: 8
+    memory:
+      requests: "60G"
+      limits: "60G"
+    hugepages-1Gi:
+      requests: 2Gi
+      limits: 2Gi
+    ephemeral-storage:
+      requests: "150G"
+      limits: "150G"
+  resources:
+    - type: ru
+      model: fr2-ru
+  environment:
+    - RTSAN_OPTIONS: halt_on_error=false:suppress_equal_stacks=true
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+    - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+  shared_files:
+    - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
+      remote_path: /usr/local/bin/gnb
+      is_executable: true
+
+- name: open5gs
+  type: 5gc
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  labels:
+    - kubernetes.io/hostname=dell-xr12
+  requirements:
+    cpu:
+      requests: 2
+      limits: 2
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "6G"
+      limits: "6G"

@@ -35,15 +35,13 @@ namespace srsran {
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
 class radio_session_uhd_impl : public radio_session, private radio_management_plane
 {
-private:
   /// Wait at most 1s for external clock locking.
   static constexpr int CLOCK_TIMEOUT_MS = 1000;
-  /// Enumerates possible UHD session states.
-  enum class states { UNINITIALIZED = 0, SUCCESSFUL_INIT, STOP };
   /// Maps ports to stream and channel indexes.
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
-  /// Indicates the current state.
-  std::atomic<states> state = {states::UNINITIALIZED};
+
+  /// Indicates if the initialization of the session was successful.
+  bool is_init_successful = false;
   /// Wraps the UHD device functions.
   radio_uhd_device device;
   /// Indexes the transmitter port indexes into stream and channel index as first and second.
@@ -53,14 +51,10 @@ private:
   /// Baseband gateways.
   std::vector<std::unique_ptr<radio_uhd_baseband_gateway>> bb_gateways;
   double                                                   actual_sampling_rate_Hz;
-  /// Protects the stream start.
-  std::mutex stream_start_mutex;
-  /// Indicates if the reception streams require start.
-  bool stream_start_required = true;
   /// Asynchronous executor.
   task_executor& async_executor;
   /// Event notifier.
-  radio_notification_handler& notifier;
+  radio_event_notifier& notifier;
 
   /// \brief Set the synchronization time to GPS mode.
   /// \return True if no exception is caught. Otherwise false.
@@ -103,17 +97,14 @@ private:
   bool start_rx_stream(baseband_gateway_timestamp init_time);
 
 public:
-  baseband_gateway_timestamp read_current_time() override;
-
-public:
   /// Constructs a radio session based on UHD.
   radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                          task_executor&                    async_executor,
-                         radio_notification_handler&       notifier_);
+                         radio_event_notifier&             notifier_);
 
   /// \brief Indicates that the radio session was initialized succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
-  bool is_successful() const { return (state != states::UNINITIALIZED); }
+  bool is_successful() const { return is_init_successful; }
 
   // See interface for documentation.
   radio_management_plane& get_management_plane() override { return *this; }
@@ -145,6 +136,9 @@ public:
 
   // See interface for documentation.
   bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
+
+  // See interface for documentation.
+  baseband_gateway_timestamp read_current_time() override;
 };
 
 /// Factory for UHD radio session.
@@ -152,15 +146,16 @@ class radio_factory_uhd_impl : public radio_factory
 {
 public:
   // See interface for documentation.
-  const radio_configuration::validator& get_configuration_validator() override { return config_validator; }
+  const radio_configuration::validator& get_configuration_validator() const override
+  {
+    static radio_config_uhd_config_validator config_validator;
+    return config_validator;
+  }
 
   // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notification_handler&       notifier) override;
-
-private:
-  static radio_config_uhd_config_validator config_validator;
+                                        radio_event_notifier&             notifier) override;
 };
 
 } // namespace srsran

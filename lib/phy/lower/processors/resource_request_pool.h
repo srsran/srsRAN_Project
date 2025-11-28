@@ -50,7 +50,7 @@ public:
 
   /// \brief Exchanges a request from the pool by the given one.
   /// \param[in] request The given request, it is copied into <tt>request.slot.system_slot() % REQUEST_ARRAY_SIZE</tt>.
-  /// \return The previous request at position  <tt> request.slot.system_slot() % REQUEST_ARRAY_SIZE </tt>.
+  /// \return The previous request at position <tt> request.slot.system_slot() % REQUEST_ARRAY_SIZE </tt>.
   request_type exchange(request_type request)
   {
     return requests[request.slot.system_slot()].exchange(std::move(request));

@@ -69,9 +69,9 @@ protected:
 
     ue_db.add_cell(to_du_cell_index(0));
 
-    slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0)));
-    slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0)));
-    slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0)));
+    slices.push_back(std::make_unique<slice_ue_repository>(SRB_RAN_SLICE_ID, du_cell_index_t(0), ue_db));
+    slices.push_back(std::make_unique<slice_ue_repository>(DEFAULT_DRB_RAN_SLICE_ID, du_cell_index_t(0), ue_db));
+    slices.push_back(std::make_unique<slice_ue_repository>(ran_slice_id_t{2}, du_cell_index_t(0), ue_db));
   }
 
   void add_ue(du_ue_index_t ue_idx, span<const test_lc_ch_cfg> lc_chs)
@@ -89,7 +89,7 @@ protected:
     req.cfg.lc_config_list         = lc_cfg_list;
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
     std::unique_ptr<ue>     u      = std::make_unique<ue>(ue_creation_command{*ue_cfg, false, cell_harqs});
-    ue_db.add_ue(std::move(u));
+    ue_db.add_ue(std::move(u), ue_cfg->logical_channels());
 
     for (const auto& lc_ch : lc_chs) {
       slices[lc_ch.slice_id.value()]->add_logical_channel(ue_db[ue_idx], lc_ch.lcid, lc_ch.lcg_id);

@@ -28,7 +28,7 @@ using namespace srsran;
 
 std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
-                                                              radio_notification_handler&       notifier)
+                                                              radio_event_notifier&             notifier)
 {
   // Create radio session based on ZMQ.
   std::unique_ptr<radio_session_zmq_impl> session =
@@ -43,9 +43,8 @@ std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_config
   return session;
 }
 
-radio_config_zmq_config_validator srsran::radio_factory_zmq_impl::config_validator;
-
-const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator()
+const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator() const
 {
+  static radio_config_zmq_config_validator config_validator;
   return config_validator;
 }

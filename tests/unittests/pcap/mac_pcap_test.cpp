@@ -75,6 +75,7 @@ TEST_F(pcap_mac_test, write_pdu)
   context.system_frame_number         = tti / 10;
   context.sub_frame_number            = tti % 10;
   mac_pcap_writer->push_pdu(context, tv);
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_many_spans)
@@ -97,6 +98,7 @@ TEST_F(pcap_mac_test, write_many_spans)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_many_byte_buffers)
@@ -119,6 +121,7 @@ TEST_F(pcap_mac_test, write_many_byte_buffers)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_dlt_pdu)
@@ -140,6 +143,7 @@ TEST_F(pcap_mac_test, write_dlt_pdu)
   context.system_frame_number         = tti / 10;
   context.sub_frame_number            = tti % 10;
   mac_pcap_writer->push_pdu(context, tv);
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_many_dlt_spans)
@@ -162,6 +166,7 @@ TEST_F(pcap_mac_test, write_many_dlt_spans)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
@@ -184,6 +189,7 @@ TEST_F(pcap_mac_test, write_many_dlt_byte_buffers)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 TEST_F(pcap_mac_test, write_large_byte_buffers)
@@ -206,6 +212,7 @@ TEST_F(pcap_mac_test, write_large_byte_buffers)
   for (std::thread& thread : writer_threads) {
     thread.join();
   }
+  worker.wait_pending_tasks();
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (spans)

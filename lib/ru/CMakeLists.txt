@@ -19,5 +19,5 @@
 #
 
 add_subdirectory(dummy)
-add_subdirectory(generic)
 add_subdirectory(ofh)
+add_subdirectory(sdr)
