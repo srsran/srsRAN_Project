@@ -345,6 +345,11 @@ variables:
     MARCH: x86-64-v3
     LINKER: lld
     INFRASTRUCTURE_TAG: amd64-avx2
+  artifacts: &valgrind_artifacts
+    when: on_failure
+    paths:
+      - build/Testing/Temporary
+    expire_in: 5 days
 
 .smoke avx512:
   extends: .build_and_unit
@@ -718,19 +723,8 @@ valgrind changed tests:
       build_srsgnb
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
-  after_script:
-    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary /tmp/Testing_Temporary
-    - cd build
-    - make clean
-    - mkdir -p ${CI_PROJECT_DIR}/build/Testing
-    - mv /tmp/Testing_Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary
   cache:
     - *cache_build_get
-  artifacts: &valgrind_artifacts
-    when: on_failure
-    paths:
-      - build/Testing/Temporary
-    expire_in: 5 days
 
 intermediate commits clean:
   extends: intermediate commits cached
@@ -853,12 +847,6 @@ smoke valgrind update cache:
       start_in: 45 minutes
   interruptible: false
   retry: 2
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    when: on_failure
-    expire_in: 1 day
   cache:
     - *cache_build_set
 
