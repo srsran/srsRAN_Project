@@ -75,6 +75,11 @@ public:
 
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
 
+  // PDCP event handlers.
+  void handle_pdcp_protocol_failure(ue_index_t ue_index) override;
+  void handle_pdcp_max_count_reached(ue_index_t ue_index) override;
+
+  // Test helpers.
   void trigger_enable_test_mode();
   void trigger_disable_test_mode();
   void trigger_reestablish_test_mode();

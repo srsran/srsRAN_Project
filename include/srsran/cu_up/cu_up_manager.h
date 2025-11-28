@@ -30,6 +30,8 @@ public:
   virtual void on_e1ap_connection_drop() = 0;
 };
 
+/// Interface for the E1AP to notify the CU-UP manger
+/// of events and messages that require handling.
 class cu_up_manager_e1ap_interface
 {
 public:
@@ -66,7 +68,23 @@ public:
   virtual void schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) = 0;
 };
 
-class cu_up_manager : public cu_up_manager_e1ap_connection_notifier, public cu_up_manager_e1ap_interface
+/// Interface for the PDCP to notify the CU-UP manger
+/// of events that require handling. This includes running out
+/// of PDCP COUNTs, protocol errors and the need for resuming
+/// an inactive bearer context.
+class cu_up_manager_pdcp_interface
+{
+public:
+  virtual ~cu_up_manager_pdcp_interface() = default;
+
+  virtual void handle_pdcp_protocol_failure(ue_index_t ue_index) = 0;
+
+  virtual void handle_pdcp_max_count_reached(ue_index_t ue_index) = 0;
+};
+
+class cu_up_manager : public cu_up_manager_e1ap_connection_notifier,
+                      public cu_up_manager_e1ap_interface,
+                      public cu_up_manager_pdcp_interface
 {
 public:
   ~cu_up_manager() override = default;

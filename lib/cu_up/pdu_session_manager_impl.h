@@ -108,7 +108,8 @@ private:
   e1ap_interface&                                          e1ap;
   f1u_cu_up_gateway&                                       f1u_gw;
   ngu_session_manager&                                     ngu_session_mngr;
-  std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
+  cu_up_manager_pdcp_interface*                            cu_up_mngr_pdcp_if; // TODO: change to use ref.
+  std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions;       // key is pdu_session_id
 };
 
 } // namespace srsran::srs_cu_up
