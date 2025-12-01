@@ -30,13 +30,13 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
 
 @mark.zmq
 @mark.parametrize(
-    "use_format_0, pucch_set1_format, ul_noise_spd",
+    "pucch_formats, ul_noise_spd",
     (
         # PUCCH Format 0 decoder doesn't work with no noise.
-        param(True, 2, -134, id="f0_f2"),
-        param(False, 2, 0, id="f1_f2"),
-        param(False, 3, 0, id="f1_f3"),
-        param(False, 4, 0, id="f1_f4"),
+        param("f0_and_f2", -134, id="f0_f2"),
+        param("f1_and_f2", 0, id="f1_f2"),
+        param("f1_and_f3", 0, id="f1_f3"),
+        param("f1_and_f4", 0, id="f1_f4"),
     ),
 )
 @mark.flaky(
@@ -50,8 +50,7 @@ def test_pucch(
     ue_32: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    use_format_0: bool,
-    pucch_set1_format: int,
+    pucch_formats: str,
     ul_noise_spd: int,
 ):
     """
@@ -65,7 +64,8 @@ def test_pucch(
     bandwidth = 50
     iperf_duration = 10
     iperf_bitrate = int(1e6)
-    pucch_set0_format = 0 if use_format_0 else 1
+    f0_or_f1 = pucch_formats[:2]
+    f2_or_f3_or_f4 = pucch_formats[-2:]
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -76,12 +76,11 @@ def test_pucch(
         sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         global_timing_advance=0,
         time_alignment_calibration=0,
-        use_format_0=use_format_0,
+        pucch_formats=pucch_formats,
         ul_noise_spd=ul_noise_spd,
-        pucch_set1_format=pucch_set1_format,
     )
 
-    logging.info("PUCCH F%d+F%d Test", pucch_set0_format, pucch_set1_format)
+    logging.info("PUCCH %s Test", pucch_formats)
 
     start_network(ue_array=ue_array, gnb_array=[gnb], fivegc=fivegc)
     ue_attach_info_dict = ue_start_and_attach(
@@ -126,7 +125,7 @@ def test_pucch(
     if invalid_pucchs:
         fail(
             f"Invalid PUCCH transmissions during the test: "
-            f"harq_f{pucch_set0_format}={metrics.total.nof_pucch_f0f1_invalid_harqs} "
-            f"harq_f{pucch_set1_format}={metrics.total.nof_pucch_f2f3f4_invalid_harqs} "
-            f"csi_f{pucch_set1_format}={metrics.total.nof_pucch_f2f3f4_invalid_csis}"
+            f"harq_{f0_or_f1}={metrics.total.nof_pucch_f0f1_invalid_harqs} "
+            f"harq_{f2_or_f3_or_f4}={metrics.total.nof_pucch_f2f3f4_invalid_harqs} "
+            f"csi_{f2_or_f3_or_f4}={metrics.total.nof_pucch_f2f3f4_invalid_csis}"
         )

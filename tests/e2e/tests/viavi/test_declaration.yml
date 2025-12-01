@@ -244,8 +244,8 @@ tests:
       cell_cfg:
         pucch:
           sr_period_ms: 20
-          f2_or_f3_or_f4_nof_cell_res_csi: 21
-          f0_or_f1_nof_cell_res_sr: 42
+          nof_cell_csi_res: 21
+          nof_cell_sr_res: 42
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 5
           nof_dl_symbols: 6
@@ -273,7 +273,7 @@ tests:
       cell_cfg:
         pucch:
           sr_period_ms: 40
-          f0_or_f1_nof_cell_res_sr: 30
+          nof_cell_sr_res: 30
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 10
           nof_dl_slots: 2
@@ -306,7 +306,7 @@ tests:
       cell_cfg:
         pucch:
           sr_period_ms: 40
-          f0_or_f1_nof_cell_res_sr: 30
+          nof_cell_sr_res: 30
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 10
           nof_dl_slots: 3
@@ -339,7 +339,7 @@ tests:
       cell_cfg:
         pucch:
           sr_period_ms: 40
-          f0_or_f1_nof_cell_res_sr: 30
+          nof_cell_sr_res: 30
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 6
           nof_dl_slots: 1
@@ -378,7 +378,7 @@ tests:
       cell_cfg:
         pucch:
           sr_period_ms: 40
-          f0_or_f1_nof_cell_res_sr: 30
+          nof_cell_sr_res: 30
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 10
           nof_dl_slots: 6

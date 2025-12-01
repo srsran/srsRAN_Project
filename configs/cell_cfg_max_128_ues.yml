@@ -10,11 +10,11 @@
 
 cell_cfg:
   pucch:
-    sr_period_ms: 20   # This can be set either 20 or 40 ms.
-    f0_or_f1_nof_cell_res_sr: 50
-    f2_or_f3_or_f4_nof_cell_res_csi: 50
+    sr_period_ms: 20 # This can be set either 20 or 40 ms.
+    nof_cell_sr_res: 50
+    nof_cell_csi_res: 50
   csi:
-    csi_rs_period: 40  # This can be set either 20 or 40 ms.
+    csi_rs_period: 40 # This can be set either 20 or 40 ms.
   ul_common:
     max_ul_grants_per_slot: 64
     max_pucchs_per_slot: 63
