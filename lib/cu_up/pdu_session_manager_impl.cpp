@@ -263,7 +263,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
   pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_cu_up_mngr_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
-  pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
+  pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_cu_up_mngr_adapter;
   pdcp_msg.ue_dl_timer_factory                  = ue_dl_timer_factory;
   pdcp_msg.ue_ul_timer_factory                  = ue_ul_timer_factory;
   pdcp_msg.ue_ctrl_timer_factory                = ue_ctrl_timer_factory;
@@ -313,7 +313,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // Connect "PDCP-E1AP" adapter to E1AP
   new_drb->pdcp_tx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, &cu_up_mngr_pdcp_if);
-  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
+  new_drb->pdcp_rx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, &cu_up_mngr_pdcp_if);
 
   // Create  F1-U bearer
   new_drb->f1u_cfg = qos_cfg.at(five_qi).f1u_cfg;

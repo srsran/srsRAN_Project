@@ -49,7 +49,7 @@ struct drb_context {
 
   // Adapter PDCP->CU-UP Manager.
   // Used for control events.
-  pdcp_rx_e1ap_adapter       pdcp_rx_to_e1ap_adapter;
+  pdcp_rx_cu_up_mngr_adapter pdcp_rx_to_cu_up_mngr_adapter;
   pdcp_tx_cu_up_mngr_adapter pdcp_tx_to_cu_up_mngr_adapter;
 
   // Adapter F1-U gateway -> NR-U

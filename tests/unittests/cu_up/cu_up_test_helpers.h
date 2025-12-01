@@ -333,7 +333,7 @@ public:
 
   void handle_message(const e1ap_message& msg) override {}
 
-  void handle_pdcp_max_count_reached(srs_cu_up::ue_index_t ue_index) override {}
+  void handle_bearer_context_release_required(srs_cu_up::ue_index_t ue_index) override {}
 };
 
 inline e1ap_message generate_bearer_context_setup_request(unsigned cu_cp_ue_e1ap_id)

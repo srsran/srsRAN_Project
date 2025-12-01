@@ -51,15 +51,9 @@ public:
   /// \param[in] msg The common type bearer context inactivity notification message to convert and forward to the CU-CP.
   virtual void
   handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
-};
 
-/// Handle E1AP PDCP notifications messages
-class e1ap_pdcp_error_handler
-{
-public:
-  virtual ~e1ap_pdcp_error_handler() = default;
-
-  virtual void handle_pdcp_max_count_reached(ue_index_t ue_index) = 0;
+  /// TODO comments.
+  virtual void handle_bearer_context_release_required(ue_index_t ue_index) = 0;
 };
 
 /// \brief Interface to query statistics from the E1AP interface.
@@ -120,7 +114,6 @@ public:
 /// Combined entry point for E1AP handling.
 class e1ap_interface : public e1ap_message_handler,
                        public e1ap_control_message_handler,
-                       public e1ap_pdcp_error_handler,
                        public e1ap_event_handler,
                        public e1ap_connection_manager,
                        public e1ap_statistics_handler
