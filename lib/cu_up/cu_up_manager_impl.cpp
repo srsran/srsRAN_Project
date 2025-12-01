@@ -193,9 +193,20 @@ async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 ///
 /// PDCP control events handling.
 ///
-void cu_up_manager_impl::handle_pdcp_protocol_failure(ue_index_t ue_index) {}
+void cu_up_manager_impl::handle_pdcp_protocol_failure(ue_index_t ue_index)
+{
+  /// TODO.
+}
 
-void cu_up_manager_impl::handle_pdcp_max_count_reached(ue_index_t ue_index) {}
+void cu_up_manager_impl::handle_pdcp_max_count_reached(ue_index_t ue_index)
+{
+  ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
+  if (ue_ctxt == nullptr) {
+    logger.error("ue={}: Reached PDCP MAX count, but could not find UE context", ue_index);
+    return;
+  }
+  e1ap.handle_bearer_context_release_request_required(ue_index);
+}
 
 ///
 /// Test mode helpers.

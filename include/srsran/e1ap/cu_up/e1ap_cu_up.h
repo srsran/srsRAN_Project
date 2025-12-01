@@ -52,8 +52,9 @@ public:
   virtual void
   handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
 
-  /// TODO comments.
-  virtual void handle_bearer_context_release_required(ue_index_t ue_index) = 0;
+  /// \brief Initiates the Bearer Context Release procedure as defined in TS 38.463 section 8.6.3.
+  /// It does this by sending the Bearer Context Release Request to the CU-CP.
+  virtual void handle_bearer_context_release_request_required(ue_index_t ue_index) = 0;
 };
 
 /// \brief Interface to query statistics from the E1AP interface.

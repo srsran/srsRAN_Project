@@ -35,6 +35,11 @@ constexpr ue_index_t int_to_ue_index(std::underlying_type_t<ue_index_t> idx)
   return static_cast<ue_index_t>(idx);
 }
 
+constexpr std::underlying_type_t<ue_index_t> ue_index_to_int(ue_index_t idx)
+{
+  return static_cast<std::underlying_type_t<ue_index_t>>(idx);
+}
+
 constexpr bool is_ue_index_valid(ue_index_t ue_idx)
 {
   return ue_idx < MAX_NOF_UES;
@@ -57,3 +62,25 @@ struct cu_up_qos_config {
 
 } // namespace srs_cu_up
 } // namespace srsran
+
+namespace fmt {
+
+// UE index formatter.
+template <>
+struct formatter<srsran::srs_cu_up::ue_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_up::ue_index_t& idx, FormatContext& ctx) const
+  {
+    if (idx == srsran::srs_cu_up::ue_index_t::INVALID_UE_INDEX) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+} // namespace fmt

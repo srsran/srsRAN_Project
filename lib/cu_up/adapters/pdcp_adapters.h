@@ -123,14 +123,14 @@ public:
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1AP handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1AP handler");
   }
 
   void on_max_count_reached() override
   {
     if (cu_up_mngr == nullptr) {
       srslog::fetch_basic_logger("PDCP").warning(
-          "No CU-UP manager handler for PDCP Tx control events. All events will be ignored.");
+          "No CU-UP manager handler for PDCP Tx control events. All events will be ignored");
       return;
     }
     cu_up_mngr->handle_pdcp_max_count_reached(ue_index);
