@@ -297,6 +297,9 @@ TEST_F(cu_cp_ue_context_release_test, when_ue_rrc_setup_fails_then_ue_is_release
   // STATUS: UE should be removed at this stage.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+
+  // Wait for DL RRC message transfer. This should fail.
+  ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
 }
 
 TEST_F(cu_cp_ue_context_release_test,
