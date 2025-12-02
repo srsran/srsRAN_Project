@@ -201,7 +201,6 @@ void intra_slice_scheduler::ul_sched(ul_ran_slice_candidate slice, scheduler_pol
 
   if (slice.get_slot_tx() != pusch_slot) {
     pusch_slot = slice.get_slot_tx();
-    update_min_srs_symbol();
     update_used_ul_vrbs(slice);
   }
 
@@ -879,6 +878,13 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
 
 void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& slice)
 {
+  // Update the min SRS symbol before checking the used VRBs.
+  // NOTE: Reset to max symbol index before looking for the min.
+  min_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  for (const auto& srs : cell_alloc[pusch_slot - pdcch_slot].result.ul.srss) {
+    min_srs_symbol = std::min(static_cast<unsigned>(srs.symbols.start()), min_srs_symbol);
+  }
+
   // The mapping from CRBs to VRBs is different for UEs configured with a common SearchSpace that uses DCI 1_0.
   // [Implementation defined] We assume all the UEs of this cell are configured the same way in that regard.
   const slice_ue_repository&       slice_ues   = slice.get_slice_ues();
@@ -915,13 +921,4 @@ void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& sl
   used_ul_vrbs = cell_alloc[pusch_slot]
                      .ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs, ul_crb_lims, symbols_to_check)
                      .convert_to<vrb_bitmap>();
-}
-
-void intra_slice_scheduler::update_min_srs_symbol()
-{
-  // Reset to max symbol index before looking for the min.
-  min_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  for (const auto& srs : cell_alloc[pusch_slot - pdcch_slot].result.ul.srss) {
-    min_srs_symbol = std::min(static_cast<unsigned>(srs.symbols.start()), min_srs_symbol);
-  }
 }

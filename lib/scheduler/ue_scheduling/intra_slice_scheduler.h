@@ -108,8 +108,6 @@ private:
   void update_used_dl_vrbs(const dl_ran_slice_candidate& slice);
   void update_used_ul_vrbs(const ul_ran_slice_candidate& slice);
 
-  void update_min_srs_symbol();
-
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
   cell_metrics_handler&             cell_metrics;
