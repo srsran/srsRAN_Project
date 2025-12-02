@@ -349,7 +349,7 @@ struct du_high_unit_pucch_config {
 
   /// \c PUCCH-Config parameters.
   /// PUCCH format combination. See \ref pucch_formats for details.
-  pucch_formats formats;
+  pucch_formats formats = pucch_formats::f1_and_f2;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
   /// Values {3,...,8} if \c formats == pucch_formats::f0_and_f2. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
