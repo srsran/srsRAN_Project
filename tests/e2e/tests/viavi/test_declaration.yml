@@ -57,7 +57,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: &base_warning_allowlist
       - missed incoming User-Plane PRACH messages
@@ -73,7 +73,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -92,7 +92,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -109,7 +109,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 72.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist:
       - missed incoming User-Plane PRACH messages
@@ -156,7 +156,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -170,7 +170,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -186,7 +186,7 @@ tests:
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -230,7 +230,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -259,7 +259,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -292,7 +292,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -325,7 +325,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -364,7 +364,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -392,7 +392,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -420,7 +420,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -434,7 +434,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -455,7 +455,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 200.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
@@ -486,7 +486,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist:
       - Tracing thread cannot keep up
@@ -501,7 +501,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_max_late_harqs: 4
-    expected_nof_kos: 5
+    expected_nof_kos: 0
     warning_as_errors: true
     warning_allowlist:
       - Tracing thread cannot keep up
