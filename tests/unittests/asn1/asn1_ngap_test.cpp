@@ -59,7 +59,7 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
   setup_req->global_ran_node_id.global_gnb_id().plmn_id.from_string("00f110");
 
   setup_req->ran_node_name_present = true;
-  setup_req->ran_node_name.from_string("srsgnb01");
+  setup_req->ran_node_name.from_string("gnb01");
 
   asn1::ngap::supported_ta_item_s   supported_ta_item   = {};
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};

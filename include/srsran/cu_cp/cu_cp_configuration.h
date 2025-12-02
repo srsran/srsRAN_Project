@@ -48,7 +48,7 @@ struct supported_tracking_area {
 struct ran_node_configuration {
   /// The gNodeB identifier.
   gnb_id_t    gnb_id{411, 22};
-  std::string ran_node_name = "srsgnb01";
+  std::string ran_node_name = "gnb01";
 };
 
 struct mobility_configuration {
