@@ -16,6 +16,7 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/rnti.h"
 
 namespace srsran {
@@ -45,7 +46,7 @@ byte_buffer pack_ul_ccch_msg(const asn1::rrc_nr::ul_ccch_msg_s& msg);
 byte_buffer pack_ul_dcch_msg(const asn1::rrc_nr::ul_dcch_msg_s& msg);
 
 /// \brief Generates a dummy SIB1 message.
-asn1::rrc_nr::sib1_s create_sib1();
+asn1::rrc_nr::sib1_s create_sib1(const plmn_identity& plmn = plmn_identity::test_value());
 
 } // namespace test_helpers
 } // namespace srsran

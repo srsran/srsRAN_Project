@@ -110,7 +110,10 @@ public:
   bool run_e1_setup(unsigned cu_up_idx);
 
   /// Connect a new UE to CU-CP through a provided DU. It runs the full RRC setup procedure.
-  [[nodiscard]] bool connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti);
+  [[nodiscard]] bool connect_new_ue(unsigned            du_idx,
+                                    gnb_du_ue_f1ap_id_t du_ue_id,
+                                    rnti_t              crnti,
+                                    plmn_identity       plmn = plmn_identity::test_value());
   /// Runs the NAS Authentication for a given UE.
   [[nodiscard]] bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
   /// Runs the Security Mode procedure for a given UE.

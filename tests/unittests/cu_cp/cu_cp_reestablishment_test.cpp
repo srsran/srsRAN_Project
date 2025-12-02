@@ -20,6 +20,7 @@
 #include "srsran/asn1/ngap/ngap_pdu_contents.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
+#include "srsran/ran/plmn_identity.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -266,8 +267,8 @@ public:
         test_helpers::create_rrc_reestablishment_request(old_rnti_, old_pci_, "1111010001000010"));
 
     // Send Initial UL RRC Message to CU-CP.
-    f1ap_message f1ap_init_ul_rrc_msg =
-        test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_rnti, {}, std::move(rrc_container));
+    f1ap_message f1ap_init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(
+        new_du_ue_id, new_rnti, plmn_identity::test_value(), {}, std::move(rrc_container));
     get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
     // Wait for DL RRC message transfer.
@@ -475,10 +476,10 @@ TEST_F(
       test_helpers::create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
 
   // Send Initial UL RRC Message to CU-CP.
-  gnb_du_ue_f1ap_id_t new_du_ue_id = int_to_gnb_du_ue_f1ap_id(1);
-  rnti_t              new_crnti    = to_rnti(0x4602);
-  f1ap_message        f1ap_init_ul_rrc_msg =
-      test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
+  gnb_du_ue_f1ap_id_t new_du_ue_id         = int_to_gnb_du_ue_f1ap_id(1);
+  rnti_t              new_crnti            = to_rnti(0x4602);
+  f1ap_message        f1ap_init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(
+      new_du_ue_id, new_crnti, plmn_identity::test_value(), {}, std::move(rrc_container));
   f1ap_init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
   f1ap_init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.clear();
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);

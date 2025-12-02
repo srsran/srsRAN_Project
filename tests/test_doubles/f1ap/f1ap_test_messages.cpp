@@ -17,6 +17,7 @@
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/f1ap/f1ap_message.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/positioning/positioning_ids.h"
 #include "srsran/support/test_utils.h"
 
@@ -65,14 +66,14 @@ static byte_buffer generate_rrc_container(uint32_t pdcp_sn, unsigned pdu_len)
 gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(const served_cell_item_info& info)
 {
   gnb_du_served_cells_item_s served_cells_item;
-  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
+  served_cells_item.served_cell_info.nr_cgi.plmn_id = info.plmn_id.to_bytes();
   served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(info.nci.value());
   served_cells_item.served_cell_info.nr_pci              = info.pci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(info.tac);
 
   served_plmns_item_s served_plmn;
-  served_plmn.plmn_id.from_string("00f110");
+  served_plmn.plmn_id = info.plmn_id.to_bytes();
   slice_support_item_s slice_support_item;
   slice_support_item.snssai.sst.from_number(1);
   served_plmn.ie_exts.tai_slice_support_list_present = true;
@@ -652,9 +653,10 @@ f1ap_message srsran::test_helpers::generate_ue_context_modification_failure(gnb_
 
 f1ap_message
 srsran::test_helpers::generate_init_ul_rrc_message_transfer_without_du_to_cu_container(gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                                       rnti_t              crnti)
+                                                                                       rnti_t              crnti,
+                                                                                       plmn_identity       plmn_id)
 {
-  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn_id);
   init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
 
   return init_ul_rrc_msg;
@@ -662,6 +664,7 @@ srsran::test_helpers::generate_init_ul_rrc_message_transfer_without_du_to_cu_con
 
 f1ap_message srsran::test_helpers::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                          rnti_t              crnti,
+                                                                         plmn_identity       plmn_id,
                                                                          byte_buffer         cell_group_cfg,
                                                                          byte_buffer         rrc_container)
 {
@@ -675,8 +678,8 @@ f1ap_message srsran::test_helpers::generate_init_ul_rrc_message_transfer(gnb_du_
 
   nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0).value();
   init_ul_rrc->nr_cgi.nr_cell_id.from_number(nci.value());
-  init_ul_rrc->nr_cgi.plmn_id.from_string("00f110");
-  init_ul_rrc->c_rnti = to_value(crnti);
+  init_ul_rrc->nr_cgi.plmn_id = plmn_id.to_bytes();
+  init_ul_rrc->c_rnti         = to_value(crnti);
 
   init_ul_rrc->sul_access_ind_present = true;
   init_ul_rrc->sul_access_ind.value   = sul_access_ind_opts::options::true_value;

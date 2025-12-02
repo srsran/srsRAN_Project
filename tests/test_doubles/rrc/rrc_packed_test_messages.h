@@ -15,6 +15,7 @@
 /// the RRC ASN.1 headers.
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
@@ -27,10 +28,10 @@ byte_buffer create_ho_prep_info();
 byte_buffer create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs);
 
 /// \brief Generates a packed dummy SIB1 message.
-byte_buffer create_packed_sib1();
+byte_buffer create_packed_sib1(const plmn_identity& plmn = plmn_identity::test_value());
 
 /// \brief Generates a dummy SIB1 hex string.
-std::string create_sib1_hex_string();
+std::string create_sib1_hex_string(const plmn_identity& plmn = plmn_identity::test_value());
 
 /// \brief Generates a dummy CellGroupConfig.
 byte_buffer create_cell_group_config();

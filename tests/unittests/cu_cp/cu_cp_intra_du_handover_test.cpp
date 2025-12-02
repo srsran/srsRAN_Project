@@ -38,10 +38,11 @@ public:
     std::optional<unsigned> ret = connect_new_du();
     EXPECT_TRUE(ret.has_value());
     du_idx = ret.value();
-    EXPECT_TRUE(this->run_f1_setup(du_idx,
-                                   int_to_gnb_du_id(0x11),
-                                   {{nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(), 0, 7},
-                                    {nr_cell_identity::create(gnb_id_t{411, 22}, 1U).value(), 2, 7}}));
+    EXPECT_TRUE(
+        this->run_f1_setup(du_idx,
+                           int_to_gnb_du_id(0x11),
+                           {{.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value(), .pci = 0, .tac = 7},
+                            {.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 1U).value(), .pci = 2, .tac = 7}}));
 
     // Setup CU-UP.
     ret = connect_new_cu_up();
@@ -283,8 +284,8 @@ public:
     // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
     byte_buffer rrc_container = test_helpers::pack_ul_ccch_msg(
         test_helpers::create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
-    f1ap_message f1ap_init_ul_rrc_msg =
-        test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
+    f1ap_message f1ap_init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(
+        new_du_ue_id, new_crnti, plmn_identity::test_value(), {}, std::move(rrc_container));
     get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
     // Wait for DL RRC message transfer (F1AP UE Context Release Command).

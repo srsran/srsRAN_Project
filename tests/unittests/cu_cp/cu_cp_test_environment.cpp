@@ -404,7 +404,10 @@ bool cu_cp_test_environment::run_e1_setup(unsigned cu_up_idx)
   return result;
 }
 
-bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, rnti_t crnti)
+bool cu_cp_test_environment::connect_new_ue(unsigned            du_idx,
+                                            gnb_du_ue_f1ap_id_t du_ue_id,
+                                            rnti_t              crnti,
+                                            plmn_identity       plmn)
 {
   ngap_message ngap_pdu;
   srsran_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -412,7 +415,7 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
   srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
   // Inject Initial UL RRC message
-  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn);
   test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -959,8 +962,8 @@ bool cu_cp_test_environment::reestablish_ue(unsigned            du_idx,
   // Send Initial UL RRC Message (containing RRC Reestablishment Request) to CU-CP.
   byte_buffer rrc_container = test_helpers::pack_ul_ccch_msg(
       test_helpers::create_rrc_reestablishment_request(old_crnti, old_pci, "1111010001000010"));
-  f1ap_message f1ap_init_ul_rrc_msg =
-      test_helpers::generate_init_ul_rrc_message_transfer(new_du_ue_id, new_crnti, {}, std::move(rrc_container));
+  f1ap_message f1ap_init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(
+      new_du_ue_id, new_crnti, plmn_identity::test_value(), {}, std::move(rrc_container));
   get_du(du_idx).push_ul_pdu(f1ap_init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (with RRC Reestablishment / RRC Setup / RRC Reject).

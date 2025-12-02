@@ -289,7 +289,8 @@ public:
   unsigned cu_up_idx     = 0;
 
   test_helpers::served_cell_item_info source_cell_info = test_helpers::served_cell_item_info{};
-  test_helpers::served_cell_item_info target_cell_info = {nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(), 2};
+  test_helpers::served_cell_item_info target_cell_info = {.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
+                                                          .pci = 2};
 
   gnb_du_ue_f1ap_id_t du_ue_id = gnb_du_ue_f1ap_id_t::min;
   gnb_cu_ue_f1ap_id_t cu_ue_id;

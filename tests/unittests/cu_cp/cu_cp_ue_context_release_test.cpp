@@ -21,16 +21,34 @@
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/ran/gnb_cu_up_id.h"
+#include "srsran/ran/plmn_identity.h"
 #include <chrono>
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
+static std::vector<std::vector<supported_tracking_area>> make_amf_test_config()
+{
+  slice_service_type      sst     = slice_service_type{1};
+  s_nssai_t               s_nssai = s_nssai_t{sst, slice_differentiator{}};
+  plmn_item               plmn    = plmn_item{plmn_identity::parse("99999").value(), std::vector<s_nssai_t>{s_nssai}};
+  tac_t                   tac     = 7;
+  supported_tracking_area supported_ta = supported_tracking_area{tac, {plmn}};
+
+  return {{supported_ta}};
+}
+
 class cu_cp_ue_context_release_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_ue_context_release_test() : cu_cp_test_environment(cu_cp_test_env_params{})
+  cu_cp_ue_context_release_test() :
+    cu_cp_test_environment(cu_cp_test_env_params{/* max_nof_cu_ups */ 8,
+                                                 /* max_nof_dus */ 8,
+                                                 /* max_nof_ues */ 8192,
+                                                 /* max_nof_drbs_per_ue */ 8,
+                                                 /* amf_config */ make_amf_test_config(),
+                                                 /* trigger_ho_from_measurements */ false})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -39,7 +57,11 @@ public:
     std::optional<unsigned> ret = connect_new_du();
     EXPECT_TRUE(ret.has_value());
     du_idx = ret.value();
-    EXPECT_TRUE(this->run_f1_setup(du_idx));
+    EXPECT_TRUE(
+        this->run_f1_setup(du_idx,
+                           int_to_gnb_du_id(0x11),
+                           {test_helpers::served_cell_item_info{
+                               .plmn_id = plmn, .sib1_str = srsran::test_helpers::create_sib1_hex_string(plmn)}}));
 
     // Setup CU-UP.
     ret = connect_new_cu_up();
@@ -51,7 +73,7 @@ public:
   [[nodiscard]] bool attach_ue()
   {
     // Connect UE 0x4601.
-    if (!connect_new_ue(du_idx, du_ue_id, crnti)) {
+    if (!connect_new_ue(du_idx, du_ue_id, crnti, plmn)) {
       return false;
     }
     if (!authenticate_ue(du_idx, du_ue_id, amf_ue_id)) {
@@ -260,6 +282,7 @@ public:
 
   gnb_du_ue_f1ap_id_t    du_ue_id      = gnb_du_ue_f1ap_id_t::min;
   rnti_t                 crnti         = to_rnti(0x4601);
+  plmn_identity          plmn          = plmn_identity::parse("99999").value();
   amf_ue_id_t            amf_ue_id     = amf_ue_id_t::min;
   gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
 
@@ -277,7 +300,7 @@ TEST_F(cu_cp_ue_context_release_test, when_ue_rrc_setup_fails_then_ue_is_release
   srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
   // Inject Initial UL RRC message
-  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn);
   test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -385,7 +408,7 @@ TEST_F(
     srsran_assert(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu), "there are still F1AP DL messages to pop from DU");
 
     // Inject Initial UL RRC message.
-    f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn);
     test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
     get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
