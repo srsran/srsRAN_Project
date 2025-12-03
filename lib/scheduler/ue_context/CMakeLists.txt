@@ -16,3 +16,4 @@ set(SOURCES
         ue_cell.cpp)
 
 add_library(sched_ue_context STATIC ${SOURCES})
+target_link_libraries(sched_ue_context srsran_ran sched_support sched_cell)
