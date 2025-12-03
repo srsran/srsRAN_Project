@@ -46,7 +46,7 @@ static rlc_metrics generate_non_zero_rlc_metrics(uint32_t ue_idx, uint32_t beare
   rlc_metric.metrics_period        = std::chrono::milliseconds(1000);
   rlc_metric.ue_index              = static_cast<du_ue_index_t>(ue_idx);
   rlc_metric.rb_id                 = rb_id_t(drb_id_t(bearer_id));
-  rlc_metric.rx.mode               = rlc_mode::am;
+  rlc_metric.rx.mode_specific      = rlc_am_rx_metrics{};
   rlc_metric.rx.num_pdus           = 5;
   rlc_metric.rx.num_pdu_bytes      = rlc_metric.rx.num_pdus * 1000;
   rlc_metric.rx.num_sdus           = 5;

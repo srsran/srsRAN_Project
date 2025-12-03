@@ -48,6 +48,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/rtsan.h"
 #include "srsran/support/test_utils.h"

@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/rlc/rlc_mode.h"
 #include "srsran/rlc/rlc_rx_metrics.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
@@ -27,7 +29,21 @@ public:
     if (not enabled) {
       return;
     }
-    metrics.mode = mode;
+    switch (mode) {
+      case rlc_mode::tm:
+        metrics.mode_specific = rlc_tm_rx_metrics{};
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+      case rlc_mode::um_unidir_ul:
+        metrics.mode_specific = rlc_um_rx_metrics{};
+        break;
+      case rlc_mode::am:
+        metrics.mode_specific = rlc_am_rx_metrics{};
+        break;
+      default:
+        break;
+    }
   }
 
   void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
@@ -78,9 +94,10 @@ public:
     if (not enabled) {
       return;
     }
-    srsran_assert(metrics.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics.mode_specific.am.num_ctrl_pdus += num_ctrl_;
-    metrics.mode_specific.am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
+    srsran_assert(std::holds_alternative<rlc_am_rx_metrics>(metrics.mode_specific), "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_rx_metrics>(metrics.mode_specific);
+    am.num_ctrl_pdus += num_ctrl_;
+    am.num_ctrl_pdu_bytes += num_ctrl_pdu_bytes_;
   }
 
   rlc_rx_metrics get_metrics()
@@ -109,11 +126,7 @@ public:
     if (not enabled) {
       return;
     }
-    rlc_mode tmp_mode    = metrics.mode;
-    uint32_t tmp_counter = metrics.counter;
-    metrics              = {};
-    metrics.mode         = tmp_mode;
-    metrics.counter      = tmp_counter;
+    metrics.reset();
   }
 };
 } // namespace srsran

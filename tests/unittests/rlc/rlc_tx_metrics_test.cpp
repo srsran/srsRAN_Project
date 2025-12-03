@@ -10,6 +10,7 @@
 
 #include "rlc_tx_metrics_test.h"
 #include "srsran/rlc/rlc_tx_metrics.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/support/engineering_notation.h"
-#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include "fmt/std.h"
