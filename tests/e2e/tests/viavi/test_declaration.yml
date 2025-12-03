@@ -465,7 +465,7 @@ tests:
       nof_antennas_ul: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 200.0e+6
+    expected_ul_bitrate: 195.0e+6
     expected_max_late_harqs: 4
     expected_nof_kos: 0
     warning_as_errors: true

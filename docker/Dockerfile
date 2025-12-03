@@ -37,7 +37,7 @@ ARG NUM_JOBS=""
 # Stage 1: Build #
 ##################
 
-FROM ubuntu:$OS_VERSION AS builder
+FROM ubuntu:$OS_VERSION AS builder-base
 
 # Adding the complete repo to the context, in /src folder
 ADD . /src
@@ -47,19 +47,36 @@ ADD . /src
 
 # Install srsRAN build dependencies
 RUN /src/docker/scripts/install_dependencies.sh build && \
-    /src/docker/scripts/install_rohc_dependencies.sh build && \
     /src/docker/scripts/install_uhd_dependencies.sh build && \
     /src/docker/scripts/install_dpdk_dependencies.sh build && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git clang
+
+
+
+FROM builder-base AS builder-rohc
+
+ARG MARCH
+ARG NUM_JOBS
+
+RUN /src/docker/scripts/install_rohc_dependencies.sh build
+
+# Compile ROHC
+RUN /src/docker/scripts/build_rohc.sh ${MARCH} ${NUM_JOBS}
+
+
+
+FROM builder-base AS builder
 
 ARG UHD_VERSION
 ARG DPDK_VERSION
 ARG MARCH
 ARG NUM_JOBS
 
-# Compile ROHC/UHD/DPDK
-RUN /src/docker/scripts/build_rohc.sh ${MARCH} ${NUM_JOBS} && \
-    /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${MARCH} ${NUM_JOBS} && \
+# Copy ROHC binaries and libraries installed in builder-rohc stage (without taking ROHC build deps that confuse DPDK build)
+COPY --from=builder-rohc /opt/rohc /opt/rohc
+
+# Compile UHD/DPDK
+RUN /src/docker/scripts/build_uhd.sh "${UHD_VERSION}" ${MARCH} ${NUM_JOBS} && \
     /src/docker/scripts/build_dpdk.sh "${DPDK_VERSION}" ${MARCH} ${NUM_JOBS}
 
 # Compile srsRAN Project and install it in the OS
@@ -99,7 +116,7 @@ FROM ubuntu:$OS_VERSION AS runtime
 ARG UHD_VERSION
 ARG DPDK_VERSION
 
-# Copy srsRAN binaries and libraries installed in previous stage
+# Copy srsRAN binaries and libraries installed in previous stage(s)
 COPY --from=builder /opt/rohc                 /opt/rohc
 COPY --from=builder /opt/uhd/${UHD_VERSION}   /opt/uhd/${UHD_VERSION}
 COPY --from=builder /opt/dpdk/${DPDK_VERSION} /opt/dpdk/${DPDK_VERSION}
