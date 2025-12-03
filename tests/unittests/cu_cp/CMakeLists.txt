@@ -34,7 +34,10 @@ target_link_libraries(cu_cp_test_helpers
         f1ap_test_helpers
         f1ap_test_doubles
         e1ap_test_helpers
+        e1ap_test_doubles
         rrc_ue_test_helpers
+        ngap_test_helpers
+        ngap_test_doubles
         f1ap_asn1
         ngap_asn1
         e1ap_asn1 srsran_e2)
