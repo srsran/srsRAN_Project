@@ -38,7 +38,7 @@ void ru_ofh_rx_symbol_handler_impl::on_new_uplink_symbol(const ofh::uplane_rx_sy
 }
 
 void ru_ofh_rx_symbol_handler_impl::on_new_prach_window_data(const prach_buffer_context& context,
-                                                             const prach_buffer&         buffer)
+                                                             shared_prach_buffer         buffer)
 {
-  notifier.on_new_prach_window_data(context, buffer);
+  notifier.on_new_prach_window_data(context, std::move(buffer));
 }

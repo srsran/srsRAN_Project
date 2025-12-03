@@ -24,7 +24,10 @@
 
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/resource_block.h"
+#include "srsran/support/memory_pool/bounded_object_pool.h"
 
 namespace srsran {
 namespace ofh {
@@ -69,6 +72,34 @@ public:
 
   bool correct_symbols_requested() const { return !symbol_out_of_bounds; }
 };
+
+inline std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(prach_format_type format)
+{
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  std::unique_ptr<prach_buffer>              buffer =
+      std::make_unique<prach_buffer_dummy>(get_preamble_duration(format), is_long_preamble(format));
+  prach_buffers.push_back(std::move(buffer));
+
+  return std::make_unique<prach_buffer_pool>(prach_buffers);
+}
+
+inline std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(unsigned nof_symbols)
+{
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  std::unique_ptr<prach_buffer>              buffer = std::make_unique<prach_buffer_dummy>(nof_symbols);
+  prach_buffers.push_back(std::move(buffer));
+
+  return std::make_unique<prach_buffer_pool>(prach_buffers);
+}
+
+inline std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(unsigned nof_symbols, prach_format_type format)
+{
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  std::unique_ptr<prach_buffer> buffer = std::make_unique<prach_buffer_dummy>(nof_symbols, is_long_preamble(format));
+  prach_buffers.push_back(std::move(buffer));
+
+  return std::make_unique<prach_buffer_pool>(prach_buffers);
+}
 
 /// Spy implementation of the resource grid writer that returns if the functions were called.
 class resource_grid_writer_bool_spy : public resource_grid_writer

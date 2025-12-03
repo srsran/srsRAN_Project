@@ -25,9 +25,7 @@
 #include "srsran/adt/interval.h"
 #include "srsran/ran/resource_block.h"
 
-namespace srsran {
-
-namespace pucch_constants {
+namespace srsran::pucch_constants {
 
 /// PUCCH hopping identifier, parameter \f$n_{ID}\f$ range.
 constexpr interval<unsigned, false> n_id_range(0, 1024);
@@ -120,5 +118,4 @@ constexpr size_t MAX_NOF_CELL_COMMON_PUCCH_RESOURCES = 16;
 /// Maximum supported UCI payload length in number of bits for PUCCH Formats 2, 3 and 4.
 constexpr unsigned FORMATS_2_3_4_MAX_UCI_NBITS = 1706;
 
-} // namespace pucch_constants
-} // namespace srsran
+} // namespace srsran::pucch_constants

@@ -112,12 +112,12 @@ public:
     }
   }
 
-  void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void handle_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
-    handler->handle_rx_prach_window(context, buffer);
+    handler->handle_rx_prach_window(context, buffer.clone());
 
     // Queue write request.
-    if (print_prach && !worker.push_task([this, context, &buffer]() {
+    if (print_prach && !worker.push_task([this, context, prach_buff = std::move(buffer)]() {
           // Retrieve preamble information.
           prach_preamble_information prach_info;
           if (is_long_preamble(context.format)) {
@@ -128,11 +128,11 @@ public:
           }
           unsigned nof_replicas = prach_info.nof_symbols;
           unsigned prach_start  = 0;
-          unsigned prach_stop   = buffer.get_max_nof_ports();
+          unsigned prach_stop   = prach_buff->get_max_nof_ports();
           for (unsigned i_port = prach_start; i_port != prach_stop; ++i_port) {
             for (unsigned i_replica = 0; i_replica != nof_replicas; ++i_replica) {
               // Select view of the replica.
-              span<const cbf16_t> samples = buffer.get_symbol(i_port, 0, 0, i_replica);
+              span<const cbf16_t> samples = prach_buff->get_symbol(i_port, 0, 0, i_replica);
 
               // Convert samples to complex float.
               span<cf_t> samples_cf = span<cf_t>(temp_prach_buffer).first(samples.size());
@@ -143,7 +143,7 @@ public:
             }
           }
 
-          unsigned nof_complex_floats = buffer.get_sequence_length() * nof_replicas * (prach_stop - prach_start);
+          unsigned nof_complex_floats = prach_buff->get_sequence_length() * nof_replicas * (prach_stop - prach_start);
           // Log the resource grid information.
           logger.info(context.slot.sfn(),
                       context.slot.slot_index(),

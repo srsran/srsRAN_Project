@@ -22,10 +22,11 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
+
 namespace srsran {
 
 struct prach_buffer_context;
-class prach_buffer;
 
 /// \brief Lower physical layer PRACH processor - Notifier interface.
 ///
@@ -54,7 +55,7 @@ public:
   /// See \ref lower_phy_error_notifier::on_prach_request_late for more information.
   /// \param[in] buffer  PRACH buffer.
   /// \param[in] context PRACH context.
-  virtual void on_rx_prach_window(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
+  virtual void on_rx_prach_window(shared_prach_buffer buffer, const prach_buffer_context& context) = 0;
 };
 
 } // namespace srsran

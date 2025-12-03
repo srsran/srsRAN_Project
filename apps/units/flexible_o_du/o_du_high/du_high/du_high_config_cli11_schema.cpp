@@ -30,6 +30,7 @@
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/slot_point_extended.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -1003,34 +1004,46 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
       ->capture_default_str()
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
-  add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
-      ->capture_default_str();
-  app.add_option_function<unsigned>(
-         "--pucch_set1_format",
-         [&pucch_params](unsigned value) {
-           if (value == 3) {
-             pucch_params.set1_format = pucch_format::FORMAT_3;
-           } else if (value == 4) {
-             pucch_params.set1_format = pucch_format::FORMAT_4;
-           } else {
-             pucch_params.set1_format = pucch_format::FORMAT_2;
-           }
-         },
-         "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
-      ->default_val(2U)
-      ->check(CLI::Range(2U, 4U));
-  add_option(app,
-             "--nof_ue_res_harq_per_set",
-             pucch_params.nof_ue_pucch_res_harq_per_set,
-             "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
+  add_option_function<std::string>(
+      app,
+      "--formats",
+      [&pucch_params](const std::string& value) {
+        if (value == "f0_and_f2") {
+          pucch_params.formats = pucch_formats::f0_and_f2;
+        } else if (value == "f1_and_f2") {
+          pucch_params.formats = pucch_formats::f1_and_f2;
+        } else if (value == "f1_and_f3") {
+          pucch_params.formats = pucch_formats::f1_and_f3;
+        } else if (value == "f1_and_f4") {
+          pucch_params.formats = pucch_formats::f1_and_f4;
+        }
+      },
+      "PUCCH formats combination to use. Values: {f0_and_f2, f1_and_f2, f1_and_f3, f1_and_f4}. Default: f1_and_f2")
+      ->default_str("f1_and_f2")
+      ->check(CLI::IsMember({"f0_and_f2", "f1_and_f2", "f1_and_f3", "f1_and_f4"}, CLI::ignore_case));
+  add_option(
+      app, "--resource_set_size", pucch_params.res_set_size, "Number of PUCCH resources in each PUCCH resource set")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   add_option(app,
-             "--f0_or_f1_nof_cell_res_sr",
+             "--nof_cell_res_set_configs",
+             pucch_params.nof_cell_res_set_configs,
+             "Number of PUCCH Resource Set configurations that are available per cell. NOTE: the higher the number of "
+             "configurations, the lower the chances UEs have to share the same PUCCH resources for HARQ-ACK.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 10));
+  add_option(app,
+             "--nof_cell_sr_res",
              pucch_params.nof_cell_sr_resources,
              "Number of PUCCH F0/F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 100));
+  add_option(app,
+             "--nof_cell_csi_res",
+             pucch_params.nof_cell_csi_resources,
+             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 100));
   add_option(app,
              "--f0_intraslot_freq_hop",
              pucch_params.f0_intraslot_freq_hopping,
@@ -1048,19 +1061,6 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.f1_intraslot_freq_hopping,
              "Enable intra-slot frequency hopping for PUCCH F1")
       ->capture_default_str();
-  add_option(app,
-             "--nof_cell_harq_pucch_res_sets",
-             pucch_params.nof_cell_harq_pucch_sets,
-             "Number of separate PUCCH resource sets for HARQ-ACK that are available in the cell. NOTE: the "
-             "higher the number of sets, the lower the chances UEs have to share the same PUCCH resources.")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 10));
-  add_option(app,
-             "--f2_or_f3_or_f4_nof_cell_res_csi",
-             pucch_params.nof_cell_csi_resources,
-             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 100));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));

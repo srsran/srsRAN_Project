@@ -61,7 +61,7 @@ struct gnb_appconfig {
   /// gNodeB identifier.
   gnb_id_t gnb_id = {411, 22};
   /// Node name.
-  std::string ran_node_name = "srsgnb01";
+  std::string ran_node_name = "gnb01";
   /// Buffer pool configuration.
   app_services::buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.

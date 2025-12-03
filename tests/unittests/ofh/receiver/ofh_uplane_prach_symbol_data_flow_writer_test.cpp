@@ -37,7 +37,8 @@ protected:
   const slot_point                                      slot;
   prach_format_type                                     format = GetParam();
   prach_buffer_context                                  buffer_context;
-  prach_buffer_dummy                                    buffer;
+  std::unique_ptr<prach_buffer_pool>                    prach_pool;
+  std::unique_ptr<prach_buffer_pool>                    custom_prach_pool;
   unsigned                                              preamble_length;
   unsigned                                              nof_symbols;
   uplane_message_decoder_results                        results;
@@ -47,7 +48,7 @@ protected:
 public:
   ofh_uplane_prach_symbol_data_flow_writer_fixture() :
     slot(0, 0, 1),
-    buffer(get_preamble_duration(format), is_long_preamble(format)),
+    prach_pool(create_prach_buffer_pool(format)),
     preamble_length(is_long_preamble(format) ? 839 : 139),
     nof_symbols(get_preamble_duration(format) == 0 ? 1U : get_preamble_duration(format)),
     writer(prach_eaxc, 0, srslog::fetch_basic_logger("TEST"), repo)
@@ -60,7 +61,7 @@ public:
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
     buffer_context.start_symbol     = 0;
 
-    repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+    repo->add(buffer_context, prach_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
     repo->process_pending_contexts();
 
     results.params.slot      = slot;
@@ -87,7 +88,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, no_eaxc_found_does_not_
 {
   unsigned eaxc = 0;
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
 
   writer.write_to_prach_buffer(eaxc, results);
 
@@ -106,7 +107,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_outside_pr
 
   writer.write_to_prach_buffer(prach_eaxc[0], results);
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols; ++i) {
@@ -121,7 +122,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_before_pra
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
-  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->add(buffer_context, prach_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
@@ -130,7 +131,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_before_pra
 
   writer.write_to_prach_buffer(prach_eaxc[0], results);
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols_; ++i) {
@@ -145,7 +146,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prbs_at_the_beginning_w
   buffer_context.pusch_scs = subcarrier_spacing::kHz60;
   buffer_context.format    = prach_format_type::zero;
   unsigned nof_symbols_    = 1U;
-  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->add(buffer_context, prach_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
@@ -154,7 +155,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prbs_at_the_beginning_w
 
   writer.write_to_prach_buffer(prach_eaxc[0], results);
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols_; ++i) {
@@ -170,8 +171,11 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
   buffer_context.format    = prach_format_type::zero;
   preamble_length          = 839;
   nof_symbols              = 1U;
-  buffer                   = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
-  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+
+  custom_prach_pool = create_prach_buffer_pool(nof_symbols, buffer_context.format);
+  auto buffer       = custom_prach_pool->get();
+
+  repo->add(buffer_context, buffer.clone(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
@@ -180,7 +184,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
 
   writer.write_to_prach_buffer(prach_eaxc[0], results);
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
   for (unsigned i = 0; i != nof_symbols; ++i) {
     const auto& sym_data = context.get_symbol_re_written(i);
@@ -195,8 +199,10 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
   buffer_context.format    = prach_format_type::zero;
   preamble_length          = 839;
   nof_symbols              = 1U;
-  buffer                   = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
-  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+
+  custom_prach_pool = create_prach_buffer_pool(nof_symbols, buffer_context.format);
+
+  repo->add(buffer_context, custom_prach_pool->get(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
@@ -205,7 +211,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, 60kHz_long_format_one_m
 
   writer.write_to_prach_buffer(prach_eaxc[0], results);
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols; ++i) {
@@ -225,7 +231,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_in_one_pac
     writer.write_to_prach_buffer(prach_eaxc[0], results);
   }
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols; ++i) {
@@ -237,10 +243,13 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_in_one_pac
 TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_with_start_symbol_offset_passes)
 {
   repo->clear(slot);
-  buffer = prach_buffer_dummy(nof_symbols, is_long_preamble(buffer_context.format));
+
+  custom_prach_pool = create_prach_buffer_pool(nof_symbols, format);
+  auto buffer       = custom_prach_pool->get();
+
   // Offset the start symbol.
   buffer_context.start_symbol = 2;
-  repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->add(buffer_context, buffer.clone(), srslog::fetch_basic_logger("TEST"), std::nullopt);
   repo->process_pending_contexts();
 
   auto& section     = results.sections.back();
@@ -251,9 +260,9 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, decoded_prbs_with_start
     results.params.symbol_id = symbol_id + buffer_context.start_symbol;
     writer.write_to_prach_buffer(prach_eaxc[0], results);
   }
-  ASSERT_TRUE(buffer.correct_symbols_requested());
+  ASSERT_TRUE(static_cast<prach_buffer_dummy&>(*buffer).correct_symbols_requested());
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols; ++i) {
@@ -276,7 +285,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prach_in_three_message_
     writer.write_to_prach_buffer(prach_eaxc[0], results_cp);
   }
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols_; ++i) {
@@ -301,7 +310,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prach_in_three_message_
     writer.write_to_prach_buffer(prach_eaxc[0], results_cp);
   }
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols_; ++i) {
@@ -327,7 +336,7 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prach_in_three_message_
     writer.write_to_prach_buffer(prach_eaxc[0], results_cp);
   }
 
-  prach_context context = repo->get(slot);
+  const prach_context& context = repo->get(slot);
   ASSERT_FALSE(context.empty());
 
   for (unsigned i = 0; i != nof_symbols_; ++i) {

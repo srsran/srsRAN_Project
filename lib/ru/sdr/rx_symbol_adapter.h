@@ -48,9 +48,9 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void on_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
-    rx_symbol_handler.on_new_prach_window_data(context, buffer);
+    rx_symbol_handler.on_new_prach_window_data(context, std::move(buffer));
   }
 
 private:

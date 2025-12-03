@@ -39,44 +39,30 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const security::sec_as_config&                   security_info_,
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
-                                                   cu_up_ue_logger&                                 logger_,
                                                    uint64_t                                         ue_dl_ambr,
-                                                   unique_timer&        ue_inactivity_timer_,
-                                                   timer_factory        ue_dl_timer_factory_,
-                                                   timer_factory        ue_ul_timer_factory_,
-                                                   timer_factory        ue_ctrl_timer_factory_,
-                                                   e1ap_interface&      e1ap_,
-                                                   f1u_cu_up_gateway&   f1u_gw_,
-                                                   ngu_session_manager& ngu_session_mngr_,
-                                                   gtpu_teid_pool&      n3_teid_allocator_,
-                                                   gtpu_teid_pool&      f1u_teid_allocator_,
-                                                   gtpu_demux_ctrl&     gtpu_rx_demux_,
-                                                   task_executor&       ue_dl_exec_,
-                                                   task_executor&       ue_ul_exec_,
-                                                   task_executor&       ue_ctrl_exec_,
-                                                   task_executor&       crypto_exec_,
-                                                   dlt_pcap&            gtpu_pcap_) :
+                                                   const pdu_session_manager_dependencies&          dependencies) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
   security_info(security_info_),
   n3_config(n3_config_),
   test_mode_config(test_mode_config_),
-  logger(logger_),
-  ue_inactivity_timer(ue_inactivity_timer_),
-  ue_dl_timer_factory(ue_dl_timer_factory_),
-  ue_ul_timer_factory(ue_ul_timer_factory_),
-  ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
-  n3_teid_allocator(n3_teid_allocator_),
-  f1u_teid_allocator(f1u_teid_allocator_),
-  gtpu_rx_demux(gtpu_rx_demux_),
-  ue_dl_exec(ue_dl_exec_),
-  ue_ul_exec(ue_ul_exec_),
-  ue_ctrl_exec(ue_ctrl_exec_),
-  crypto_exec(crypto_exec_),
-  gtpu_pcap(gtpu_pcap_),
-  e1ap(e1ap_),
-  f1u_gw(f1u_gw_),
-  ngu_session_mngr(ngu_session_mngr_)
+  logger(dependencies.logger),
+  ue_inactivity_timer(dependencies.ue_inactivity_timer),
+  ue_dl_timer_factory(dependencies.ue_dl_timer_factory),
+  ue_ul_timer_factory(dependencies.ue_ul_timer_factory),
+  ue_ctrl_timer_factory(dependencies.ue_ctrl_timer_factory),
+  n3_teid_allocator(dependencies.n3_teid_allocator),
+  f1u_teid_allocator(dependencies.f1u_teid_allocator),
+  gtpu_rx_demux(dependencies.gtpu_rx_demux),
+  ue_dl_exec(dependencies.ue_dl_exec),
+  ue_ul_exec(dependencies.ue_ul_exec),
+  ue_ctrl_exec(dependencies.ue_ctrl_exec),
+  crypto_exec(dependencies.crypto_exec),
+  gtpu_pcap(dependencies.gtpu_pcap),
+  e1ap(dependencies.e1ap),
+  f1u_gw(dependencies.f1u_gw),
+  ngu_session_mngr(dependencies.ngu_session_mngr),
+  cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if)
 {
   token_bucket_config ue_ambr_config =
       generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_ctrl_timer_factory);
@@ -287,9 +273,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg, new_session.security_ind);
   pdcp_msg.config.custom                        = qos_cfg.at(five_qi).pdcp_custom_cfg;
   pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
-  pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
+  pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_cu_up_mngr_adapter;
   pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
-  pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
+  pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_cu_up_mngr_adapter;
   pdcp_msg.ue_dl_timer_factory                  = ue_dl_timer_factory;
   pdcp_msg.ue_ul_timer_factory                  = ue_ul_timer_factory;
   pdcp_msg.ue_ctrl_timer_factory                = ue_ctrl_timer_factory;
@@ -338,8 +324,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // Connect "PDCP-E1AP" adapter to E1AP
-  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
-  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(ue_index, &e1ap);
+  new_drb->pdcp_tx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, &cu_up_mngr_pdcp_if);
+  new_drb->pdcp_rx_to_cu_up_mngr_adapter.connect_cu_up_mngr(ue_index, &cu_up_mngr_pdcp_if);
 
   // Create  F1-U bearer
   new_drb->f1u_cfg = qos_cfg.at(five_qi).f1u_cfg;

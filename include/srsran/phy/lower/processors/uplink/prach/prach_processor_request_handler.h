@@ -22,10 +22,11 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
+
 namespace srsran {
 
 struct prach_buffer_context;
-class prach_buffer;
 
 /// \brief Lower physical layer PRACH processor - Request handler interface.
 ///
@@ -44,7 +45,7 @@ public:
   ///
   /// \param[in] buffer Destination PRACH buffer.
   /// \param[in] context PRACH context.
-  virtual void handle_request(prach_buffer& buffer, const prach_buffer_context& context) = 0;
+  virtual void handle_request(shared_prach_buffer buffer, const prach_buffer_context& context) = 0;
 };
 
 } // namespace srsran

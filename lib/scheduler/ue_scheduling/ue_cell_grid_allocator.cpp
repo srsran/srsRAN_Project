@@ -46,12 +46,13 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
   ul_grants.reserve(MAX_PUSCH_PDUS_PER_SLOT);
 }
 
-std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
-                                                                        const search_space_info&      ss_info,
-                                                                        uint8_t pdsch_td_res_index,
-                                                                        std::pair<crb_interval, crb_interval> crbs,
-                                                                        sch_mcs_index                         mcs,
-                                                                        unsigned nof_layers)
+std::optional<sch_mcs_tbs>
+ue_cell_grid_allocator::calculate_dl_mcs_tbs(const cell_slot_resource_allocator&          pdsch_alloc,
+                                             const search_space_info&                     ss_info,
+                                             uint8_t                                      pdsch_td_res_index,
+                                             const std::pair<crb_interval, crb_interval>& crbs,
+                                             sch_mcs_index                                mcs,
+                                             unsigned                                     nof_layers) const
 {
   // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS
   // REs.
@@ -87,8 +88,8 @@ std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(cell_slo
   return mcs_tbs_info;
 }
 
-expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_pdcch(const ue_cell&           ue_cc,
-                                                                                     const search_space_info& ss_info)
+expected<pdcch_dl_information*, alloc_status>
+ue_cell_grid_allocator::alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info) const
 {
   const rnti_t crnti = ue_cc.rnti();
 
@@ -116,8 +117,9 @@ expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_p
   return pdcch;
 }
 
-std::optional<uci_allocation>
-ue_cell_grid_allocator::alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index)
+std::optional<uci_allocation> ue_cell_grid_allocator::alloc_uci(const ue_cell&           ue_cc,
+                                                                const search_space_info& ss_info,
+                                                                uint8_t                  pdsch_td_res_index) const
 {
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = ss_info.pdsch_time_domain_list[pdsch_td_res_index];
 
@@ -159,7 +161,7 @@ expected<ue_cell_grid_allocator::dl_grant_info, dl_alloc_failure_cause>
 ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                       user,
                                                const sched_helper::dl_sched_context& params,
                                                std::optional<dl_harq_process_handle> h_dl,
-                                               unsigned                              pending_bytes)
+                                               unsigned                              pending_bytes) const
 {
   const bool            is_retx            = h_dl.has_value();
   const search_space_id ss_id              = params.ss_id;
@@ -227,7 +229,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
 void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        grant,
                                               vrb_interval                          vrbs,
                                               std::pair<crb_interval, crb_interval> crbs,
-                                              bool                                  enable_interleaving)
+                                              bool                                  enable_interleaving) const
 {
   // Derive remaining parameters from \c dl_grant_params.
   ue&                                          u                  = ues[grant.user->ue_index()];
@@ -401,7 +403,7 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
 }
 
 expected<vrb_interval, dl_alloc_failure_cause>
-ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
+ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request) const
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_retx_dl_sched_context(
@@ -445,8 +447,12 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
   // Select PDCCH searchSpace and PUSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_newtx_ul_sched_context(
-      request.user, cell_alloc[0].slot, request.pusch_slot, pending_uci_harq_bits, request.pending_bytes);
+  auto sched_ctxt = sched_helper::get_newtx_ul_sched_context(request.user,
+                                                             cell_alloc[0].slot,
+                                                             request.pusch_slot,
+                                                             pending_uci_harq_bits,
+                                                             request.pending_bytes,
+                                                             request.allowed_symbols);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
     return make_unexpected(alloc_status::skip_ue);
@@ -460,17 +466,22 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
 
   // Add UL grant to list of pending grants and create a newTx DL grant builder.
   ul_grants.push_back(*result);
-  return ul_newtx_grant_builder{*this, (unsigned)ul_grants.size() - 1};
+  return ul_newtx_grant_builder{*this, static_cast<unsigned>(ul_grants.size()) - 1};
 }
 
-expected<vrb_interval, alloc_status> ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& request)
+expected<vrb_interval, alloc_status>
+ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& request) const
 {
   unsigned pending_uci_harq_bits =
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
   // Select PDCCH searchSpace and PUSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_retx_ul_sched_context(
-      request.user, cell_alloc[0].slot, request.pusch_slot, pending_uci_harq_bits, request.h_ul);
+  auto sched_ctxt = sched_helper::get_retx_ul_sched_context(request.user,
+                                                            cell_alloc[0].slot,
+                                                            request.pusch_slot,
+                                                            pending_uci_harq_bits,
+                                                            request.h_ul,
+                                                            request.allowed_symbols);
   if (not sched_ctxt) {
     return make_unexpected(alloc_status::skip_ue);
   }
@@ -497,7 +508,7 @@ expected<ue_cell_grid_allocator::ul_grant_info, alloc_status>
 ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                       user,
                                                const sched_helper::ul_sched_context& params,
                                                std::optional<ul_harq_process_handle> h_ul,
-                                               unsigned                              pending_bytes)
+                                               unsigned                              pending_bytes) const
 {
   // Derive remaining parameters from \c ul_grant_params.
   ue&                                          u                  = ues[user.ue_index()];
@@ -565,7 +576,7 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
   return ul_grant_info{&user, params, h_ul.value(), pdcch, &msg, pending_bytes};
 }
 
-void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs)
+void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs) const
 {
   srsran_assert(not vrbs.empty(), "Invalid set of PUSCH VRBs");
 
@@ -612,7 +623,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
     // dc_offset_helper::is_contained), we take the conservative approach and assume that the DC location is always
     // contained in the RBs. This may slightly reduce the MCS beyond what's needed to satisfy the effective code rate
     // limits. We do this to simplify the search for available RBs during HARQ retxs.
-    const bool contains_dc = true;
+    constexpr bool contains_dc = true;
     mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, ue_cc.active_bwp(), grant.cfg.recommended_mcs, vrbs.length(), contains_dc);
 
@@ -793,28 +804,28 @@ void ue_cell_grid_allocator::post_process_results()
   auto& slot_alloc = cell_alloc[0];
 
   // Remove cancelled allocations.
-  for (auto it = slot_alloc.result.dl.dl_pdcchs.begin(); it != slot_alloc.result.dl.dl_pdcchs.end();) {
+  for (auto* it = slot_alloc.result.dl.dl_pdcchs.begin(); it != slot_alloc.result.dl.dl_pdcchs.end();) {
     if (it->ctx.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.dl.dl_pdcchs.erase(it);
     } else {
       ++it;
     }
   }
-  for (auto it = slot_alloc.result.dl.ul_pdcchs.begin(); it != slot_alloc.result.dl.ul_pdcchs.end();) {
+  for (auto* it = slot_alloc.result.dl.ul_pdcchs.begin(); it != slot_alloc.result.dl.ul_pdcchs.end();) {
     if (it->ctx.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.dl.ul_pdcchs.erase(it);
     } else {
       ++it;
     }
   }
-  for (auto it = slot_alloc.result.dl.ue_grants.begin(); it != slot_alloc.result.dl.ue_grants.end();) {
+  for (auto* it = slot_alloc.result.dl.ue_grants.begin(); it != slot_alloc.result.dl.ue_grants.end();) {
     if (it->pdsch_cfg.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.dl.ue_grants.erase(it);
     } else {
       ++it;
     }
   }
-  for (auto it = slot_alloc.result.ul.puschs.begin(); it != slot_alloc.result.ul.puschs.end();) {
+  for (auto* it = slot_alloc.result.ul.puschs.begin(); it != slot_alloc.result.ul.puschs.end();) {
     if (it->pusch_cfg.rnti == rnti_t::INVALID_RNTI) {
       it = slot_alloc.result.ul.puschs.erase(it);
     } else {
@@ -829,7 +840,7 @@ void ue_cell_grid_allocator::post_process_results()
   ul_grants.clear();
 }
 
-void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
+void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot) const
 {
   if (not cell_alloc.cfg.is_ul_enabled(slot)) {
     return;
@@ -888,9 +899,10 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
   }
 }
 
-void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interval                          alloc_vrbs,
-                                                                      std::pair<crb_interval, crb_interval> alloc_crbs,
-                                                                      bool enable_interleaving)
+void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(
+    vrb_interval                                 alloc_vrbs,
+    const std::pair<crb_interval, crb_interval>& alloc_crbs,
+    bool                                         enable_interleaving)
 {
   // Transfer the PDSCH parameters to the parent DL grant.
   parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs, enable_interleaving);

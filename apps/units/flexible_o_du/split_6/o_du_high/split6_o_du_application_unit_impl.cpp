@@ -85,7 +85,7 @@ o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_d
 
   // Create the adaptors.
   auto fapi_ctrl = plugin->create_fapi_adaptor(du_hi_cfg, dependencies);
-  report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");
+  report_error_if_not(fapi_ctrl, "Could not create PHY-FAPI adaptor");
   auto du_impl = create_o_du_split6(unit_cfg, dependencies, std::move(fapi_ctrl));
   report_error_if_not(du_impl.unit, "Could not create split 6 DU");
 

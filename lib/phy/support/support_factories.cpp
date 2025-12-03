@@ -23,7 +23,6 @@
 #include "srsran/phy/support/support_factories.h"
 #include "interpolator/interpolator_linear_impl.h"
 #include "prach_buffer_impl.h"
-#include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
 #include "resource_grid_pool_impl.h"
 #include "srsran/phy/generic_functions/precoding/precoding_factories.h"
@@ -105,12 +104,6 @@ std::shared_ptr<resource_grid_mapper_factory>
 srsran::create_resource_grid_mapper_factory(std::shared_ptr<channel_precoder_factory> precoder_factory)
 {
   return std::make_shared<resource_grid_mapper_factory_impl>(precoder_factory);
-}
-
-std::unique_ptr<prach_buffer_pool>
-srsran::create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements)
-{
-  return std::make_unique<prach_buffer_pool_impl>(std::move(elements));
 }
 
 std::unique_ptr<prach_buffer> srsran::create_prach_buffer_long(unsigned max_nof_antennas, unsigned max_nof_fd_occasions)

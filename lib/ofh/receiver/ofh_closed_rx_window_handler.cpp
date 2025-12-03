@@ -124,21 +124,19 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
     return;
   }
 
-  const auto& ctx_value = *context;
+  const auto& ctx_value = context->context;
 
-  notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
+  notifier->on_new_prach_window_data(ctx_value, std::move(context->buffer));
 
   // Increase the metrics counter.
   nof_missed_prach_contexts.fetch_add(1, std::memory_order_relaxed);
 
   if (log_unreceived_messages) {
-    logger.warning("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'",
-                   ctx_value.context.sector,
-                   ctx_value.context.slot);
+    logger.warning(
+        "Sector#{}: missed incoming User-Plane PRACH messages for slot '{}'", ctx_value.sector, ctx_value.slot);
   }
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
-    logger.debug(
-        "Sector#{}: notifying incomplete PRACH in slot '{}'", ctx_value.context.sector, ctx_value.context.slot);
+    logger.debug("Sector#{}: notifying incomplete PRACH in slot '{}'", ctx_value.sector, ctx_value.slot);
   }
 }

@@ -35,6 +35,7 @@
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/radio_link_monitoring.h"
@@ -359,23 +360,22 @@ struct du_high_unit_pucch_config {
   std::optional<unsigned> pucch_resource_common;
 
   /// \c PUCCH-Config parameters.
-  /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
-  bool use_format_0 = false;
-  /// Select the format for the PUCCH resources belonging to PUCCH resource set 1. Values: {2, 3, 4}.
-  pucch_format set1_format = pucch_format::FORMAT_2;
+  /// PUCCH format combination. See \ref pucch_formats for details.
+  pucch_formats formats = pucch_formats::f1_and_f2;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
-  /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
+  /// Values {3,...,8} if \c formats == pucch_formats::f0_and_f2. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
   /// resources.
-  unsigned nof_ue_pucch_res_harq_per_set = 8;
-  /// \brief Number of separate PUCCH resource sets for HARQ-ACK reporting that are available in a cell.
-  /// \remark UEs will be distributed possibly over different HARQ-ACK PUCCH sets; the more sets, the fewer UEs will
-  /// have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack of
-  /// resources. However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
-  unsigned nof_cell_harq_pucch_sets = 2;
-  /// Number of PUCCH Format 1 cell resources for SR.
+  unsigned res_set_size = 8;
+  /// \brief Number of separate PUCCH resource set configurations for HARQ-ACK reporting that are available in a cell.
+  /// \remark A resource set configuration defines the PUCCH resources present in Resource Set ID 0 and Resource Set ID
+  /// 1 for a given UE. UEs will be distributed possibly over different configurations. The more configurations, the
+  /// fewer UEs will have to share the same set, which reduces the chances that UEs won't be allocated PUCCH due to lack
+  /// of resources. However, the usage of PUCCH-dedicated REs will be proportional to the number of sets.
+  unsigned nof_cell_res_set_configs = 2;
+  /// Number of PUCCH Format 0/1 cell resources for SR.
   unsigned nof_cell_sr_resources = 8;
-  /// Number of PUCCH Format 1 cell resources for CSI.
+  /// Number of PUCCH Format 2/3/4 cell resources for CSI.
   unsigned nof_cell_csi_resources = 8;
 
   /// \brief \c SR period in milliseconds.
@@ -482,9 +482,8 @@ struct du_high_unit_pucch_config {
   bool operator==(const du_high_unit_pucch_config& rhs) const
   {
     return p0_nominal == rhs.p0_nominal && pucch_resource_common == rhs.pucch_resource_common &&
-           use_format_0 == rhs.use_format_0 && set1_format == rhs.set1_format &&
-           nof_ue_pucch_res_harq_per_set == rhs.nof_ue_pucch_res_harq_per_set &&
-           nof_cell_harq_pucch_sets == rhs.nof_cell_harq_pucch_sets &&
+           formats == rhs.formats && res_set_size == rhs.res_set_size &&
+           nof_cell_res_set_configs == rhs.nof_cell_res_set_configs &&
            nof_cell_sr_resources == rhs.nof_cell_sr_resources && nof_cell_csi_resources == rhs.nof_cell_csi_resources &&
            almost_equal<float>(sr_period_msec, rhs.sr_period_msec) &&
            f0_intraslot_freq_hopping == rhs.f0_intraslot_freq_hopping && f1_enable_occ == rhs.f1_enable_occ &&

@@ -29,6 +29,7 @@
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/ngap/ngap_message.h"
+#include "srsran/ran/plmn_identity.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -93,7 +94,11 @@ TEST_F(cu_cp_setup_test, when_new_ue_sends_rrc_setup_request_with_unknown_cause_
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
   get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(
-      du_ue_f1ap_id, crnti, {}, byte_buffer::create({0x1d, 0xa9, 0xe1, 0xb9, 0xf1, 0x18}).value()));
+      du_ue_f1ap_id,
+      crnti,
+      plmn_identity::test_value(),
+      {},
+      byte_buffer::create({0x1d, 0xa9, 0xe1, 0xb9, 0xf1, 0x18}).value()));
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;

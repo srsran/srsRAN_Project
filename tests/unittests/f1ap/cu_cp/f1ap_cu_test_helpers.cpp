@@ -29,6 +29,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
@@ -64,7 +65,7 @@ f1ap_cu_test::~f1ap_cu_test()
 f1ap_cu_test::test_ue& f1ap_cu_test::create_ue(gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message msg = test_helpers::generate_init_ul_rrc_message_transfer(
-      du_ue_id, to_rnti(0x4601), byte_buffer::create({0x1, 0x2, 0x3, 0x4}).value());
+      du_ue_id, to_rnti(0x4601), plmn_identity::test_value(), byte_buffer::create({0x1, 0x2, 0x3, 0x4}).value());
   f1ap->handle_message(msg);
   ue_index_t ue_index = *du_processor_notifier.last_created_ue_index;
   test_ues.emplace(ue_index, test_ue{ue_index});

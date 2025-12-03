@@ -27,7 +27,7 @@
       model: acc100
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
-    - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
+    - LD_LIBRARY_PATH: /opt/rohc/lib/:/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
   shared_files:
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb

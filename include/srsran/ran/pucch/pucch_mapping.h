@@ -71,6 +71,58 @@ inline const char* to_string(pucch_format format)
   }
 }
 
+/// Defines the allowed combinations of PUCCH formats to use for the resources in a given cell.
+enum class pucch_formats { f0_and_f2, f1_and_f2, f1_and_f3, f1_and_f4 };
+
+inline const char* to_string(pucch_formats formats)
+{
+  switch (formats) {
+    case pucch_formats::f0_and_f2:
+      return "f0_and_f2";
+    case pucch_formats::f1_and_f2:
+      return "f1_and_f2";
+    case pucch_formats::f1_and_f3:
+      return "f1_and_f3";
+    case pucch_formats::f1_and_f4:
+      return "f1_and_f4";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+/// \brief Returns a format between F0 and F1 for the given combination of PUCCH formats.
+/// This format is used for Resource Set ID 0 and SR resources.
+inline pucch_format pucch_f0f1_format(pucch_formats formats)
+{
+  switch (formats) {
+    case pucch_formats::f0_and_f2:
+      return pucch_format::FORMAT_0;
+    case pucch_formats::f1_and_f2:
+    case pucch_formats::f1_and_f3:
+    case pucch_formats::f1_and_f4:
+      return pucch_format::FORMAT_1;
+    default:
+      return pucch_format::NOF_FORMATS;
+  }
+}
+
+/// Returns a format between F2, F3 and F4 for the given combination of PUCCH formats.
+/// This format is used for Resource Set ID 1 and CSI resources.
+inline pucch_format pucch_f2f3f4_format(pucch_formats formats)
+{
+  switch (formats) {
+    case pucch_formats::f0_and_f2:
+    case pucch_formats::f1_and_f2:
+      return pucch_format::FORMAT_2;
+    case pucch_formats::f1_and_f3:
+      return pucch_format::FORMAT_3;
+    case pucch_formats::f1_and_f4:
+      return pucch_format::FORMAT_4;
+    default:
+      return pucch_format::NOF_FORMATS;
+  }
+}
+
 /// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, refer to
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };

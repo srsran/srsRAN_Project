@@ -25,13 +25,11 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
-#include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
-#include <random>
 
 namespace srsran {
 
@@ -73,10 +71,24 @@ std::ostream& operator<<(std::ostream& os, span<const prach_occasion_info> occas
   }
 
   for (const auto& occasion : occasions) {
-    os << std::endl << occasion;
+    os << '\n' << occasion;
   }
 
   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const test_case_t& params)
+{
+  return os << fmt::format("dplx_mode={} prach_config_index={} pusch_scs={} active_slots={} nof_slots_period={} "
+                           "crbs={} nof_subframes={} symbols={}",
+                           to_string(params.dplx_mode),
+                           params.prach_config_index,
+                           to_string(params.pusch_scs),
+                           params.active_slots,
+                           params.nof_slots_period,
+                           params.crbs,
+                           params.nof_subframes,
+                           params.symbols);
 }
 
 } // namespace srsran

@@ -217,7 +217,7 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
 
   amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.warning("ue={}: Dropping UL NAS transport. UE AMF ID not found", msg.ue_index);
+    logger.warning("ue={}: Dropping ULNAStransport. UE AMF ID not found", msg.ue_index);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
@@ -868,7 +868,7 @@ void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer&
 {
   const ue_index_t ue_index = ul_ran_status_transfer.ue_index;
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.warning("ue={}: Dropping UL RAN Status Transfer. UE context does not exist", ue_index);
+    logger.warning("ue={}: Dropping ULRANStatusTransfer. UE context does not exist", ue_index);
     return;
   }
 
@@ -886,7 +886,7 @@ void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer&
 
   // Forward message to AMF.
   if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send UL Status Transfer");
+    ue_ctxt.logger.log_warning("AMF notifier is not set. Cannot send ULRANStatusTransfer");
     return;
   }
 }
@@ -894,7 +894,7 @@ void ngap_impl::handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer&
 async_task<expected<ngap_dl_ran_status_transfer>> ngap_impl::handle_dl_ran_status_transfer_required(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.warning("ue={}: Cannot await DL RAN Status Transfer. UE context does not exist", ue_index);
+    logger.warning("ue={}: Cannot await DLRANStatusTransfer. UE context does not exist", ue_index);
 
     auto err_function = [](coro_context<async_task<expected<ngap_dl_ran_status_transfer>>>& ctx) {
       CORO_BEGIN(ctx);
@@ -1221,6 +1221,66 @@ async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const by
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE
+
+async_task<bool>
+ngap_impl::handle_rrc_inactive_transition_report_required(const ngap_rrc_inactive_transition_report& report)
+{
+  const ue_index_t ue_index = report.ue_index;
+  if (!ue_ctxt_list.contains(ue_index)) {
+    logger.warning("ue={}: Dropping RRCInactiveTransitionReport. UE context does not exist", ue_index);
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+
+  ngap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
+
+  if (ue_ctxt.release_requested or ue_ctxt.release_scheduled) {
+    ue_ctxt.logger.log_debug("Ignoring RRCInactiveTransitionReport. Cause: Release {} already pending",
+                             ue_ctxt.release_scheduled ? "command" : "request");
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+
+  ngap_message ngap_msg = {};
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_RRC_INACTIVE_TRANSITION_REPORT);
+
+  rrc_inactive_transition_report_s& asn1_rrc_transition_report =
+      ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report();
+  asn1_rrc_transition_report->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctxt.ue_ids.ran_ue_id);
+  asn1_rrc_transition_report->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctxt.ue_ids.amf_ue_id);
+
+  fill_asn1_rrc_inactive_transition_report(asn1_rrc_transition_report, report);
+
+  // Schedule transmission of RRC Inactive Transition Report.
+  return launch_async([this, report, ngap_msg](coro_context<async_task<bool>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (!ue_ctxt_list.contains(report.ue_index)) {
+      logger.warning(
+          "ue={} ran_ue_id={} amf_ue_id={}: Dropping scheduled RRCInactiveTransitionReport. UE context does not "
+          "exist anymore",
+          report.ue_index,
+          ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->ran_ue_ngap_id,
+          ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->amf_ue_ngap_id);
+      CORO_EARLY_RETURN(false);
+    }
+
+    if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
+      logger.error("ue={} ran_ue_id={} amf_ue_id={}: AMF notifier is not set. Cannot send RRCInactiveTransitionReport",
+                   report.ue_index,
+                   ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->ran_ue_ngap_id,
+                   ngap_msg.pdu.init_msg().value.rrc_inactive_transition_report()->amf_ue_ngap_id);
+      CORO_EARLY_RETURN(false);
+    }
+
+    CORO_RETURN(true);
+  });
+}
 
 ngap_info ngap_impl::handle_ngap_metrics_report_request() const
 {

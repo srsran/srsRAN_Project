@@ -52,7 +52,7 @@ public:
                  context.sector);
   }
 
-  void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void handle_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     std::unique_lock<std::mutex> lock(mutex);
     logger.debug(context.slot.sfn(),

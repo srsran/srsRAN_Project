@@ -103,7 +103,7 @@ public:
   }
 
   // See ru_uplink_plane_handler interface for documentation.
-  void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
+  void handle_prach_occasion(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     auto token = stop_control.get_token();
     if (SRSRAN_UNLIKELY(token.is_stop_requested())) {
@@ -112,7 +112,7 @@ public:
 
     std::optional<prach_buffer_context> late_context =
         prach_request[context.slot.system_slot() % prach_request.size()].new_request(
-            context, &buffer, std::move(token));
+            context, std::move(buffer), std::move(token));
     total_prach_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
@@ -206,7 +206,7 @@ public:
     if (prach_context.slot.valid()) {
       if (prach_context.slot == slot) {
         // Notify received PRACH buffer.
-        symbol_notifier.on_new_prach_window_data(prach_context, *prach_buffer);
+        symbol_notifier.on_new_prach_window_data(prach_context, std::move(prach_buffer));
       } else {
         // Notify with a warning message if the UL previous saved context do not match with the current slot.
         logger.warning(slot.sfn(),
@@ -286,8 +286,8 @@ private:
       }
 
       // Default context and resource.
-      Context  current_context  = {};
-      Resource current_resource = {};
+      Context  current_context = {};
+      Resource current_resource;
 
       // If the previous state is in-use, obtain the context and the resource.
       if (previous_state == internal_states::in_use) {
@@ -310,7 +310,7 @@ private:
 
     std::atomic<internal_states> internal_state = internal_states::available;
     Context                      context        = {};
-    Resource                     resource       = {};
+    Resource                     resource;
     stop_event_token             token;
   };
 
@@ -325,7 +325,7 @@ private:
   /// Buffer containing the UL requests slots.
   std::vector<request_information<resource_grid_context, shared_resource_grid>> ul_request;
   /// Buffer containing the PRACH requests slots.
-  std::vector<request_information<prach_buffer_context, prach_buffer*>> prach_request;
+  std::vector<request_information<prach_buffer_context, shared_prach_buffer>> prach_request;
   /// Circular buffer containing the DL requests indexed by system slot.
   std::vector<request_information<resource_grid_context, shared_resource_grid>> dl_request;
   /// Stop control.

@@ -929,16 +929,10 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
     e1ap_removal_handler = &cu_up_db.find_cu_up_processor(cu_up_index)->get_e1ap_bearer_context_removal_handler();
   }
 
-  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
-  if (ngap == nullptr) {
-    logger.debug("ue={}: No ngap context for this ue exists, releasing it from rrc and f1ap",
-                 ue->get_ue_context().plmn);
-    return launch_async([this, ue_index](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      // If NGAP was not found, release UE from DU processor, RRC and F1AP.
-      CORO_AWAIT(handle_ue_context_release_command({ue_index, ngap_cause_radio_network_t::unspecified}));
-      CORO_RETURN();
-    });
+  auto*                            ngap                 = ngap_db.find_ngap(ue->get_ue_context().plmn);
+  ngap_ue_context_removal_handler* ngap_removal_handler = nullptr;
+  if (ngap != nullptr) {
+    ngap_removal_handler = &ngap->get_ngap_ue_context_removal_handler();
   }
 
   nrppa_ue_context_removal_handler* nrppa_removal_handler = nullptr;
@@ -948,7 +942,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
                                           du_db.get_du_processor(du_index).get_rrc_du_handler(),
                                           e1ap_removal_handler,
                                           du_db.get_du_processor(du_index).get_f1ap_handler(),
-                                          ngap->get_ngap_ue_context_removal_handler(),
+                                          ngap_removal_handler,
                                           nrppa_removal_handler,
                                           ue_mng,
                                           logger);

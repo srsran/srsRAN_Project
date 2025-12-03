@@ -145,3 +145,7 @@ add_test(cell_identity_test cell_identity_test)
 add_executable(phy_time_unit_test phy_time_unit_test.cpp)
 target_link_libraries(phy_time_unit_test srsran_support gtest gtest_main)
 gtest_discover_tests(phy_time_unit_test)
+
+add_executable(i_rnti_test i_rnti_test.cpp)
+target_link_libraries(i_rnti_test srsran_support gtest gtest_main)
+add_test(i_rnti_test i_rnti_test)

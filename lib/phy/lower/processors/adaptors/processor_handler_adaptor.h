@@ -80,7 +80,7 @@ private:
     }
 
     // See interface for documentation.
-    void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) override;
+    void request_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override;
 
     // See interface for documentation.
     void request_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override;

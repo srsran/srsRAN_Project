@@ -1,0 +1,71 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * This file is part of srsRAN.
+ *
+ * srsRAN is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * srsRAN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * A copy of the GNU Affero General Public License can be found in
+ * the LICENSE file in the top-level directory of this distribution
+ * and at http://www.gnu.org/licenses/.
+ *
+ */
+
+#pragma once
+
+#include "srsran/fapi_adaptor/mac/p7/mac_fapi_p7_sector_adaptor.h"
+
+namespace srsran {
+
+namespace fapi {
+class slot_data_message_notifier;
+class error_message_notifier;
+class slot_time_message_notifier;
+} // namespace fapi
+
+class mac_cell_control_information_handler;
+class mac_cell_rach_handler;
+class mac_cell_result_notifier;
+class mac_cell_slot_handler;
+class mac_pdu_handler;
+
+namespace fapi_adaptor {
+
+/// \brief MAC-FAPI bidirectional sector fastpath adaptor interface.
+///
+/// This adaptor is a collection of interfaces to translate FAPI messages into their MAC layer counterpart and vice
+/// versa.
+class mac_fapi_p7_sector_fastpath_adaptor : public mac_fapi_p7_sector_adaptor
+{
+public:
+  // Note: temporal stop method. When doing the task of stopping O-DU low using the FAPI adaptor, check if this method
+  // is still required.
+  virtual void stop() = 0;
+
+  /// Returns a reference to the MAC cell results notifier used by the adaptor.
+  virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;
+
+  /// Configures the MAC cell slot handler to the given one.
+  virtual void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) = 0;
+
+  /// Configures the MAC cell RACH handler to the given one.
+  virtual void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) = 0;
+
+  /// Configures the MAC cell PDU handler to the given one.
+  virtual void set_cell_pdu_handler(mac_pdu_handler& handler) = 0;
+
+  /// Configures the MAC cell CRC handler to the given one.
+  virtual void set_cell_crc_handler(mac_cell_control_information_handler& handler) = 0;
+};
+
+} // namespace fapi_adaptor
+} // namespace srsran

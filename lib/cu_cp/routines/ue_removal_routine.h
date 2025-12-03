@@ -37,7 +37,7 @@ public:
                      rrc_ue_handler&                      rrc_du_notifier_,
                      e1ap_bearer_context_removal_handler* e1ap_removal_handler_,
                      f1ap_ue_context_removal_handler&     f1ap_removal_handler_,
-                     ngap_ue_context_removal_handler&     ngap_removal_handler_,
+                     ngap_ue_context_removal_handler*     ngap_removal_handler_,
                      nrppa_ue_context_removal_handler*    nrppa_removal_handler_,
                      ue_manager&                          ue_mng_,
                      srslog::basic_logger&                logger_);
@@ -52,7 +52,7 @@ private:
   rrc_ue_handler&                      rrc_du_notifier;
   e1ap_bearer_context_removal_handler* e1ap_removal_handler = nullptr;
   f1ap_ue_context_removal_handler&     f1ap_removal_handler;
-  ngap_ue_context_removal_handler&     ngap_removal_handler;
+  ngap_ue_context_removal_handler*     ngap_removal_handler  = nullptr;
   nrppa_ue_context_removal_handler*    nrppa_removal_handler = nullptr;
   // To remove UE context from DU processor.
   ue_manager&           ue_mng;

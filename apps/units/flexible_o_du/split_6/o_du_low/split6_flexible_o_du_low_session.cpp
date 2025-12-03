@@ -23,9 +23,10 @@
 #include "split6_flexible_o_du_low_session.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_operation_controller.h"
-#include "srsran/fapi_adaptor/fapi_operation_controller.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
+#include "srsran/fapi_adaptor/mac/p7/mac_fapi_p7_sector_adaptor.h"
+#include "srsran/fapi_adaptor/phy/p7/phy_fapi_p7_sector_fastpath_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_fastpath_adaptor.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/support/srsran_assert.h"
@@ -34,9 +35,6 @@ using namespace srsran;
 
 split6_flexible_o_du_low_session::~split6_flexible_o_du_low_session()
 {
-  // Stop adaptor.
-  slot_adaptor->get_operation_controller().stop();
-
   // Stop RU.
   ru->get_controller().get_operation_controller().stop();
 
@@ -44,18 +42,19 @@ split6_flexible_o_du_low_session::~split6_flexible_o_du_low_session()
   odu_low->get_operation_controller().stop();
 }
 
-void split6_flexible_o_du_low_session::set_dependencies(std::unique_ptr<fapi::slot_messages_adaptor> slot_msg_adaptor,
-                                                        std::unique_ptr<srs_du::o_du_low>            du,
-                                                        std::unique_ptr<radio_unit>                  radio,
-                                                        unique_timer                                 timer)
+void split6_flexible_o_du_low_session::set_dependencies(
+    std::unique_ptr<fapi_adaptor::mac_fapi_p7_sector_adaptor> slot_msg_adaptor,
+    std::unique_ptr<srs_du::o_du_low>                         du,
+    std::unique_ptr<radio_unit>                               radio,
+    unique_timer                                              timer)
 {
   srsran_assert(slot_msg_adaptor, "Invalid FAPI slot message adaptor");
   srsran_assert(du, "Invalid O-DU low");
   srsran_assert(radio, "Invalid Radio Unit");
 
-  slot_adaptor = std::move(slot_msg_adaptor);
-  odu_low      = std::move(du);
-  ru           = std::move(radio);
+  mac_p7_adaptor = std::move(slot_msg_adaptor);
+  odu_low        = std::move(du);
+  ru             = std::move(radio);
 
   // Connect the RU adaptor to the RU.
   ru_dl_rg_adapt.connect(ru->get_downlink_plane_handler());
@@ -70,10 +69,10 @@ void split6_flexible_o_du_low_session::set_dependencies(std::unique_ptr<fapi::sl
     ru_error_adapt.map_handler(i, upper.get_error_handler());
 
     // Connect adaptor with O-DU low.
-    auto& fapi_adaptor = odu_low->get_phy_fapi_adaptor().get_sector_adaptor(i);
-    fapi_adaptor.set_slot_time_message_notifier(slot_adaptor->get_slot_time_message_notifier());
-    fapi_adaptor.set_slot_data_message_notifier(slot_adaptor->get_slot_data_message_notifier());
-    fapi_adaptor.set_error_message_notifier(slot_adaptor->get_error_message_notifier());
+    auto& fapi_adaptor = odu_low->get_phy_fapi_fastpath_adaptor().get_sector_adaptor(i).get_p7_sector_adaptor();
+    fapi_adaptor.set_slot_time_message_notifier(mac_p7_adaptor->get_slot_time_message_notifier());
+    fapi_adaptor.set_slot_data_message_notifier(mac_p7_adaptor->get_slot_data_message_notifier());
+    fapi_adaptor.set_error_message_notifier(mac_p7_adaptor->get_error_message_notifier());
   }
 
   odu_low->get_operation_controller().start();

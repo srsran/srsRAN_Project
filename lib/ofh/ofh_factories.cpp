@@ -231,8 +231,11 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                         prach_cp_repo,
                                         ul_grid_symbol_notified_repo);
 
-  return std::make_unique<sector_impl>(
-      sector_impl_config{sector_cfg.sector_id, sector_cfg.are_metrics_enabled},
-      sector_impl_dependencies{
-          std::move(receiver), std::move(transmitter), std::move(ul_data_repo), eth_transmitter, eth_receiver});
+  return std::make_unique<sector_impl>(sector_impl_config{sector_cfg.sector_id, sector_cfg.are_metrics_enabled},
+                                       sector_impl_dependencies{std::move(receiver),
+                                                                std::move(transmitter),
+                                                                std::move(ul_data_repo),
+                                                                std::move(ul_prach_repo),
+                                                                eth_transmitter,
+                                                                eth_receiver});
 }

@@ -231,7 +231,7 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
   // Check that creation message is valid
   const du_cell_configuration* pcell = cfg.du_cfg_hdlr->get_context().find_cell(req.cgi);
   if (pcell == nullptr) {
-    logger.warning("ue={} c-rnti={}: Could not find cell with NCI={}", req.ue_index, req.c_rnti, req.cgi.nci);
+    logger.warning("ue={} c-rnti={}: Could not find cell with nci={}", req.ue_index, req.c_rnti, req.cgi.nci);
     // Return the RRCReject container
     return make_unexpected(rrc->get_rrc_reject());
   }

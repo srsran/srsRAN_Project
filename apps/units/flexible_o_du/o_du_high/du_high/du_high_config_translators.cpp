@@ -26,7 +26,6 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_high_configuration.h"
-#include "srsran/du/du_high/du_manager/cbs/cbs_encoder.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
@@ -34,6 +33,7 @@
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
@@ -42,6 +42,7 @@
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -536,8 +537,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.pusch_max_nof_layers =
         cell.cell.pusch_cfg.enable_transform_precoding
             ? 1
-            : std::min(cell.cell.nof_antennas_ul,
-                       std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
+            : std::min({cell.cell.nof_antennas_ul, phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank});
 
     if (cell.cell.ntn_cfg.has_value()) {
       if (base_cell.common_scs == subcarrier_spacing::kHz30) {
@@ -557,7 +557,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
     // If not provided, set a default common resource set index depending on the format used for Resource Set 0.
     // The indices are chosen to maximize the number of symbols and minimize the number of cyclic shifts.
-    if (base_cell.pucch_cfg.use_format_0) {
+    if (pucch_f0f1_format(base_cell.pucch_cfg.formats) == pucch_format::FORMAT_0) {
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
           base_cell.pucch_cfg.pucch_resource_common.value_or(0);
     } else {
@@ -709,41 +709,40 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if ((param.channel_bw_mhz < bs_channel_bandwidth::MHz10 or
          (is_tdd and param.channel_bw_mhz <= bs_channel_bandwidth::MHz10)) and
         user_pucch_cfg_pre_processing == du_high_unit_pucch_config{}) {
-      constexpr unsigned nof_ue_res_harq_per_set_bw_5mhz      = 7;
-      constexpr unsigned nof_cell_harq_pucch_res_sets_bw_5mhz = 1;
-      constexpr unsigned f1_nof_cell_res_sr_5mhz              = 7;
-      constexpr unsigned f2_nof_cell_res_csi_5mhz             = 7;
-      user_pucch_cfg.nof_cell_harq_pucch_sets                 = nof_cell_harq_pucch_res_sets_bw_5mhz;
-      user_pucch_cfg.nof_ue_pucch_res_harq_per_set =
-          std::min(nof_ue_res_harq_per_set_bw_5mhz, user_pucch_cfg_pre_processing.nof_ue_pucch_res_harq_per_set);
+      constexpr unsigned res_set_size_5mhz             = 7;
+      constexpr unsigned nof_cell_res_set_configs_5mhz = 1;
+      constexpr unsigned nof_cell_sr_res_5mhz          = 7;
+      constexpr unsigned nof_cell_csi_res_5mhz         = 7;
+      user_pucch_cfg.nof_cell_res_set_configs          = nof_cell_res_set_configs_5mhz;
+      user_pucch_cfg.res_set_size = std::min(res_set_size_5mhz, user_pucch_cfg_pre_processing.res_set_size);
       user_pucch_cfg.nof_cell_sr_resources =
-          std::min(f1_nof_cell_res_sr_5mhz, user_pucch_cfg_pre_processing.nof_cell_sr_resources);
+          std::min(nof_cell_sr_res_5mhz, user_pucch_cfg_pre_processing.nof_cell_sr_resources);
       user_pucch_cfg.nof_cell_csi_resources =
-          std::min(f2_nof_cell_res_csi_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
+          std::min(nof_cell_csi_res_5mhz, user_pucch_cfg_pre_processing.nof_cell_csi_resources);
       user_pucch_cfg.f1_enable_occ = true;
     }
-    du_pucch_cfg.nof_cell_harq_pucch_res_sets = user_pucch_cfg.nof_cell_harq_pucch_sets;
-    du_pucch_cfg.nof_sr_resources             = user_pucch_cfg.nof_cell_sr_resources;
-    du_pucch_cfg.nof_csi_resources            = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
+    du_pucch_cfg.nof_cell_res_set_configs = user_pucch_cfg.nof_cell_res_set_configs;
+    du_pucch_cfg.nof_cell_sr_resources    = user_pucch_cfg.nof_cell_sr_resources;
+    du_pucch_cfg.nof_cell_csi_resources   = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
 
-    if (user_pucch_cfg.use_format_0) {
+    if (pucch_f0f1_format(user_pucch_cfg.formats) == pucch_format::FORMAT_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
-      const unsigned extra_res_harq               = user_pucch_cfg.set1_format == pucch_format::FORMAT_2 ? 2U : 0U;
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
-      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
-      f0_params.intraslot_freq_hopping                  = user_pucch_cfg.f0_intraslot_freq_hopping;
+      const unsigned extra_res_harq = pucch_f2f3f4_format(user_pucch_cfg.formats) == pucch_format::FORMAT_2 ? 2U : 0U;
+      du_pucch_cfg.res_set_0_size   = user_pucch_cfg.res_set_size - extra_res_harq;
+      du_pucch_cfg.res_set_1_size   = user_pucch_cfg.res_set_size - extra_res_harq;
+      f0_params.intraslot_freq_hopping = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
-      auto& f1_params                                   = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      f1_params.occ_supported                           = user_pucch_cfg.f1_enable_occ;
+      auto& f1_params                  = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
+      du_pucch_cfg.res_set_0_size      = user_pucch_cfg.res_set_size;
+      du_pucch_cfg.res_set_1_size      = user_pucch_cfg.res_set_size;
+      f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
       f1_params.nof_cyc_shifts         = static_cast<pucch_nof_cyclic_shifts>(user_pucch_cfg.f1_nof_cyclic_shifts);
       f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
 
-    switch (user_pucch_cfg.set1_format) {
+    switch (pucch_f2f3f4_format(user_pucch_cfg.formats)) {
       case pucch_format::FORMAT_2: {
         // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
         constexpr unsigned pucch_f2_nof_symbols = 2U;

@@ -59,9 +59,10 @@ struct drb_context {
   pdcp_f1u_adapter  pdcp_to_f1u_adapter;
   f1u_pdcp_adapter  f1u_to_pdcp_adapter;
 
-  // Adapter PDCP->E1AP
-  pdcp_rx_e1ap_adapter pdcp_rx_to_e1ap_adapter;
-  pdcp_tx_e1ap_adapter pdcp_tx_to_e1ap_adapter;
+  // Adapter PDCP->CU-UP Manager.
+  // Used for control events.
+  pdcp_rx_cu_up_mngr_adapter pdcp_rx_to_cu_up_mngr_adapter;
+  pdcp_tx_cu_up_mngr_adapter pdcp_tx_to_cu_up_mngr_adapter;
 
   // Adapter F1-U gateway -> NR-U
   f1u_gateway_rx_nru_adapter f1u_gateway_rx_to_nru_adapter;

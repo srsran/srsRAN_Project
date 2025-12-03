@@ -55,7 +55,7 @@ private:
   bool                                  quit         = false;
   std::unique_ptr<resource_grid_pool>   dl_rg_pool;
   std::unique_ptr<resource_grid_pool>   ul_rg_pool;
-  std::unique_ptr<prach_buffer>         prach_buf;
+  std::unique_ptr<prach_buffer_pool>    prach_pool;
   std::unique_ptr<ssb_processor>        ssb;
   std::unique_ptr<modulation_mapper>    data_modulator;
   std::unique_ptr<resource_grid_mapper> mapper;
@@ -94,9 +94,6 @@ public:
     logger(logger_),
     dl_rg_pool(std::move(dl_rg_pool_)),
     ul_rg_pool(std::move(ul_rg_pool_)),
-    prach_buf(create_prach_buffer_short(1,
-                                        prach_constants::MAX_NOF_PRACH_TD_OCCASIONS,
-                                        prach_constants::MAX_NOF_PRACH_FD_OCCASIONS)),
     ssb(std::move(ssb_)),
     data_modulator(std::move(data_modulator_)),
     mapper(std::move(mapper_)),
@@ -122,6 +119,12 @@ public:
     srsran_assert(ssb_config.period_ms % 5 == 0, "SSB period ({}) must be multiple of 5 ms.", ssb_config.period_ms);
     srsran_assert(nof_subcs != 0, "Number of OFDM subcarriers cannot be zero.");
     srsran_assert(nof_ports_ != 0, "Number of antenna ports cannot be zero.");
+
+    std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+    prach_buffers.push_back(create_prach_buffer_short(
+        1, prach_constants::MAX_NOF_PRACH_TD_OCCASIONS, prach_constants::MAX_NOF_PRACH_FD_OCCASIONS));
+
+    prach_pool = std::make_unique<prach_buffer_pool>(prach_buffers);
   }
 
   void handle_tti_boundary(const upper_phy_timing_context& context) override
@@ -169,7 +172,13 @@ public:
       prach_context.zero_correlation_zone = 0;
       prach_context.start_preamble_index  = 0;
       prach_context.nof_preamble_indices  = 64;
-      rx_symb_req_notifier->on_prach_capture_request(prach_context, *prach_buf);
+      auto buffer                         = prach_pool->get();
+
+      if (!buffer) {
+        logger.warning("PRACH buffer pool depleted. Ignoring PRACH capture request");
+      } else {
+        rx_symb_req_notifier->on_prach_capture_request(prach_context, std::move(buffer));
+      }
     }
 
     // Get a resource grid from the pool.

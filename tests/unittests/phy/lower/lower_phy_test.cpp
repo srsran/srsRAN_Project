@@ -280,6 +280,9 @@ protected:
     nof_tx_ports                 = nof_tx_ports_dist(rgen);
     nof_rx_ports                 = nof_rx_ports_dist(rgen);
 
+    // Create the PRACH buffer pool.
+    prach_pool = create_spy_prach_buffer_pool();
+
     // Prepare configuration.
     lower_phy_configuration config;
     config.sector_id                         = 0U;
@@ -400,6 +403,7 @@ protected:
   unsigned           nof_tx_ports;
   unsigned           nof_rx_ports;
 
+  std::unique_ptr<prach_buffer_pool>      prach_pool;
   baseband_gateway_spy                    bb_gateway_spy;
   lower_phy_rx_symbol_notifier_spy        rx_symbol_notifier_spy;
   lower_phy_timing_notifier_spy           timing_notifier_spy;
@@ -648,14 +652,13 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
     context.start_preamble_index  = 0;
     context.nof_preamble_indices  = 0;
 
-    prach_buffer_spy buffer;
+    auto buffer = prach_pool->get();
 
-    prach_notifier->on_rx_prach_window(buffer, context);
+    prach_notifier->on_rx_prach_window(buffer.clone(), context);
     auto& entries = rx_symbol_notifier_spy.get_rx_prach_events();
     ASSERT_EQ(entries.size(), 1);
-    ASSERT_EQ(context, entries.back().context);
-    ASSERT_EQ(&buffer, entries.back().buffer);
-    ASSERT_EQ(buffer.get_total_count(), 0);
+    ASSERT_EQ(buffer.get(), entries.back().buffer);
+    ASSERT_EQ(static_cast<prach_buffer_spy&>(*buffer).get_total_count(), 0);
   }
 
   // Notify PUxCH grid complete reception event.
@@ -737,21 +740,20 @@ TEST_P(LowerPhyFixture, PrachRequestHandler)
   context.start_preamble_index  = 0;
   context.nof_preamble_indices  = 0;
 
-  // Prepare RG spy.
-  prach_buffer_spy buffer_spy;
+  auto buffer = prach_pool->get();
 
   // Request RG.
-  request_handler.request_prach_window(context, buffer_spy);
+  request_handler.request_prach_window(context, buffer.clone());
 
   // Assert context and RG.
   auto& entries = prach_proc_spy.get_entries();
   ASSERT_EQ(entries.size(), 1);
   auto& puxch_entry = entries.back();
   ASSERT_EQ(puxch_entry.context, context);
-  ASSERT_EQ(puxch_entry.buffer, &buffer_spy);
+  ASSERT_EQ(puxch_entry.buffer, buffer);
 
   // No method of the buffer should have been called.
-  ASSERT_EQ(buffer_spy.get_total_count(), 0);
+  ASSERT_EQ(static_cast<prach_buffer_spy&>(*buffer).get_total_count(), 0);
 }
 
 TEST_P(LowerPhyFixture, PuxchRequestHandler)

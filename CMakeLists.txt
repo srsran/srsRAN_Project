@@ -371,7 +371,7 @@ if(ROHC_FOUND)
         DOWNLOAD_LOCATION  "https://rohc-lib.org"
         SUPPLIER           "ROHC library project"
         LICENSE            "LGPL-2.1-or-later"
-        VERSION            ${ROHC_VERSION}
+        VERSION            ${PC_ROHC_VERSION}
     )
 endif()
 

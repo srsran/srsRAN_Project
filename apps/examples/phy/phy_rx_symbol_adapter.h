@@ -51,10 +51,10 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void on_rx_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
-    rx_symbol_handler->handle_rx_prach_window(context, buffer);
+    rx_symbol_handler->handle_rx_prach_window(context, std::move(buffer));
   }
 };
 

@@ -38,12 +38,14 @@ static ue_manager_config generate_ue_manager_config(const n3_interface_config&  
 }
 
 static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_manager_impl_dependencies& dependencies,
-                                                                srslog::basic_logger&                  logger)
+                                                                cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if,
+                                                                srslog::basic_logger&         logger)
 {
   return {dependencies.e1ap,
           dependencies.timers,
           dependencies.f1u_gateway,
           dependencies.ngu_session_mngr,
+          cu_up_mngr_pdcp_if,
           dependencies.ngu_demux,
           dependencies.n3_teid_allocator,
           dependencies.f1u_teid_allocator,
@@ -69,7 +71,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
 {
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(n3_cfg, test_mode_cfg),
-                                        generate_ue_manager_dependencies(dependencies, logger));
+                                        generate_ue_manager_dependencies(dependencies, *this, logger));
 }
 
 async_task<void> cu_up_manager_impl::stop()
@@ -200,6 +202,27 @@ async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
       });
 }
 
+///
+/// PDCP control events handling.
+///
+void cu_up_manager_impl::handle_pdcp_protocol_failure(ue_index_t ue_index)
+{
+  /// TODO.
+}
+
+void cu_up_manager_impl::handle_pdcp_max_count_reached(ue_index_t ue_index)
+{
+  ue_context* ue_ctxt = ue_mng->find_ue(ue_index);
+  if (ue_ctxt == nullptr) {
+    logger.error("ue={}: Reached PDCP MAX count, but could not find UE context", ue_index);
+    return;
+  }
+  e1ap.handle_bearer_context_release_request_required(ue_index);
+}
+
+///
+/// Test mode helpers.
+///
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
   return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, *ue_mng, ngu_demux);

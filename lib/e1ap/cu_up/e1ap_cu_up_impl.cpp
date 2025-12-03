@@ -144,7 +144,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   pdu_notifier->on_new_message(e1ap_msg);
 }
 
-void e1ap_cu_up_impl::handle_pdcp_max_count_reached(ue_index_t ue_index)
+void e1ap_cu_up_impl::handle_bearer_context_release_request_required(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
     logger.error("ue={}: Dropping PDCP max count reached. UE does not exist.", fmt::underlying(ue_index));

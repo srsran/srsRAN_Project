@@ -124,16 +124,21 @@ TEST_P(PrachDetectorFixture, FromVector)
   unsigned nof_symbols = preamble_info.nof_symbols;
 
   // Get frequency domain data.
-  auto                sequence_data = params.symbols.read();
-  prach_buffer_tensor sequence(sequence_data);
-  ASSERT_EQ(sequence.get_sequence_length(), preamble_info.sequence_length);
-  ASSERT_EQ(sequence.get_max_nof_symbols(), nof_symbols);
-  ASSERT_EQ(sequence.get_max_nof_td_occasions(), 1);
-  ASSERT_EQ(sequence.get_max_nof_fd_occasions(), 1);
-  ASSERT_EQ(sequence.get_max_nof_ports(), config.nof_rx_ports);
+  std::vector<std::unique_ptr<prach_buffer>> prach_buffers;
+  auto                                       sequence_data = params.symbols.read();
+  std::unique_ptr<prach_buffer> buffer_to_be_inserted      = std::make_unique<prach_buffer_tensor>(sequence_data);
+  prach_buffers.push_back(std::move(buffer_to_be_inserted));
+  prach_buffer_pool prach_pool(prach_buffers);
+
+  auto buffer = prach_pool.get();
+  ASSERT_EQ(buffer->get_sequence_length(), preamble_info.sequence_length);
+  ASSERT_EQ(buffer->get_max_nof_symbols(), nof_symbols);
+  ASSERT_EQ(buffer->get_max_nof_td_occasions(), 1);
+  ASSERT_EQ(buffer->get_max_nof_fd_occasions(), 1);
+  ASSERT_EQ(buffer->get_max_nof_ports(), config.nof_rx_ports);
 
   // Run generator.
-  prach_detection_result result = detector->detect(sequence, config);
+  prach_detection_result result = detector->detect(*buffer, config);
 
   // Calculate expected delay.
   phy_time_unit time_error_tolerance = phy_time_unit::from_seconds(1.04e-6F);

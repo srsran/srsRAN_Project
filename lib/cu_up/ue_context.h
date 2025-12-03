@@ -46,59 +46,66 @@ struct ue_context_cfg {
   std::optional<std::chrono::seconds>              ue_inactivity_timeout;
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
   uint64_t                                         ue_dl_aggregate_maximum_bit_rate;
+  cu_up_test_mode_config                           test_mode_config;
+};
+
+struct ue_context_dependencies {
+  e1ap_interface&                     e1ap;
+  std::unique_ptr<ue_executor_mapper> ue_exec_mapper;
+  fifo_async_task_scheduler&          task_sched;
+  timer_factory                       ue_dl_timer_factory;
+  timer_factory                       ue_ul_timer_factory;
+  timer_factory                       ue_ctrl_timer_factory;
+  f1u_cu_up_gateway&                  f1u_gw;
+  ngu_session_manager&                ngu_session_mngr;
+  cu_up_manager_pdcp_interface&       cu_up_mngr_pdcp_if;
+  gtpu_teid_pool&                     n3_teid_allocator;
+  gtpu_teid_pool&                     f1u_teid_allocator;
+  gtpu_demux_ctrl&                    gtpu_rx_demux;
+  dlt_pcap&                           gtpu_pcap;
 };
 
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
-  ue_context(ue_index_t                          index_,
-             ue_context_cfg                      cfg_,
-             e1ap_interface&                     e1ap_,
-             const n3_interface_config&          n3_config_,
-             const cu_up_test_mode_config&       test_mode_config_,
-             std::unique_ptr<ue_executor_mapper> ue_exec_mapper_,
-             fifo_async_task_scheduler&          task_sched_,
-             timer_factory                       ue_dl_timer_factory_,
-             timer_factory                       ue_ul_timer_factory_,
-             timer_factory                       ue_ctrl_timer_factory_,
-             f1u_cu_up_gateway&                  f1u_gw_,
-             ngu_session_manager&                ngu_session_mngr_,
-             gtpu_teid_pool&                     n3_teid_allocator_,
-             gtpu_teid_pool&                     f1u_teid_allocator_,
-             gtpu_demux_ctrl&                    gtpu_rx_demux_,
-             dlt_pcap&                           gtpu_pcap) :
-    task_sched(task_sched_),
-    ue_exec_mapper(std::move(ue_exec_mapper_)),
+  ue_context(ue_index_t                    index_,
+             ue_context_cfg                cfg_,
+             const n3_interface_config&    n3_config_,
+             const cu_up_test_mode_config& test_mode_config_,
+             ue_context_dependencies       dependencies) :
+    task_sched(dependencies.task_sched),
+    ue_exec_mapper(std::move(dependencies.ue_exec_mapper)),
     index(index_),
     cfg(std::move(cfg_)),
     logger("CU-UP", {index_}),
-    e1ap(e1ap_),
+    e1ap(dependencies.e1ap),
     pdu_session_manager(index,
                         cfg.qos,
                         cfg.security_info,
                         n3_config_,
                         test_mode_config_,
-                        logger,
                         cfg.ue_dl_aggregate_maximum_bit_rate,
-                        ue_inactivity_timer,
-                        ue_dl_timer_factory_,
-                        ue_ul_timer_factory_,
-                        ue_ctrl_timer_factory_,
-                        e1ap_,
-                        f1u_gw_,
-                        ngu_session_mngr_,
-                        n3_teid_allocator_,
-                        f1u_teid_allocator_,
-                        gtpu_rx_demux_,
-                        ue_exec_mapper->dl_pdu_executor(),
-                        ue_exec_mapper->ul_pdu_executor(),
-                        ue_exec_mapper->ctrl_executor(),
-                        ue_exec_mapper->crypto_executor(),
-                        gtpu_pcap),
-    ue_dl_timer_factory(ue_dl_timer_factory_),
-    ue_ul_timer_factory(ue_ul_timer_factory_),
-    ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
+                        {logger,
+                         ue_inactivity_timer,
+                         dependencies.ue_dl_timer_factory,
+                         dependencies.ue_ul_timer_factory,
+                         dependencies.ue_ctrl_timer_factory,
+                         dependencies.e1ap,
+                         dependencies.f1u_gw,
+                         dependencies.ngu_session_mngr,
+                         dependencies.cu_up_mngr_pdcp_if,
+                         dependencies.n3_teid_allocator,
+                         dependencies.f1u_teid_allocator,
+                         dependencies.gtpu_rx_demux,
+                         ue_exec_mapper->dl_pdu_executor(),
+                         ue_exec_mapper->ul_pdu_executor(),
+                         ue_exec_mapper->ctrl_executor(),
+                         ue_exec_mapper->crypto_executor(),
+                         dependencies.gtpu_pcap}),
+    ue_dl_timer_factory(dependencies.ue_dl_timer_factory),
+    ue_ul_timer_factory(dependencies.ue_ul_timer_factory),
+    ue_ctrl_timer_factory(dependencies.ue_ctrl_timer_factory)
   {
     if (cfg.activity_level == activity_notification_level_t::ue) {
       if (not cfg.ue_inactivity_timeout.has_value()) {

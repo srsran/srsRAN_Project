@@ -50,6 +50,7 @@
     - type: zmq
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/cu:/builds/softwareradiosystems/srsgnb/build/apps/du
+    - LD_LIBRARY_PATH: /opt/rohc/lib/
   shared_files:
     - local_path: ${GNB_BUILD_PATH}/apps/cu/srscu
       remote_path: /usr/local/bin/srscu

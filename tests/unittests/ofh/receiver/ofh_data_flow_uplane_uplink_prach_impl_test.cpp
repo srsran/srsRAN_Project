@@ -64,8 +64,9 @@ protected:
   bool                                                  ignore_prach_start_symbol = std::get<2>(params);
   prach_format_type                                     format                    = std::get<0>(params);
 
+  std::unique_ptr<prach_buffer_pool>                prach_pool;
+  shared_prach_buffer                               buffer;
   prach_buffer_context                              buffer_context;
-  prach_buffer_dummy                                buffer;
   unsigned                                          preamble_length;
   unsigned                                          nof_symbols;
   message_decoder_results                           results;
@@ -80,7 +81,7 @@ protected:
 public:
   data_flow_uplane_uplink_prach_impl_fixture() :
     slot(0, 0, 1),
-    buffer(get_preamble_duration(format), is_long_preamble(format)),
+    prach_pool(create_prach_buffer_pool(format)),
     preamble_length(is_long_preamble(format) ? 839 : 139),
     nof_symbols(get_preamble_duration(format) == 0 ? 1U : get_preamble_duration(format)),
     data_flow(get_config(), get_dependencies())
@@ -93,7 +94,9 @@ public:
     buffer_context.pusch_scs        = srsran::subcarrier_spacing::kHz30;
     buffer_context.start_symbol     = 0;
 
-    repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+    buffer = prach_pool->get();
+
+    repo->add(buffer_context, buffer.clone(), srslog::fetch_basic_logger("TEST"), std::nullopt);
     repo->process_pending_contexts();
 
     results.uplane_results.params.slot      = slot;
@@ -111,7 +114,7 @@ public:
 
     // Fill the contexts
     ul_cplane_context_repo_ptr->add(slot, eaxc, context);
-    prach_context_repo->add(buffer_context, buffer, srslog::fetch_basic_logger("TEST"), std::nullopt);
+    prach_context_repo->add(buffer_context, buffer.clone(), srslog::fetch_basic_logger("TEST"), std::nullopt);
     prach_context_repo->process_pending_contexts();
   }
 

@@ -44,16 +44,17 @@ struct ue_manager_config {
 
 /// UE manager dependencies.
 struct ue_manager_dependencies {
-  e1ap_interface&        e1ap;
-  timer_manager&         timers;
-  f1u_cu_up_gateway&     f1u_gw;
-  ngu_session_manager&   ngu_session_mngr;
-  gtpu_demux_ctrl&       gtpu_rx_demux;
-  gtpu_teid_pool&        n3_teid_allocator;
-  gtpu_teid_pool&        f1u_teid_allocator;
-  cu_up_executor_mapper& exec_pool;
-  dlt_pcap&              gtpu_pcap;
-  srslog::basic_logger&  logger;
+  e1ap_interface&               e1ap;
+  timer_manager&                timers;
+  f1u_cu_up_gateway&            f1u_gw;
+  ngu_session_manager&          ngu_session_mngr;
+  cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if;
+  gtpu_demux_ctrl&              gtpu_rx_demux;
+  gtpu_teid_pool&               n3_teid_allocator;
+  gtpu_teid_pool&               f1u_teid_allocator;
+  cu_up_executor_mapper&        exec_pool;
+  dlt_pcap&                     gtpu_pcap;
+  srslog::basic_logger&         logger;
 };
 
 class ue_manager : public ue_manager_ctrl
@@ -94,6 +95,7 @@ private:
   e1ap_interface&               e1ap;
   f1u_cu_up_gateway&            f1u_gw;
   ngu_session_manager&          ngu_session_mngr;
+  cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if;
   gtpu_demux_ctrl&              gtpu_rx_demux;
   gtpu_teid_pool&               n3_teid_allocator;
   gtpu_teid_pool&               f1u_teid_allocator;

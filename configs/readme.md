@@ -49,7 +49,7 @@ Options:
   --gnb_id UINT [411]         gNodeB identifier
   --gnb_id_bit_length UINT:INT in [22 - 32] [ ]
                               gNodeB identifier length in bits
-  --ran_node_name TEXT [srsgnb01]
+  --ran_node_name TEXT [gnb01]
                               RAN node name
   --cells TEXT ...            Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg
   --qos TEXT ...              Configures RLC and PDCP radio bearers on a per 5QI basis.

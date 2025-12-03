@@ -43,7 +43,7 @@ class prach_processor_impl : public prach_processor,
   prach_processor_notifier*                            notifier = nullptr;
 
   // See prach_processor_request_handler for documentation.
-  void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
+  void handle_request(shared_prach_buffer buffer, const prach_buffer_context& context) override
   {
     // Ignore request if the processor has stopped.
     if (stopped.load(std::memory_order_relaxed)) {
@@ -57,7 +57,7 @@ class prach_processor_impl : public prach_processor,
       // Select the first worker available.
       if (worker->is_available()) {
         // Set request.
-        worker->handle_request(buffer, context);
+        worker->handle_request(std::move(buffer), context);
 
         // Stop iterating.
         return;
@@ -99,7 +99,14 @@ public:
   }
 
   // See prach_processor interface for documentation.
-  void stop() override { stopped = true; }
+  void stop() override
+  {
+    stopped = true;
+
+    for (std::unique_ptr<prach_processor_worker>& worker : workers) {
+      worker->stop();
+    }
+  }
 
   // See prach_processor for documentation.
   prach_processor_request_handler& get_request_handler() override { return *this; }

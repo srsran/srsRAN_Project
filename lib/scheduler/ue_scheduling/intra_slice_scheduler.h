@@ -112,9 +112,9 @@ private:
                                         scheduler_policy&       ul_policy,
                                         unsigned                max_ue_grants_to_alloc);
 
-  unsigned max_pdschs_to_alloc(const dl_ran_slice_candidate& slice);
+  unsigned max_pdschs_to_alloc(const dl_ran_slice_candidate& slice) const;
 
-  unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
+  unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice) const;
 
   // Called when bitmap of used VRBs needs to be recalculated.
   void update_used_dl_vrbs(const dl_ran_slice_candidate& slice);
@@ -152,6 +152,8 @@ private:
   vrb_bitmap used_dl_vrbs;
   bool       enable_pdsch_interleaving = false;
   vrb_bitmap used_ul_vrbs;
+  // Minimum symbol index used for SRS resources within this slot.
+  unsigned min_srs_symbol = 0;
 
   // Grants being built for the current slice.
   std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_dl_newtxs;

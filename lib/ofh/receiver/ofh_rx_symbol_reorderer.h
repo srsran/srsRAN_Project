@@ -50,10 +50,10 @@ public:
   void on_new_uplink_symbol(const uplane_rx_symbol_context& context, shared_resource_grid grid, bool is_valid) override;
 
   // See interface for documentation.
-  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override
+  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override
   {
     // PRACH notifies all symbols at once, no need to reorder.
-    notifier.on_new_prach_window_data(context, buffer);
+    notifier.on_new_prach_window_data(context, std::move(buffer));
   }
 };
 

@@ -71,7 +71,7 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
   setup_req->global_ran_node_id.global_gnb_id().plmn_id.from_string("00f110");
 
   setup_req->ran_node_name_present = true;
-  setup_req->ran_node_name.from_string("srsgnb01");
+  setup_req->ran_node_name.from_string("gnb01");
 
   asn1::ngap::supported_ta_item_s   supported_ta_item   = {};
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
@@ -268,8 +268,8 @@ TEST_F(asn1_ngap_test, ng_setup_response_pack_and_unpack)
 TEST_F(asn1_ngap_test, amf_config_update)
 {
   const uint8_t ngap_msg[] = {
-      0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x08, 0x02, 0x80, 0x73, 0x72, 0x73, 0x72, 0x61, 0x6e};
-  // 0000000F00000100010008028073727372616E
+      0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x08, 0x02, 0x80, 0x74, 0x73, 0x74, 0x72, 0x61, 0x6e};
+  // 0000000F00000100010008028074737472616E
   const srsran::byte_buffer byte_pdu = srsran::byte_buffer::create(ngap_msg).value();
   cbit_ref                  bref(byte_pdu);
 
@@ -285,7 +285,7 @@ TEST_F(asn1_ngap_test, amf_config_update)
   ASSERT_FALSE(amf_upd.ext);
   auto& amf_name = amf_upd->amf_name;
   ASSERT_TRUE(amf_upd->amf_name_present);
-  ASSERT_EQ("srsran", amf_name.to_string());
+  ASSERT_EQ("tstran", amf_name.to_string());
 
   ASSERT_EQ(sizeof(ngap_msg), std::ceil(bref.distance_bytes()));
   ASSERT_EQ(SRSASN_SUCCESS, test_pack_unpack_consistency(pdu));

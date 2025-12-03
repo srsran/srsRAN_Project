@@ -44,12 +44,13 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   metrics_collector(std::move(config.metrics_collector)),
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
-  prach_pool(std::move(config.prach_pool)),
   dl_processor_pool(std::move(config.dl_processor_pool)),
   ul_processor_pool(std::move(config.ul_processor_pool)),
   dl_pdu_validator(std::move(config.dl_pdu_validator)),
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
-  ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
+  ul_request_processor(*config.rx_symbol_request_notifier,
+                       config.prach_buffers,
+                       srslog::fetch_basic_logger("PHY", true)),
   rx_results_notifier(std::move(config.rx_results_notifier)),
   rx_symbol_handler(std::move(config.rx_symbol_handler)),
   timing_handler(notifier_dummy),
@@ -58,7 +59,6 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
   srsran_assert(dl_rg_pool, "Invalid downlink resource grid pool");
   srsran_assert(ul_processor_pool, "Invalid uplink processor pool");
-  srsran_assert(prach_pool, "Invalid PRACH buffer pool");
   srsran_assert(rx_buf_pool, "Invalid receive buffer pool");
   srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
   srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");

@@ -41,10 +41,10 @@ cell_cfg:
     rv_sequence: 0
   pucch:
     sr_period_ms: 20
-    nof_ue_res_harq_per_set: 8
-    nof_cell_harq_pucch_res_sets: 2
-    f0_or_f1_nof_cell_res_sr: 80
-    f2_or_f3_or_f4_nof_cell_res_csi: 80
+    resource_set_size: 8
+    nof_cell_res_set_configs: 2
+    nof_cell_sr_res: 80
+    nof_cell_csi_res: 80
   csi:
     csi_rs_period: 40
   ul_common:

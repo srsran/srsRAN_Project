@@ -165,6 +165,10 @@ export CXX
 
 cd "$FOLDER" || exit
 
+# Setup ROHC
+export ROHC_DIR="/opt/rohc"
+echo "ROHC_DIR set to $ROHC_DIR"
+
 # Setup UHD
 if [[ -n "$UHD_VERSION" ]]; then
     uhd_system_version=$(uhd_config_info --version) && regex="^UHD ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*" && [[ $uhd_system_version =~ $regex ]]

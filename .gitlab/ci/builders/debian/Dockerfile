@@ -31,6 +31,7 @@ RUN chmod +x /usr/local/bin/install_dependencies.sh /usr/local/bin/builder.sh /u
     /usr/local/builder_tools/bin/pip install "pandas<3" "psutil"
 
 ADD lib /opt/lib
+ADD rohc /opt/rohc
 ADD uhd /opt/uhd
 ADD dpdk /opt/dpdk
 

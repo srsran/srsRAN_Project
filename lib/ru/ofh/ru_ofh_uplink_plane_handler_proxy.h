@@ -49,7 +49,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override;
+  void handle_prach_occasion(const prach_buffer_context& context, shared_prach_buffer buffer) override;
 
   // See interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override;

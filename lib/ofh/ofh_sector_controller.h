@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "support/prach_context_repository.h"
 #include "support/uplink_context_repository.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
@@ -35,8 +36,11 @@ namespace ofh {
 class sector_controller : public operation_controller
 {
 public:
-  sector_controller(transmitter& ofh_tx_, receiver& ofh_rx_, std::shared_ptr<uplink_context_repository> slot_repo_) :
-    ofh_tx(ofh_tx_), ofh_rx(ofh_rx_), slot_repo(std::move(slot_repo_))
+  sector_controller(transmitter&                               ofh_tx_,
+                    receiver&                                  ofh_rx_,
+                    std::shared_ptr<uplink_context_repository> slot_repo_,
+                    std::shared_ptr<prach_context_repository>  prach_repo_) :
+    ofh_tx(ofh_tx_), ofh_rx(ofh_rx_), slot_repo(std::move(slot_repo_)), prach_repo(std::move(prach_repo_))
   {
   }
 
@@ -50,6 +54,7 @@ private:
   transmitter&                               ofh_tx;
   receiver&                                  ofh_rx;
   std::shared_ptr<uplink_context_repository> slot_repo;
+  std::shared_ptr<prach_context_repository>  prach_repo;
 };
 
 } // namespace ofh

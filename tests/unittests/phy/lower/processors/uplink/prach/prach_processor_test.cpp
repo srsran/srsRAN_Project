@@ -125,6 +125,9 @@ protected:
     // Select a random number of maximum concurrent requests.
     max_nof_concurrent_requests = max_nof_concurrent_requests_dist(rgen);
 
+    // Create PRACH buffer pool.
+    prach_pool = create_spy_prach_buffer_pool();
+
     // Create OFDM PRACH demodulator spy.
     ofdm_prach_factory_spy = std::make_shared<ofdm_prach_demodulator_factory_spy>();
 
@@ -151,6 +154,7 @@ protected:
   static constexpr unsigned unused_byte    = UINT8_MAX;
   static constexpr unsigned max_nof_ports  = 1;
 
+  std::unique_ptr<prach_buffer_pool>                  prach_pool;
   std::shared_ptr<ofdm_prach_demodulator_factory_spy> ofdm_prach_factory_spy;
   std::unique_ptr<prach_processor>                    processor;
   manual_task_worker_always_enqueue_tasks             task_executor_spy;
@@ -231,10 +235,10 @@ TEST_P(PrachProcessorFixture, SectorUnmatch)
   context.start_preamble_index  = unused_byte;
   context.nof_preamble_indices  = unused_byte;
 
-  prach_buffer_spy buffer;
+  auto buffer = prach_pool->get();
 
   // Do request.
-  processor->get_request_handler().handle_request(buffer, context);
+  processor->get_request_handler().handle_request(buffer.clone(), context);
 
   // Run a number of slots and symbols.
   for (slot_point slot = TEST_SLOT_BEGIN; slot != TEST_SLOT_END; ++slot) {
@@ -251,7 +255,7 @@ TEST_P(PrachProcessorFixture, SectorUnmatch)
   }
 
   // Verify no entity was used.
-  ASSERT_EQ(0, buffer.get_total_count());
+  ASSERT_EQ(0, static_cast<prach_buffer_spy&>(*buffer).get_total_count());
   ASSERT_EQ(0, notifier_spy.get_nof_notifications());
   ASSERT_EQ(0, ofdm_prach_factory_spy->get_nof_total_demodulate_entries());
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
@@ -281,9 +285,10 @@ TEST_P(PrachProcessorFixture, DetectLate)
   context.start_preamble_index  = unused_byte;
   context.nof_preamble_indices  = unused_byte;
 
+  auto buffer = prach_pool->get();
+
   // Do request.
-  prach_buffer_spy buffer;
-  processor->get_request_handler().handle_request(buffer, context);
+  processor->get_request_handler().handle_request(buffer.clone(), context);
 
   // Run a number of slots and symbols.
   for (slot_point slot = context.slot + 1; slot != TEST_SLOT_END; ++slot) {
@@ -309,7 +314,7 @@ TEST_P(PrachProcessorFixture, DetectLate)
   }
 
   // Verify no entity was used.
-  ASSERT_EQ(0, buffer.get_total_count());
+  ASSERT_EQ(0, static_cast<prach_buffer_spy&>(*buffer).get_total_count());
   ASSERT_EQ(0, notifier_spy.get_nof_notifications());
   ASSERT_EQ(0, ofdm_prach_factory_spy->get_nof_total_demodulate_entries());
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
@@ -342,10 +347,10 @@ TEST_P(PrachProcessorFixture, DetectSectorUnmatchLate)
   context.start_preamble_index  = unused_byte;
   context.nof_preamble_indices  = unused_byte;
 
-  prach_buffer_spy buffer;
+  auto buffer = prach_pool->get();
 
   // Do request.
-  processor->get_request_handler().handle_request(buffer, context);
+  processor->get_request_handler().handle_request(buffer.clone(), context);
 
   // Run a number of slots and symbols.
   for (slot_point slot = TEST_SLOT_BEGIN; slot != TEST_SLOT_END; ++slot) {
@@ -371,7 +376,7 @@ TEST_P(PrachProcessorFixture, DetectSectorUnmatchLate)
   }
 
   // Verify no entity was used.
-  ASSERT_EQ(0, buffer.get_total_count());
+  ASSERT_EQ(0, static_cast<prach_buffer_spy&>(*buffer).get_total_count());
   ASSERT_EQ(0, notifier_spy.get_nof_notifications());
   ASSERT_EQ(0, ofdm_prach_factory_spy->get_nof_total_demodulate_entries());
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
@@ -404,10 +409,8 @@ TEST_P(PrachProcessorFixture, RequestOverflow)
     context.start_preamble_index  = unused_byte;
     context.nof_preamble_indices  = unused_byte;
 
-    prach_buffer_spy buffer;
-
     // Do request.
-    processor->get_request_handler().handle_request(buffer, context);
+    processor->get_request_handler().handle_request(prach_pool->get(), context);
   }
 
   // No notification was expected.
@@ -433,10 +436,8 @@ TEST_P(PrachProcessorFixture, RequestOverflow)
     context.start_preamble_index  = unused_byte;
     context.nof_preamble_indices  = unused_byte;
 
-    prach_buffer_spy buffer;
-
     // Do request.
-    processor->get_request_handler().handle_request(buffer, context);
+    processor->get_request_handler().handle_request(prach_pool->get(), context);
 
     // Check the expected notification.
     ASSERT_EQ(1, notifier_spy.get_nof_notifications());
@@ -478,9 +479,10 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
       get_prach_window_duration(format, pusch_scs, context.start_symbol, context.nof_td_occasions)
           .to_samples(srate.to_Hz());
 
+  auto buffer = prach_pool->get();
+
   // Do request.
-  prach_buffer_spy buffer;
-  processor->get_request_handler().handle_request(buffer, context);
+  processor->get_request_handler().handle_request(buffer.clone(), context);
 
   // Verify no external entries are registered.
   ASSERT_EQ(0, notifier_spy.get_nof_notifications());
@@ -521,8 +523,8 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
       cf_buffer, samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length), INT16_MAX);
 
   // Verify demodulation entry.
-  const auto demodulate_entry = ofdm_prach_factory_spy->get_total_demodulate_entries().back();
-  ASSERT_EQ(demodulate_entry.buffer, &buffer);
+  const auto demodulate_entry = std::move(ofdm_prach_factory_spy->get_total_demodulate_entries().back());
+  ASSERT_EQ(demodulate_entry.buffer, buffer.get());
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
   ASSERT_EQ(demodulate_entry.config.slot, context.slot);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
@@ -537,13 +539,13 @@ TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
   // Verify contents of the notification.
   const auto& rx_prach = notifier_spy.get_rx_prach_window_entries().back();
   ASSERT_EQ(rx_prach.context, context);
-  ASSERT_EQ(rx_prach.buffer, &buffer);
+  ASSERT_EQ(rx_prach.buffer, buffer);
 
   // No more tasks.
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 
   // No buffer method should have been called at any time.
-  ASSERT_EQ(0, buffer.get_total_count());
+  ASSERT_EQ(0, static_cast<const prach_buffer_spy&>(*buffer).get_total_count());
 }
 
 // The PRACH processor is requested to process one request. The PRACH window is segmented in three different buffers.
@@ -572,9 +574,10 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
       get_prach_window_duration(format, pusch_scs, context.start_symbol, context.nof_td_occasions)
           .to_samples(srate.to_Hz());
 
+  auto buffer = prach_pool->get();
+
   // Do request.
-  prach_buffer_spy buffer;
-  processor->get_request_handler().handle_request(buffer, context);
+  processor->get_request_handler().handle_request(buffer.clone(), context);
 
   // Verify no external entries are registered.
   ASSERT_EQ(0, notifier_spy.get_nof_notifications());
@@ -663,8 +666,8 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
       cf_buffer, samples.get_reader().get_channel_buffer(context.ports.front()).first(prach_window_length), INT16_MAX);
 
   // Verify demodulation entry.
-  const auto demodulate_entry = ofdm_prach_factory_spy->get_total_demodulate_entries().back();
-  ASSERT_EQ(demodulate_entry.buffer, &buffer);
+  const auto demodulate_entry = std::move(ofdm_prach_factory_spy->get_total_demodulate_entries().back());
+  ASSERT_EQ(demodulate_entry.buffer, buffer.get());
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
   ASSERT_EQ(demodulate_entry.config.slot, context.slot);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
@@ -679,13 +682,13 @@ TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
   // Verify contents of the notification.
   const auto& rx_prach = notifier_spy.get_rx_prach_window_entries().back();
   ASSERT_EQ(rx_prach.context, context);
-  ASSERT_EQ(rx_prach.buffer, &buffer);
+  ASSERT_EQ(rx_prach.buffer, buffer);
 
   // No more tasks.
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 
   // No buffer method should have been called at any time.
-  ASSERT_EQ(0, buffer.get_total_count());
+  ASSERT_EQ(0, static_cast<prach_buffer_spy&>(*buffer).get_total_count());
 }
 
 // Creates test suite that combines a few parameters.

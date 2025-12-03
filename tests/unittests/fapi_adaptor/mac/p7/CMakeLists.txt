@@ -1,0 +1,46 @@
+#
+# Copyright 2021-2025 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
+
+add_subdirectory(messages)
+
+add_executable(fapi_to_mac_data_msg_fastpath_translator_test fapi_to_mac_data_msg_fastpath_translator_test.cpp)
+target_include_directories(fapi_to_mac_data_msg_fastpath_translator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7)
+target_link_libraries(fapi_to_mac_data_msg_fastpath_translator_test PRIVATE
+        srsran_support
+        srsran_fapi_to_mac_p7_fastpath_translator
+        srslog
+        srsran_mac_translator_helpers
+        gtest
+        gtest_main)
+gtest_discover_tests(fapi_to_mac_data_msg_fastpath_translator_test)
+
+add_executable(mac_to_fapi_fastpath_translator_test mac_to_fapi_fastpath_translator_test.cpp)
+target_include_directories(mac_to_fapi_fastpath_translator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7)
+target_link_libraries(mac_to_fapi_fastpath_translator_test PRIVATE
+        srsran_support
+        srsran_mac_to_fapi_p7_fastpath_translator
+        srsran_fapi_precoding_matrix_tools
+        srslog
+        srsran_mac_translator_helpers
+        gtest
+        gtest_main)
+gtest_discover_tests(mac_to_fapi_fastpath_translator_test)

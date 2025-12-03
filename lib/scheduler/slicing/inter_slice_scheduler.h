@@ -57,7 +57,7 @@ public:
 
   size_t                         nof_slices() const { return slices.size(); }
   const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].inst.cfg; }
-  scheduler_policy&              get_policy(ran_slice_id_t id) { return *slices[id.value()].policy; }
+  scheduler_policy&              get_policy(ran_slice_id_t id) const { return *slices[id.value()].policy; }
 
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req);
 
@@ -143,7 +143,7 @@ private:
   ran_slice_instance& get_slice(const logical_channel_config& lc_cfg);
 
   // Fetch UE if it is in a state to be added/reconfigured.
-  ue* fetch_ue_to_update(du_ue_index_t ue_idx);
+  ue* fetch_ue_to_update(du_ue_index_t ue_idx) const;
 
   void add_impl(ue& u);
 

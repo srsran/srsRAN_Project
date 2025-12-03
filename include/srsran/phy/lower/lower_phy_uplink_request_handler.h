@@ -22,9 +22,10 @@
 
 #pragma once
 
+#include "srsran/phy/support/shared_prach_buffer.h"
+
 namespace srsran {
 
-class prach_buffer;
 struct prach_buffer_context;
 class resource_grid;
 struct resource_grid_context;
@@ -46,7 +47,7 @@ public:
   ///
   /// \param[in] context PRACH window context.
   /// \param[in] buffer  PRACH buffer used to write the PRACH window.
-  virtual void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) = 0;
+  virtual void request_prach_window(const prach_buffer_context& context, shared_prach_buffer buffer) = 0;
 
   /// \brief Requests the lower PHY to provide an uplink slot.
   ///

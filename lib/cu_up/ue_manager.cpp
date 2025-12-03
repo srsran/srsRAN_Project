@@ -32,6 +32,7 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   e1ap(dependencies.e1ap),
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
+  cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
   n3_teid_allocator(dependencies.n3_teid_allocator),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
@@ -102,22 +103,24 @@ ue_context* ue_manager::add_ue(const ue_context_cfg& ue_cfg)
   timer_factory ue_ctrl_timer_factory = {timers, ue_exec_mapper->ctrl_executor()};
 
   // Create UE object
-  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
-                                                                     ue_cfg,
-                                                                     e1ap,
-                                                                     n3_config,
-                                                                     test_mode_config,
-                                                                     std::move(ue_exec_mapper),
-                                                                     ue_task_schedulers[new_idx],
-                                                                     ue_dl_timer_factory,
-                                                                     ue_ul_timer_factory,
-                                                                     ue_ctrl_timer_factory,
-                                                                     f1u_gw,
-                                                                     ngu_session_mngr,
-                                                                     n3_teid_allocator,
-                                                                     f1u_teid_allocator,
-                                                                     gtpu_rx_demux,
-                                                                     gtpu_pcap);
+  std::unique_ptr<ue_context> new_ctx =
+      std::make_unique<ue_context>(new_idx,
+                                   ue_cfg,
+                                   n3_config,
+                                   test_mode_config,
+                                   ue_context_dependencies{e1ap,
+                                                           std::move(ue_exec_mapper),
+                                                           ue_task_schedulers[new_idx],
+                                                           ue_dl_timer_factory,
+                                                           ue_ul_timer_factory,
+                                                           ue_ctrl_timer_factory,
+                                                           f1u_gw,
+                                                           ngu_session_mngr,
+                                                           cu_up_mngr_pdcp_if,
+                                                           n3_teid_allocator,
+                                                           f1u_teid_allocator,
+                                                           gtpu_rx_demux,
+                                                           gtpu_pcap});
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

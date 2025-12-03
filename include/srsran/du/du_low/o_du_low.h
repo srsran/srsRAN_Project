@@ -25,8 +25,8 @@
 namespace srsran {
 
 namespace fapi_adaptor {
-class phy_fapi_adaptor;
-}
+class phy_fapi_fastpath_adaptor;
+} // namespace fapi_adaptor
 
 class du_operation_controller;
 class upper_phy_metrics_notifiers;
@@ -36,7 +36,7 @@ namespace srs_du {
 class du_low;
 class o_du_low_metrics_collector;
 
-/// O-RAN DU low interface. O-DU low groups the DU low with the PHY-FAPI adaptor.
+/// O-RAN DU low interface. O-DU low groups the DU low with the PHY-FAPI fastpath adaptor.
 class o_du_low
 {
 public:
@@ -49,8 +49,8 @@ public:
   /// Returns the upper PHY of this O-DU low.
   virtual du_low& get_du_low() = 0;
 
-  /// Returns the PHY&ndash;FAPI adaptor of this O-DU low.
-  virtual fapi_adaptor::phy_fapi_adaptor& get_phy_fapi_adaptor() = 0;
+  /// Returns the PHY-FAPI fastpath adaptor of this O-DU low.
+  virtual fapi_adaptor::phy_fapi_fastpath_adaptor& get_phy_fapi_fastpath_adaptor() = 0;
 
   /// Returns the metrics collector of this O-DU low.
   virtual o_du_low_metrics_collector* get_metrics_collector() = 0;

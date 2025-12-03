@@ -87,6 +87,11 @@ public:
 
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
 
+  // PDCP event handlers.
+  void handle_pdcp_protocol_failure(ue_index_t ue_index) override;
+  void handle_pdcp_max_count_reached(ue_index_t ue_index) override;
+
+  // Test helpers.
   void trigger_enable_test_mode();
   void trigger_disable_test_mode();
   void trigger_reestablish_test_mode();
@@ -103,7 +108,7 @@ private:
   std::string    plmn;
 
   std::atomic<bool>&                    stop_command;
-  e1ap_connection_manager&              e1ap;
+  e1ap_interface&                       e1ap;
   std::map<five_qi_t, cu_up_qos_config> qos;
   const network_interface_config        net_cfg;
   const n3_interface_config             n3_cfg;

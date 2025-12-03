@@ -176,7 +176,7 @@ public:
           asn1::f1ap::f1_setup_resp_s& f1_setup_resp = pdu_resp.pdu.successful_outcome().value.f1_setup_resp();
 
           f1_setup_resp->transaction_id = f1_setup->transaction_id;
-          f1_setup_resp->gnb_cu_name.from_string("srsgnb01");
+          f1_setup_resp->gnb_cu_name.from_string("gnb01");
           if (f1_setup->gnb_du_served_cells_list_present) {
             f1_setup_resp->cells_to_be_activ_list_present = true;
             for (const auto& cell : f1_setup->gnb_du_served_cells_list) {

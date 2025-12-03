@@ -46,8 +46,8 @@ protected:
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     e1ap               = std::make_unique<dummy_e1ap>();
-
-    ngu_session_mngr = std::make_unique<dummy_ngu_session_manager>();
+    pdcp_ctrl_handler  = std::make_unique<dummy_cu_up_manager_pdcp_interface>();
+    ngu_session_mngr   = std::make_unique<dummy_ngu_session_manager>();
 
     cu_up_exec_mapper = std::make_unique<dummy_cu_up_executor_mapper>(&worker);
 
@@ -60,6 +60,7 @@ protected:
                                                                   timers,
                                                                   *f1u_gw,
                                                                   *ngu_session_mngr,
+                                                                  *pdcp_ctrl_handler,
                                                                   *gtpu_rx_demux,
                                                                   *gtpu_n3_allocator,
                                                                   *gtpu_f1u_allocator,
@@ -79,6 +80,7 @@ protected:
   std::unique_ptr<gtpu_teid_pool>                             gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_interface>                             e1ap;
+  std::unique_ptr<cu_up_manager_pdcp_interface>               pdcp_ctrl_handler;
   std::unique_ptr<cu_up_executor_mapper>                      cu_up_exec_mapper;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   null_dlt_pcap                                               gtpu_pcap;

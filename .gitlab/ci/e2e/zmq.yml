@@ -51,6 +51,7 @@
   environment:
     - RTSAN_OPTIONS: halt_on_error=false:suppress_equal_stacks=true
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+    - LD_LIBRARY_PATH: /opt/rohc/lib/
   shared_files:
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb

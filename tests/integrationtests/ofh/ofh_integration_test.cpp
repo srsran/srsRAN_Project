@@ -414,7 +414,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
+  void on_new_prach_window_data(const prach_buffer_context& context, shared_prach_buffer buffer) override {}
 };
 
 /// Dummy RU notifier class for timing events.

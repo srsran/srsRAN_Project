@@ -21,8 +21,10 @@
  */
 
 #include "rrc_test_messages.h"
+#include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/ul_ccch_msg_ies.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "srsran/ran/plmn_identity.h"
 
 using namespace srsran;
 using namespace asn1::rrc_nr;
@@ -112,7 +114,20 @@ byte_buffer srsran::test_helpers::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
   return byte_buffer{};
 }
 
-asn1::rrc_nr::sib1_s srsran::test_helpers::create_sib1()
+asn1::rrc_nr::plmn_id_s plmn_to_asn1(const plmn_identity& plmn)
+{
+  asn1::rrc_nr::plmn_id_s asn1_plmn;
+  asn1_plmn.mcc_present         = true;
+  asn1_plmn.mcc                 = plmn.mcc().to_bytes();
+  static_vector<uint8_t, 3> mnc = plmn.mnc().to_bytes();
+  asn1_plmn.mnc.resize(mnc.size());
+  for (unsigned i = 0, sz = mnc.size(); i != sz; ++i) {
+    asn1_plmn.mnc[i] = mnc[i];
+  }
+  return asn1_plmn;
+}
+
+asn1::rrc_nr::sib1_s srsran::test_helpers::create_sib1(const plmn_identity& plmn)
 {
   asn1::rrc_nr::sib1_s sib1;
 
@@ -126,13 +141,11 @@ asn1::rrc_nr::sib1_s srsran::test_helpers::create_sib1()
   sib1.cell_access_related_info.plmn_id_info_list.resize(1);
   plmn_id_info_s& plmn_info = sib1.cell_access_related_info.plmn_id_info_list[0];
   plmn_info.plmn_id_list.resize(1);
-  plmn_info.plmn_id_list[0].mcc_present = true;
-  plmn_info.plmn_id_list[0].mcc[0]      = 0;
-  plmn_info.plmn_id_list[0].mcc[1]      = 0;
-  plmn_info.plmn_id_list[0].mcc[2]      = 1;
-  plmn_info.plmn_id_list[0].mnc.resize(2);
-  plmn_info.plmn_id_list[0].mnc[0] = 0;
-  plmn_info.plmn_id_list[0].mnc[1] = 1;
+
+  // Fill plmn id.
+  plmn_info.plmn_id_list[0] = plmn_to_asn1(plmn);
+
+  // Fill ta and cell id.
   plmn_info.tac.from_number(7);
   plmn_info.cell_id.from_number(0x66c0000);
   plmn_info.cell_reserved_for_oper = asn1::rrc_nr::plmn_id_info_s::cell_reserved_for_oper_opts::options::not_reserved;

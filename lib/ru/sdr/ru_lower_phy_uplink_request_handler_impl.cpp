@@ -29,11 +29,11 @@
 using namespace srsran;
 
 void ru_lower_phy_uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context,
-                                                                     prach_buffer&               buffer)
+                                                                     shared_prach_buffer         buffer)
 {
   srsran_assert(context.sector < handlers.size(), "Invalid sector {}", context.sector);
 
-  handlers[context.sector]->request_prach_window(context, buffer);
+  handlers[context.sector]->request_prach_window(context, std::move(buffer));
 }
 
 void ru_lower_phy_uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context,

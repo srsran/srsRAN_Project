@@ -27,6 +27,7 @@
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_metrics.h"
+#include "srsran/ngap/ngap_rrc_inactive_transition.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/ran/plmn_identity.h"
@@ -278,12 +279,14 @@ public:
   virtual async_task<ngap_handover_preparation_response>
   handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
 
+  /// \brief Initiates the transmission of an UL RAN status transfer message.
   virtual void handle_ul_ran_status_transfer(const ngap_ul_ran_status_transfer& ul_status_transfer) = 0;
 
+  /// \brief Prepares the reception of a DL RAN status transfer message.
   virtual async_task<expected<ngap_dl_ran_status_transfer>>
   handle_dl_ran_status_transfer_required(ue_index_t ue_index) = 0;
 
-  /// \brief Handle the reception of an inter CU handove related RRC Reconfiguration Complete.
+  /// \brief Handle the reception of an inter CU handover related RRC Reconfiguration Complete.
   virtual void
   handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t ue_index, const nr_cell_global_id_t& cgi, const tac_t tac) = 0;
 
@@ -295,6 +298,10 @@ public:
 
   /// \brief Handle the reception of a UL non UE associated NRPPa message.
   virtual async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) = 0;
+
+  /// \brief Initiates the transmission of a RRC inactive transition report.
+  virtual async_task<bool>
+  handle_rrc_inactive_transition_report_required(const ngap_rrc_inactive_transition_report& report) = 0;
 };
 
 /// Interface to control the NGAP.

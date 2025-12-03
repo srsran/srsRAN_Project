@@ -63,15 +63,15 @@ class prach_processor_request_handler_spy : public prach_processor_request_handl
 public:
   struct entry_t {
     prach_buffer_context context;
-    const prach_buffer*  buffer;
+    shared_prach_buffer  buffer;
   };
 
-  void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
+  void handle_request(shared_prach_buffer buffer, const prach_buffer_context& context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
     entry.context  = context;
-    entry.buffer   = &buffer;
+    entry.buffer   = std::move(buffer);
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

@@ -25,6 +25,7 @@
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/shared_prach_buffer.h"
 #include "srsran/srslog/srslog.h"
 #include <vector>
 
@@ -35,7 +36,7 @@ class prach_processor_notifier_spy : public prach_processor_notifier
 private:
   struct rx_prach_window_entry {
     prach_buffer_context context;
-    const prach_buffer*  buffer;
+    shared_prach_buffer  buffer;
   };
 
   srslog::basic_logger&              logger;
@@ -72,7 +73,7 @@ public:
     request_overflow_entries.push_back(context);
   }
 
-  void on_rx_prach_window(const prach_buffer& buffer, const prach_buffer_context& context) override
+  void on_rx_prach_window(shared_prach_buffer buffer, const prach_buffer_context& context) override
   {
     logger.info("PRACH Rx Window Processed. Sector/Port {}/{}. Slot/Symbol {}/{}.",
                 context.sector,
@@ -82,7 +83,7 @@ public:
     rx_prach_window_entries.emplace_back();
     rx_prach_window_entry& entry = rx_prach_window_entries.back();
     entry.context                = context;
-    entry.buffer                 = &buffer;
+    entry.buffer                 = std::move(buffer);
   }
 
   unsigned get_nof_notifications() const

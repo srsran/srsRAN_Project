@@ -45,7 +45,7 @@ public:
   void fill_worker_manager_config(worker_manager_config& config) override {}
 
   // See interface for documentation.
-  std::vector<std::unique_ptr<fapi::fapi_adaptor>>
+  std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
   create_fapi_adaptor(const srs_du::du_high_configuration& du_high_cfg,
                       const o_du_unit_dependencies&        dependencies) override;
 };

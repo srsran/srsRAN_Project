@@ -47,6 +47,7 @@ struct sector_impl_dependencies {
   std::unique_ptr<receiver>                  ofh_receiver;
   std::unique_ptr<transmitter>               ofh_transmitter;
   std::shared_ptr<uplink_context_repository> ul_data_repo;
+  std::shared_ptr<prach_context_repository>  ul_prach_repo;
   ether::transmitter&                        eth_transmitter;
   ether::receiver&                           eth_receiver;
 };
@@ -58,7 +59,10 @@ public:
   sector_impl(const sector_impl_config& config, sector_impl_dependencies&& dependencies) :
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
-    ofh_sector_controller(*ofh_transmitter, *ofh_receiver, std::move(dependencies.ul_data_repo)),
+    ofh_sector_controller(*ofh_transmitter,
+                          *ofh_receiver,
+                          std::move(dependencies.ul_data_repo),
+                          std::move(dependencies.ul_prach_repo)),
     ofh_metrics_collector(ofh_receiver->get_metrics_collector(),
                           ofh_transmitter->get_metrics_collector(),
                           config.sector_id)

@@ -49,9 +49,9 @@ byte_buffer srsran::test_helpers::create_meas_timing_cfg(uint32_t carrier_freq, 
   return byte_buffer{};
 }
 
-byte_buffer srsran::test_helpers::create_packed_sib1()
+byte_buffer srsran::test_helpers::create_packed_sib1(const plmn_identity& plmn)
 {
-  asn1::rrc_nr::sib1_s sib1 = create_sib1();
+  asn1::rrc_nr::sib1_s sib1 = create_sib1(plmn);
 
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -61,9 +61,9 @@ byte_buffer srsran::test_helpers::create_packed_sib1()
   return byte_buffer{};
 }
 
-std::string srsran::test_helpers::create_sib1_hex_string()
+std::string srsran::test_helpers::create_sib1_hex_string(const plmn_identity& plmn)
 {
-  return asn1::octet_string_helper::to_hex_string(create_packed_sib1());
+  return asn1::octet_string_helper::to_hex_string(create_packed_sib1(plmn));
 }
 
 byte_buffer srsran::test_helpers::create_cell_group_config()

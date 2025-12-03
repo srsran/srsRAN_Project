@@ -121,7 +121,7 @@ static unsigned get_prach_start_symbol(const prach_buffer_context& context)
   return context.start_symbol + unsigned(cp_length_sec / symbol_duration_sec);
 }
 
-void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer)
+void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, shared_prach_buffer buffer)
 {
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
     logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
@@ -148,7 +148,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 
   // Store the context in the repository.
   if (is_short_preamble(context.format)) {
-    ul_prach_repo->add(context, buffer, logger, std::nullopt);
+    ul_prach_repo->add(context, std::move(buffer), logger, std::nullopt);
     if (SRSRAN_UNLIKELY(context.nof_td_occasions > 1)) {
       logger.info("Sector#{}: PRACH with multiple time-domain occasions is configured, however only the first occasion "
                   "will be used in slot '{}'",
@@ -159,7 +159,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
     // Determine PRACH start symbol.
     unsigned start_symbol = get_prach_start_symbol(context);
 
-    ul_prach_repo->add(context, buffer, logger, start_symbol);
+    ul_prach_repo->add(context, std::move(buffer), logger, start_symbol);
   }
 
   if (!is_prach_cp_enabled) {
