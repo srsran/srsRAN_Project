@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/moodycamel_bounded_mpmc_queue.h"
+#include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/srslog/srslog.h"
@@ -61,7 +61,7 @@ private:
   const uint32_t max_nof_teids;
 
   concurrent_queue<gtpu_teid_t,
-                   concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc,
+                   concurrent_queue_policy::moodycamel_lockfree_mpmc,
                    concurrent_queue_wait_policy::non_blocking>
       teid_pool;
 
