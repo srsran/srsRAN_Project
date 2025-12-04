@@ -115,7 +115,7 @@ void du_ue_drb::stop()
   connector.disconnect();
   rlc_bearer->stop();
   drb_f1u->stop();
-  if (teid_pool != nullptr && not dluptnl_info_list.empty()) {
+  if (teid_pool != nullptr) {
     for (const up_transport_layer_info& dl : dluptnl_info_list) {
       if (not teid_pool->release_teid(dl.gtp_teid)) {
         srslog::fetch_basic_logger("DU-MNG").warning(

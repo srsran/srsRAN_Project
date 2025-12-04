@@ -10,11 +10,10 @@
 
 #pragma once
 
+#include "srsran/adt/moodycamel_bounded_mpmc_queue.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/compiler.h"
-#include <vector>
 
 namespace srsran {
 
@@ -24,59 +23,47 @@ public:
   explicit gtpu_teid_pool_impl(uint32_t max_nof_teids_) :
     max_nof_teids(max_nof_teids_), teid_pool(max_nof_teids_), logger(srslog::fetch_basic_logger("GTPU"))
   {
+    for (uint32_t t = GTPU_TEID_MIN.value(); t < GTPU_TEID_MIN.value() + max_nof_teids; t++) {
+      if (not teid_pool.try_push(gtpu_teid_t{t})) {
+        logger.warning("Failed to reserve TEID. teid={}", t);
+      }
+    }
   }
 
   [[nodiscard]] expected<gtpu_teid_t> request_teid() override
   {
     expected<gtpu_teid_t> teid = make_unexpected(default_error_t{});
+    gtpu_teid_t           t;
 
-    if (full()) {
-      return teid;
+    if (teid_pool.try_pop(t)) {
+      teid = t;
+    } else {
+      logger.warning("Failed to allocate TEID. teid_pool_size={}", teid_pool.size());
     }
 
-    // Find a free teid
-    bool     found   = false;
-    uint16_t tmp_idx = next_teid_idx;
-    for (uint16_t n = 0; n < max_nof_teids; n++) {
-      tmp_idx = (next_teid_idx + n) % max_nof_teids;
-      if (not teid_pool[tmp_idx]) {
-        teid_pool[tmp_idx] = true;
-        found              = true;
-        break;
-      }
-    }
-
-    if (not found) {
-      return teid;
-    }
-    next_teid_idx = (tmp_idx + 1) % max_nof_teids;
-    teid          = gtpu_teid_t{tmp_idx + GTPU_TEID_MIN.value()};
-    nof_teids++;
     return teid;
   }
 
   [[nodiscard]] bool release_teid(gtpu_teid_t teid) override
   {
-    uint32_t teid_idx = teid.value() - GTPU_TEID_MIN.value();
-    if (not teid_pool[teid_idx]) {
-      logger.error("Trying to free non-allocated TEID. teid={}", teid);
+    if (not teid_pool.try_push(teid)) {
+      logger.warning("Failed to release TEID. teid_pool_size={}, teid={}", teid_pool.size(), teid);
       return false;
     }
-    teid_pool[teid_idx] = false;
-    nof_teids--;
     return true;
   }
 
-  [[nodiscard]] bool full() const override { return nof_teids >= max_nof_teids; }
+  [[nodiscard]] bool full() const override { return teid_pool.empty(); }
 
   uint32_t get_max_nof_teids() override { return max_nof_teids; }
 
 private:
-  uint32_t       next_teid_idx = 0;
-  uint32_t       nof_teids     = 0;
   const uint32_t max_nof_teids;
 
-  std::vector<bool> teid_pool;
+  concurrent_queue<gtpu_teid_t,
+                   concurrent_queue_policy::moodycamel_lockfree_bounded_mpmc,
+                   concurrent_queue_wait_policy::non_blocking>
+      teid_pool;
 
   srslog::basic_logger& logger;
 };
