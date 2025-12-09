@@ -115,14 +115,6 @@ void du_ue_drb::stop()
   connector.disconnect();
   rlc_bearer->stop();
   drb_f1u->stop();
-  if (teid_pool != nullptr) {
-    for (const up_transport_layer_info& dl : dluptnl_info_list) {
-      if (not teid_pool->release_teid(dl.gtp_teid)) {
-        srslog::fetch_basic_logger("DU-MNG").warning(
-            "ue={} {}: Failed to release DL GTP-TEID. teid={}", ue_id, drb_id, dl.gtp_teid);
-      }
-    }
-  }
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& drb_info)
@@ -151,7 +143,6 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   drb->five_qi = drb_info.five_qi;
   drb->s_nssai = drb_info.s_nssai;
   drb->uluptnl_info_list.assign(drb_info.uluptnl_info_list.begin(), drb_info.uluptnl_info_list.end());
-  drb->teid_pool = &teid_pool;
 
   drb->f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
@@ -160,6 +151,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
       drb->five_qi,
       drb_info.f1u_cfg,
       dl_teid.value(),
+      teid_pool,
       drb->uluptnl_info_list[0],
       drb->connector.f1u_gateway_nru_rx_notif,
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)},

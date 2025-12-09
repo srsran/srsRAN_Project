@@ -15,6 +15,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/srslog/srslog.h"
 #include "fmt/std.h"
 #include <cstdint>
@@ -113,23 +114,28 @@ public:
   f1u_gateway_du_bearer(uint32_t                                   ue_index,
                         drb_id_t                                   drb_id,
                         const gtpu_teid_t&                         dl_teid_,
+                        gtpu_teid_pool&                            dl_teid_pool_,
                         srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx_,
                         const up_transport_layer_info&             ul_up_tnl_info_,
                         srs_du::f1u_bearer_disconnector&           disconnector_) :
     f1u_rx(f1u_rx_),
     ul_up_tnl_info(ul_up_tnl_info_),
     dl_tnl_info(transport_layer_address::create_from_string(dl_ip_addr), dl_teid_),
+    dl_teid_pool(dl_teid_pool_),
     logger("DU-F1-U", {ue_index, drb_id, dl_tnl_info}),
     disconnector(disconnector_)
   {
   }
 
-  ~f1u_gateway_du_bearer() override { disconnector.remove_du_bearer(dl_tnl_info); }
+  ~f1u_gateway_du_bearer() override { stop(); }
 
   void stop() override
   {
     if (not stopped) {
       disconnector.remove_du_bearer(dl_tnl_info);
+      if (!dl_teid_pool.release_teid(dl_tnl_info.gtp_teid)) {
+        logger.log_warning("Failed to release DL GTP-TEID. teid={}", dl_tnl_info.gtp_teid);
+      }
     }
     stopped = true;
   }
@@ -165,6 +171,7 @@ public:
   const std::string       dl_ip_addr = "127.0.10.2";
   up_transport_layer_info ul_up_tnl_info;
   up_transport_layer_info dl_tnl_info;
+  gtpu_teid_pool&         dl_teid_pool;
 
   srs_du::f1u_bearer_logger logger;
 
@@ -209,6 +216,7 @@ public:
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
                                                                   const gtpu_teid_t&             dl_up_tnl_info,
+                                                                  gtpu_teid_pool&                dl_teid_pool,
                                                                   const up_transport_layer_info& ul_up_tnl_info,
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,

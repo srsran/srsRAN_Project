@@ -102,8 +102,7 @@ struct du_ue_drb {
   std::unique_ptr<rlc_entity>            rlc_bearer;
   du_drb_connector                       connector;
 
-  gtpu_teid_pool* teid_pool = nullptr;
-  bool            stopped   = false;
+  bool stopped = false;
 
   /// \brief Stops DRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
   void stop();

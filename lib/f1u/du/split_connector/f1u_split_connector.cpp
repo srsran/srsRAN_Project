@@ -63,6 +63,7 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                                       five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
                                       const gtpu_teid_t&                         dl_teid,
+                                      gtpu_teid_pool&                            dl_teid_pool,
                                       const up_transport_layer_info&             ul_up_tnl_info,
                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                       timer_factory                              timers,
@@ -81,7 +82,7 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   up_transport_layer_info dl_up_tnl_info{transport_layer_address::create_from_string(bind_addr), dl_teid};
 
   std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer = std::make_unique<f1u_split_gateway_du_bearer>(
-      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, udp_session, *this, gtpu_pcap, peer_port);
+      ue_index, drb_id, dl_up_tnl_info, dl_teid_pool, du_rx, ul_up_tnl_info, udp_session, *this, gtpu_pcap, peer_port);
   {
     std::unique_lock<std::mutex> lock(map_mutex);
     srsran_assert(du_map.find(ul_up_tnl_info) == du_map.end(),
