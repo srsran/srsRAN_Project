@@ -145,7 +145,6 @@ protected:
     config.warn_on_drop         = true;
     config.buffer_ul_on_startup = true;
     config.ul_buffer_size       = 2;
-    config.ul_buffer_timeout    = std::chrono::milliseconds(5);
     init_f1u(config);
   }
 
@@ -710,42 +709,6 @@ TEST_F(f1u_du_buffer_test, buffer_ul_pdus)
   // Check F1-U is buffering.
   ASSERT_TRUE(tester->tx_msg_list.empty());
   f1u->flush_ul_buffer();
-
-  // Check flushing is correct.
-  ASSERT_EQ(tester->tx_msg_list.size(), 2);
-
-  // Check flush was in order.
-  byte_buffer t_pdu1 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
-  ASSERT_EQ(t_pdu1[0], pdcp_sn);
-  tester->tx_msg_list.pop_front();
-  byte_buffer t_pdu2 = tester->tx_msg_list.front().t_pdu.value().deep_copy().value();
-  ASSERT_EQ(t_pdu2[0], pdcp_sn + 1);
-  tester->tx_msg_list.pop_front();
-}
-
-TEST_F(f1u_du_buffer_test, buffer_ul_pdus_timeout)
-{
-  constexpr uint32_t pdu_size = 10;
-  constexpr uint32_t pdcp_sn  = 123;
-
-  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
-  auto        chain1       = byte_buffer_chain::create(tx_pdcp_pdu1.deep_copy().value());
-  ASSERT_TRUE(chain1.has_value());
-  f1u->handle_sdu(std::move(chain1.value()));
-
-  byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
-  auto        chain2       = byte_buffer_chain::create(tx_pdcp_pdu2.deep_copy().value());
-  ASSERT_TRUE(chain2.has_value());
-  f1u->handle_sdu(std::move(chain2.value()));
-
-  byte_buffer tx_pdcp_pdu3 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 2);
-  auto        chain3       = byte_buffer_chain::create(tx_pdcp_pdu3.deep_copy().value());
-  ASSERT_TRUE(chain3.has_value());
-  f1u->handle_sdu(std::move(chain2.value())); // This should be dropped at the UL buffer, as the queue size is only 2.
-
-  // Check F1-U is buffering.
-  ASSERT_TRUE(tester->tx_msg_list.empty());
-  tick_all(5);
 
   // Check flushing is correct.
   ASSERT_EQ(tester->tx_msg_list.size(), 2);
