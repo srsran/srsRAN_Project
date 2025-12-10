@@ -966,7 +966,7 @@ void rlc_tx_am_entity::decrement_retx_count(uint32_t sn)
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
 {
   if (tx_window[sn].retx_count == cfg.max_retx_thresh) {
-    logger.log_warning("Reached maximum number of RETX. sn={} retx_count={}", sn, tx_window[sn].retx_count);
+    logger.log_info("Reached maximum number of RETX. sn={} retx_count={}", sn, tx_window[sn].retx_count);
     upper_cn.on_max_retx();
   }
 }
