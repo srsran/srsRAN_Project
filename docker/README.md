@@ -177,6 +177,54 @@ Change the environment variables define in `.env` that are used to setup and dep
 └── ...
 ```
 
+#### Connecting to an External gNB
+
+When running the monitoring stack (`docker-compose.ui.yml`) with a gNB that runs **outside** of Docker (e.g., on the host machine or another server), you need to configure `WS_URL` in the `.env` file to point to the gNB's WebSocket server.
+
+**Steps:**
+
+1. Ensure your gNB configuration includes:
+   ```yaml
+   remote_control:
+     enabled: true
+     bind_addr: 0.0.0.0    # Important: bind to all interfaces
+
+   metrics:
+     enable_json: true
+   ```
+
+2. Update `WS_URL` in `docker/.env`:
+   ```bash
+   # Replace <GNB_HOST_IP> with your gNB's IP address
+   WS_URL=<GNB_HOST_IP>:8001
+
+   # Example: gNB running on 192.168.1.100
+   WS_URL=192.168.1.100:8001
+
+   # Example: gNB running on the same machine (Linux)
+   WS_URL=host.docker.internal:8001
+   ```
+
+3. Start the monitoring stack:
+   ```bash
+   docker compose -f docker/docker-compose.ui.yml up
+   ```
+
+4. Verify connectivity by checking Telegraf logs:
+   ```bash
+   docker logs telegraf
+   ```
+
+**Troubleshooting:**
+- If Grafana shows "No data", check that `WS_URL` is correctly set to reach your gNB
+- Verify gNB is running and shows: `Remote control server listening on 0.0.0.0:8001`
+- Test WebSocket connectivity manually:
+  ```bash
+  cd docker/telegraf
+  WS_URL="<GNB_HOST_IP>:8001" python3 ws_adapter.py
+  ```
+  You should see JSON metrics output if the connection is successful.
+
 You can access grafana in <http://localhost:3300>. By default, you'll be in view mode without needing to log in. If you want to modify anything, you need to log in using following credentials:
 
 - username: `admin`
