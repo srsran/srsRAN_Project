@@ -177,53 +177,92 @@ Change the environment variables define in `.env` that are used to setup and dep
 └── ...
 ```
 
-#### Connecting to an External gNB
+#### Connecting to gNB - All Deployment Scenarios
 
-When running the monitoring stack (`docker-compose.ui.yml`) with a gNB that runs **outside** of Docker (e.g., on the host machine or another server), you need to configure `WS_URL` in the `.env` file to point to the gNB's WebSocket server.
+The monitoring stack supports connecting to gNB regardless of where it runs. Configure `WS_URL` in `.env` based on your deployment:
 
-**Steps:**
+| Scenario | gNB Location | WS_URL Configuration |
+|----------|--------------|----------------------|
+| A | Docker (docker-compose.yml) | `gnb:8001` (default) |
+| B | Host machine (native build) | `host.docker.internal:8001` |
+| C | Kubernetes | `<service>.<namespace>.svc.cluster.local:8001` or `<NodeIP>:<NodePort>` |
+| D | Remote server | `<ip-address>:8001` |
 
-1. Ensure your gNB configuration includes:
-   ```yaml
-   remote_control:
-     enabled: true
-     bind_addr: 0.0.0.0    # Important: bind to all interfaces
+##### gNB Configuration Requirements
 
-   metrics:
-     enable_json: true
-   ```
+Ensure your gNB configuration includes:
 
-2. Update `WS_URL` in `docker/.env`:
-   ```bash
-   # Replace <GNB_HOST_IP> with your gNB's IP address
-   WS_URL=<GNB_HOST_IP>:8001
+```yaml
+remote_control:
+  enabled: true
+  bind_addr: 0.0.0.0    # Important: bind to all interfaces
 
-   # Example: gNB running on 192.168.1.100
-   WS_URL=192.168.1.100:8001
+metrics:
+  enable_json: true
+  autostart_stdout_metrics: true  # Required for metrics output
+```
 
-   # Example: gNB running on the same machine (Linux)
-   WS_URL=host.docker.internal:8001
-   ```
+##### Scenario A: gNB in Docker (Default)
 
-3. Start the monitoring stack:
-   ```bash
-   docker compose -f docker/docker-compose.ui.yml up
-   ```
+```bash
+# Both gNB and monitoring in Docker - no changes needed
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.ui.yml up
+```
 
-4. Verify connectivity by checking Telegraf logs:
-   ```bash
-   docker logs telegraf
-   ```
+##### Scenario B: gNB on Host (Native Build)
 
-**Troubleshooting:**
-- If Grafana shows "No data", check that `WS_URL` is correctly set to reach your gNB
-- Verify gNB is running and shows: `Remote control server listening on 0.0.0.0:8001`
-- Test WebSocket connectivity manually:
-  ```bash
-  cd docker/telegraf
-  WS_URL="<GNB_HOST_IP>:8001" python3 ws_adapter.py
-  ```
-  You should see JSON metrics output if the connection is successful.
+```bash
+# 1. Update .env
+sed -i 's/WS_URL=.*/WS_URL=host.docker.internal:8001/' docker/.env
+
+# 2. Start monitoring stack
+docker compose -f docker/docker-compose.ui.yml up
+
+# 3. Start gNB on host (in another terminal)
+sudo ./gnb -c your_config.yml
+```
+
+##### Scenario C: gNB in Kubernetes
+
+For Kubernetes deployments, see [srsRAN gNB on Kubernetes](https://docs.srsran.com/projects/project/en/latest/tutorials/source/k8s/source/index.html).
+
+```bash
+# Using NodePort
+WS_URL=10.0.0.50:30801
+
+# Using K8s service DNS (from within cluster)
+WS_URL=srsran-project-cudu-chart-metrics.srsran.svc.cluster.local:8001
+```
+
+##### Scenario D: gNB on Remote Server
+
+```bash
+# Update .env with remote server IP
+sed -i 's/WS_URL=.*/WS_URL=192.168.1.100:8001/' docker/.env
+docker compose -f docker/docker-compose.ui.yml up
+```
+
+##### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Grafana shows "No data" | Verify `WS_URL` is correctly set in `.env` |
+| Connection refused | Check gNB has `bind_addr: 0.0.0.0` in config |
+| No metrics output | Ensure `autostart_stdout_metrics: true` in gNB config |
+| `host.docker.internal` not resolving (Linux) | Use `172.17.0.1` (Docker bridge) or your host's actual IP |
+| Firewall blocking connection | Open port 8001: `sudo ufw allow 8001` or equivalent |
+
+**Verify connectivity manually:**
+
+```bash
+# Check Telegraf logs
+docker logs telegraf
+
+# Test WebSocket connection directly
+cd docker/telegraf
+WS_URL="192.168.1.100:8001" python3 ws_adapter.py
+# You should see JSON metrics if connection is successful
+```
 
 You can access grafana in <http://localhost:3300>. By default, you'll be in view mode without needing to log in. If you want to modify anything, you need to log in using following credentials:
 
