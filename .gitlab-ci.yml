@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2025 Software Radio Systems Limited
+# Copyright 2021-2026 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -735,37 +735,3 @@ create-tags:
       done
   needs: []
   retry: 2
-
-################################################################################
-# Enable / Disable pipelines
-################################################################################
-scheduler:
-  # Override default scheduler job
-  # Enabling branches on default_branch will also apply any change done
-  stage: ci
-  extends: .enable-schedule-by-branch
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-  variables:
-    ENABLE: "true"
-    BRANCH: $CI_COMMIT_BRANCH
-  dependencies: []
-
-disable current schedule:
-  stage: .post
-  extends: .enable-schedule-by-description
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      when: always
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-      when: always
-    - if: $CI_DESCRIPTION =~ /Alternative OSs/
-      when: always
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      when: always
-  interruptible: false
-  variables:
-    ENABLE: "false"
-    BRANCH: $CI_COMMIT_REF_NAME
-    DESCRIPTION: $CI_DESCRIPTION
-  dependencies: []

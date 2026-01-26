@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -90,9 +90,6 @@ private:
   /// layers. The purpose of this timer is to avoid excessive uplink notifications for every PDCP SN that is notified by
   /// lower layers.
   unique_timer ul_notif_timer;
-
-  /// Time used to limit the handover buffering while waiting for the DU to notify that the handover is finished.
-  unique_timer ul_buffer_timer;
 
   /// Holds the most recent information of the available space in the RLC SDU queue
   std::atomic<uint32_t> desired_buffer_size_for_data_radio_bearer;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -102,16 +102,19 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t  drb_id;
-  lcid_t    lcid;
-  s_nssai_t s_nssai;
-  five_qi_t five_qi; /// multiple 5QIs can exist within a DRB. For now, we take the 5QI of the QoS descriptor.
+  du_ue_index_t ue_id;
+  drb_id_t      drb_id;
+  lcid_t        lcid;
+  s_nssai_t     s_nssai;
+  five_qi_t     five_qi; /// multiple 5QIs can exist within a DRB. For now, we take the 5QI of the QoS descriptor.
   std::vector<up_transport_layer_info>   uluptnl_info_list;
   std::vector<up_transport_layer_info>   dluptnl_info_list;
   std::unique_ptr<f1u_du_gateway_bearer> f1u_gw_bearer;
   std::unique_ptr<f1u_bearer>            drb_f1u;
   std::unique_ptr<rlc_entity>            rlc_bearer;
   du_drb_connector                       connector;
+
+  bool stopped = false;
 
   /// \brief Stops DRB by disconnecting MAC, RLC and F1-U notifiers and stopping the RLC timers.
   void stop();

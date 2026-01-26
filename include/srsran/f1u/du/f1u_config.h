@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,7 +35,6 @@ struct f1u_config {
   bool     warn_on_drop         = true;  ///< Log a warning instead of an info message whenever a PDU is dropped
   bool     buffer_ul_on_startup = false; ///< Buffer UL SDUs on startup. Useful during handover to avoid losses.
   uint32_t ul_buffer_size       = 4096;  ///< Size of UL buffer for handover.
-  std::chrono::milliseconds ul_buffer_timeout{700}; ///< How long to wait to wait for confirmation of finished handover.
 
   bool operator==(const f1u_config& other) const
   {

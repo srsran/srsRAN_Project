@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -220,7 +220,7 @@ static rlc_metrics generate_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   rlc_metric.metrics_period        = std::chrono::milliseconds(1000);
   rlc_metric.ue_index              = static_cast<du_ue_index_t>(ue_idx);
   rlc_metric.rb_id                 = rb_id_t(drb_id_t(bearer_id));
-  rlc_metric.rx.mode               = rlc_mode::am;
+  rlc_metric.rx.mode_specific      = rlc_am_rx_metrics{};
   rlc_metric.rx.num_pdus           = 5;
   rlc_metric.rx.num_pdu_bytes      = rlc_metric.rx.num_pdus * 1000;
   rlc_metric.rx.num_sdus           = 5;

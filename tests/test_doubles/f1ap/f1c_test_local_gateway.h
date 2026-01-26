@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -126,6 +126,7 @@ class f1u_test_local_gateway : public srs_du::f1u_du_gateway
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
                                                                   const gtpu_teid_t&             dl_teid,
+                                                                  gtpu_teid_pool&                dl_teid_pool,
                                                                   const up_transport_layer_info& ul_up_tnl_info,
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,

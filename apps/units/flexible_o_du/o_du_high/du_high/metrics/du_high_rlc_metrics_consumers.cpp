@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,6 +23,7 @@
 #include "du_high_rlc_metrics_consumers.h"
 #include "apps/helpers/metrics/json_generators/du_high/rlc.h"
 #include "du_high_rlc_metrics.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 
@@ -42,7 +43,7 @@ void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   fmt::format_to(std::back_inserter(buffer), " du={}", static_cast<uint32_t>(drb.du_index));
   fmt::format_to(std::back_inserter(buffer), " ue={}", static_cast<uint32_t>(drb.ue_index));
   fmt::format_to(std::back_inserter(buffer), " rb={}", drb.rb_id);
-  fmt::format_to(std::back_inserter(buffer), " mode={} TX=[", drb.rx.mode);
+  fmt::format_to(std::back_inserter(buffer), " TX=[");
   format_rlc_tx_metrics(buffer, drb.metrics_period, drb.tx);
   fmt::format_to(std::back_inserter(buffer), "] RX=[");
   format_rlc_rx_metrics(buffer, drb.metrics_period, drb.rx);

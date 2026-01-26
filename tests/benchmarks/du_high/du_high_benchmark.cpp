@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -60,6 +60,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/rtsan.h"
 #include "srsran/support/test_utils.h"
@@ -430,6 +431,7 @@ public:
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
                                                           const gtpu_teid_t&                         dl_teid,
+                                                          gtpu_teid_pool&                            dl_teid_pool,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,

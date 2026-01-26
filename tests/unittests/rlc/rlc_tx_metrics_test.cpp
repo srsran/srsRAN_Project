@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #include "rlc_tx_metrics_test.h"
 #include "srsran/rlc/rlc_tx_metrics.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

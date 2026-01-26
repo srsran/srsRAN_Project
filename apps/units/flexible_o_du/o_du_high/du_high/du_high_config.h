@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -1089,9 +1089,8 @@ struct du_high_unit_srb_config {
 
 /// F1-U configuration at DU side
 struct du_high_unit_f1u_du_config {
-  int32_t  t_notify;          ///< Maximum backoff time for transmit/delivery notifications from DU to CU_UP (ms)
-  uint32_t ul_buffer_timeout; ///< Timeout for UL buffering that waits for the handover to fully finish.
-  uint32_t ul_buffer_size;    ///< UL buffer size to be used during handover.
+  int32_t  t_notify;       ///< Maximum backoff time for transmit/delivery notifications from DU to CU_UP (ms)
+  uint32_t ul_buffer_size; ///< UL buffer size to be used during handover.
 };
 
 /// RLC UM TX configuration

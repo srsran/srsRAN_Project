@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -120,6 +120,10 @@ void du_drb_connector::disconnect()
 
 void du_ue_drb::stop()
 {
+  if (stopped) {
+    return;
+  }
+  stopped = true;
   connector.disconnect();
   rlc_bearer->stop();
   drb_f1u->stop();
@@ -145,6 +149,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
 
   // > Setup DRB config
+  drb->ue_id   = ue_index;
   drb->drb_id  = drb_info.drb_id;
   drb->lcid    = drb_info.lcid;
   drb->five_qi = drb_info.five_qi;
@@ -158,6 +163,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
       drb->five_qi,
       drb_info.f1u_cfg,
       dl_teid.value(),
+      teid_pool,
       drb->uluptnl_info_list[0],
       drb->connector.f1u_gateway_nru_rx_notif,
       timer_factory{drb_info.du_params.services.timers, drb_info.du_params.services.ue_execs.ctrl_executor(ue_index)},

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,6 +34,18 @@ using namespace srsran;
 using namespace srs_du;
 
 namespace {
+
+class dummy_teid_pool final : public gtpu_teid_pool
+{
+public:
+  [[nodiscard]] expected<gtpu_teid_t> request_teid() override { return gtpu_teid_t{0x1}; }
+
+  [[nodiscard]] bool release_teid(gtpu_teid_t teid) override { return true; }
+
+  [[nodiscard]] virtual bool full() const override { return false; }
+
+  virtual uint32_t get_max_nof_teids() override { return 1; }
+};
 
 struct dummy_f1u_du_gateway_bearer_rx_notifier final : f1u_du_gateway_bearer_rx_notifier {
   void on_new_pdu(nru_dl_message msg) override
@@ -248,10 +260,21 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
+  dummy_teid_pool dl_teid_pool;
+
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(0,
+                                           drb_id_t::drb1,
+                                           s_nssai_t{},
+                                           five_qi_t{9},
+                                           f1u_du_cfg,
+                                           dl_tnl.gtp_teid,
+                                           dl_teid_pool,
+                                           ul_tnl,
+                                           du_rx,
+                                           timers,
+                                           ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -283,10 +306,22 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   // Setup GTP-U tunnel
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  dummy_teid_pool dl_teid_pool;
+
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(0,
+                                           drb_id_t::drb1,
+                                           s_nssai_t{},
+                                           five_qi_t{9},
+                                           f1u_du_cfg,
+                                           dl_tnl.gtp_teid,
+                                           dl_teid_pool,
+                                           ul_tnl,
+                                           du_rx,
+                                           timers,
+                                           ue_worker);
 
   // Send SDU
   expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
@@ -309,10 +344,21 @@ TEST_F(f1u_du_split_connector_test, disconnect_stops_tx)
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
 
+  dummy_teid_pool dl_teid_pool;
+
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(0,
+                                           drb_id_t::drb1,
+                                           s_nssai_t{},
+                                           five_qi_t{9},
+                                           f1u_du_cfg,
+                                           dl_tnl.gtp_teid,
+                                           dl_teid_pool,
+                                           ul_tnl,
+                                           du_rx,
+                                           timers,
+                                           ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -369,10 +415,22 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   // Setup GTP-U tunnel
   up_transport_layer_info ul_tnl{transport_layer_address::create_from_string("127.0.0.1"), gtpu_teid_t{1}};
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
+
+  dummy_teid_pool dl_teid_pool;
+
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer = du_gw->create_du_bearer(
-      0, drb_id_t::drb1, s_nssai_t{}, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(0,
+                                           drb_id_t::drb1,
+                                           s_nssai_t{},
+                                           five_qi_t{9},
+                                           f1u_du_cfg,
+                                           dl_tnl.gtp_teid,
+                                           dl_teid_pool,
+                                           ul_tnl,
+                                           du_rx,
+                                           timers,
+                                           ue_worker);
 
   // Disconnect incorrect tunnel (no effect expected)
   du_gw->remove_du_bearer(

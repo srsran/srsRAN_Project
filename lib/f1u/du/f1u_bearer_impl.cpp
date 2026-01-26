@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2025 Software Radio Systems Limited
+ * Copyright 2021-2026 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -42,7 +42,6 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   tx_pdu_notifier(tx_pdu_notifier_),
   ue_executor(ue_executor_),
   ul_notif_timer(timers.create_timer()),
-  ul_buffer_timer(timers.create_timer()),
   desired_buffer_size_for_data_radio_bearer(cfg.rlc_queue_bytes_limit),
   notif_desired_buffer_size_for_data_radio_bearer(
       0) // make sure that we send an initial buffer report, even if there is no data
@@ -50,15 +49,6 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
 
-  ul_buffer_timer.set(cfg.ul_buffer_timeout, [this](timer_id_t tid) {
-    logger.log_warning("UL buffering timed out, flushing PDUs. ul_buffer_size={} ul_buffer_timeout={}ms",
-                       cfg.ul_buffer_size,
-                       cfg.ul_buffer_timeout.count());
-    flush_ul_buffer();
-  });
-  if (cfg.buffer_ul_on_startup) {
-    ul_buffer_timer.run();
-  }
   logger.log_info("F1-U bearer configured. {} {}", cfg, dl_tnl_info);
 }
 
@@ -151,8 +141,8 @@ void f1u_bearer_impl::flush_ul_buffer()
     ul_buffer.pop();
   }
   buffering = false;
-  ul_buffer_timer.stop();
 }
+
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn, uint32_t desired_buf_size)
 {
   // This function may be called from pcell_executor, since it only writes to an atomic variable
