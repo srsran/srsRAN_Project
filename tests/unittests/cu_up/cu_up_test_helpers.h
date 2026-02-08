@@ -111,6 +111,9 @@ public:
 
   void stop() override {}
 
+  void set_error_indication_tx(gtpu_tunnel_common_tx_upper_layer_notifier& tx_upper,
+                               const std::string&                          local_addr) override {}
+
   std::list<gtpu_teid_t> created_teid_list = {};
   std::list<gtpu_teid_t> removed_teid_list = {};
 

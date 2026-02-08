@@ -26,6 +26,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/gtpu/gtpu_tunnel_common_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/support/executors/task_executor.h"
 #include <sys/socket.h>
 
@@ -77,6 +78,11 @@ public:
 
   /// \brief Mark GTP-U demux as stopped.
   virtual void stop() = 0;
+
+  /// \brief Set the TX notifier and local address for sending GTP-U Error Indication messages.
+  /// Ref: TS 29.281 Sec. 7.3.1.
+  virtual void set_error_indication_tx(gtpu_tunnel_common_tx_upper_layer_notifier& tx_upper,
+                                       const std::string&                          local_addr) = 0;
 };
 
 /// Combined entry point for the GTPU-demux object.

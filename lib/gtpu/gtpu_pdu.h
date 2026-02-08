@@ -285,6 +285,22 @@ bool gtpu_write_ie_private_extension(byte_buffer&               pdu,
                                      gtpu_ie_private_extension& ie_priv_ext,
                                      gtpu_tunnel_logger&        logger);
 
+/// Append the "Tunnel Endpoint Identifier Data I" information element to a GTP-U PDU.
+/// Ref: TS 29.281 Sec. 8.3.
+/// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
+/// \param[in] ie The information element "Tunnel Endpoint Identifier Data I".
+/// \param[in] logger Access to the logger.
+/// \return True if write was successful, False otherwise.
+bool gtpu_write_ie_teid_i(byte_buffer& pdu, const gtpu_ie_teid_i& ie, gtpu_tunnel_logger& logger);
+
+/// Append the "GTP-U Peer Address" information element to a GTP-U PDU.
+/// Ref: TS 29.281 Sec. 8.4.
+/// \param[out] pdu Buffer of the GTP-U PDU to which the information element shall be appended.
+/// \param[in] ie The information element "GTP-U Peer Address".
+/// \param[in] logger Access to the logger.
+/// \return True if write was successful, False otherwise.
+bool gtpu_write_ie_gtpu_peer_address(byte_buffer& pdu, const gtpu_ie_gtpu_peer_address& ie, gtpu_tunnel_logger& logger);
+
 bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);

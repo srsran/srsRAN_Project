@@ -124,6 +124,14 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   // We use the first UDP GW for UL.
   gtpu_gw_adapter.connect_network_gateway(*ngu_sessions[0]);
 
+  // Configure GTP-U Error Indication TX on the demux.
+  {
+    std::string n3_bind_addr;
+    if (ngu_sessions[0]->get_bind_address(n3_bind_addr)) {
+      ngu_demux->set_error_indication_tx(gtpu_gw_adapter, n3_bind_addr);
+    }
+  }
+
   // Create N3 TEID allocator
   gtpu_allocator_creation_request n3_alloc_msg = {};
   n3_alloc_msg.max_nof_teids                   = MAX_NOF_UES * MAX_NOF_PDU_SESSIONS;

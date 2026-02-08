@@ -153,6 +153,39 @@ bool srsran::gtpu_write_ie_private_extension(byte_buffer&               pdu,
   return pack_ok;
 }
 
+bool srsran::gtpu_write_ie_teid_i(byte_buffer& pdu, const gtpu_ie_teid_i& ie, gtpu_tunnel_logger& logger)
+{
+  logger.log_debug("Writing IE TEID-I. teid_i={:#x}", ie.teid_i);
+  bit_encoder enc{pdu};
+  bool        pack_ok = true;
+  pack_ok &= enc.pack(static_cast<uint8_t>(gtpu_information_element_type::tunnel_endpoint_identifier_data_i), 8);
+  pack_ok &= enc.pack(ie.teid_i, 32);
+  return pack_ok;
+}
+
+bool srsran::gtpu_write_ie_gtpu_peer_address(byte_buffer&                     pdu,
+                                             const gtpu_ie_gtpu_peer_address& ie,
+                                             gtpu_tunnel_logger&              logger)
+{
+  logger.log_debug("Writing IE GTP-U peer address.");
+  bit_encoder enc{pdu};
+  bool        pack_ok = true;
+  pack_ok &= enc.pack(static_cast<uint8_t>(gtpu_information_element_type::gsn_address), 8);
+  if (std::holds_alternative<gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address)) {
+    const auto& addr = std::get<gtpu_ie_gtpu_peer_address::ipv4_addr_t>(ie.gtpu_peer_address);
+    pack_ok &= enc.pack(static_cast<uint16_t>(4), 16);
+    pack_ok &= enc.pack_bytes(span<const uint8_t>(addr));
+  } else if (std::holds_alternative<gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address)) {
+    const auto& addr = std::get<gtpu_ie_gtpu_peer_address::ipv6_addr_t>(ie.gtpu_peer_address);
+    pack_ok &= enc.pack(static_cast<uint16_t>(16), 16);
+    pack_ok &= enc.pack_bytes(span<const uint8_t>(addr));
+  } else {
+    logger.log_error("Cannot write IE GTP-U peer address: unsupported address type.");
+    return false;
+  }
+  return pack_ok;
+}
+
 static bool gtpu_read_ie_type(gtpu_information_element_type& ie_type, bit_decoder& dec, srslog::basic_logger& logger)
 {
   bool read_ok = true;
