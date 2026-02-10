@@ -23,6 +23,7 @@
 #include "gtpu_test_shared.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -36,6 +37,14 @@ public:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) final { last_rx = std::move(pdu); }
 
   byte_buffer last_rx;
+};
+
+class gtpu_tx_upper_dummy : public gtpu_tunnel_common_tx_upper_layer_notifier
+{
+public:
+  void on_new_pdu(byte_buffer buf, const sockaddr_storage& addr) final { last_tx = std::move(buf); }
+
+  byte_buffer last_tx;
 };
 
 /// Fixture class for GTPU demux tests
@@ -75,10 +84,15 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
   sockaddr_storage src_addr = {};
   byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_1).value();
 
+  // Configure error indication TX so we can verify it is sent.
+  gtpu_tx_upper_dummy dummy_tx;
+  dut->set_error_indication_tx(dummy_tx, "127.0.0.1");
+
   dut->handle_pdu(std::move(pdu), src_addr);
   teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
+  ASSERT_GT(dummy_tx.last_tx.length(), 0);
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
