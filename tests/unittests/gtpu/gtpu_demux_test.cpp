@@ -21,6 +21,7 @@
  */
 
 #include "gtpu_test_shared.h"
+#include "lib/gtpu/gtpu_pdu.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
@@ -93,6 +94,12 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
   ASSERT_GT(dummy_tx.last_tx.length(), 0);
+
+  // Verify the error indication TEID IE matches the received PDU.
+  dummy_tx.last_tx.trim_head(GTPU_EXTENDED_HEADER_LEN);
+  gtpu_msg_error_indication err_ind = {};
+  ASSERT_TRUE(gtpu_read_msg_error_indication(err_ind, dummy_tx.last_tx, test_logger));
+  ASSERT_EQ(err_ind.teid_i.teid_i, gtpu_teid_t{0x1}.value());
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
@@ -101,10 +108,15 @@ TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
   byte_buffer      pdu      = byte_buffer::create(gtpu_ping_vec_teid_1).value();
   auto             queue    = dut->add_tunnel(gtpu_teid_t{0x1}, teid_worker, gtpu_tunnel.get());
 
+  // Configure error indication TX so we can verify it is not sent.
+  gtpu_tx_upper_dummy dummy_tx;
+  dut->set_error_indication_tx(dummy_tx, "127.0.0.1");
+
   dut->handle_pdu(std::move(pdu), src_addr);
   teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), sizeof(gtpu_ping_vec_teid_1));
+  ASSERT_TRUE(dummy_tx.last_tx.empty());
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_was_removed_pdu_is_dropped)
@@ -114,11 +126,22 @@ TEST_F(gtpu_demux_test, when_tunnel_was_removed_pdu_is_dropped)
   auto             queue    = dut->add_tunnel(gtpu_teid_t{0x1}, teid_worker, gtpu_tunnel.get());
   dut->remove_tunnel(gtpu_teid_t{0x1});
 
+  // Configure error indication TX so we can verify it is sent.
+  gtpu_tx_upper_dummy dummy_tx;
+  dut->set_error_indication_tx(dummy_tx, "127.0.0.1");
+
   // pass and handle PDU when tunnel was already removed
   dut->handle_pdu(std::move(pdu), src_addr);
   teid_worker.run_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
+  ASSERT_GT(dummy_tx.last_tx.length(), 0);
+
+  // Verify the error indication TEID IE matches the removed tunnel.
+  dummy_tx.last_tx.trim_head(GTPU_EXTENDED_HEADER_LEN);
+  gtpu_msg_error_indication err_ind = {};
+  ASSERT_TRUE(gtpu_read_msg_error_indication(err_ind, dummy_tx.last_tx, test_logger));
+  ASSERT_EQ(err_ind.teid_i.teid_i, gtpu_teid_t{0x1}.value());
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_is_being_removed_pdu_is_dropped)
